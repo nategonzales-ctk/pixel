@@ -17,6 +17,8 @@
   --text-dim: rgba(238,238,255,0.42);
   --glow: rgba(217,102,255,0.4);
   --chat-panel-bg: rgba(13,13,26,0.97);
+  --primary-w: 1920px;
+  --primary-h: 1080px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -175,7 +177,8 @@ body {
 #open-pet-selector {
   position: fixed;
   bottom: 18px;
-  right: 18px;
+  left: calc(var(--primary-w) - 18px);
+  transform: translateX(-100%);
   z-index: 31;
   font-family: 'Nunito', sans-serif;
   font-size: 9px; font-weight: 900;
@@ -201,7 +204,7 @@ body {
   position: fixed; inset: 0; z-index: 200;
   background: rgba(5,5,14,0.88);
   backdrop-filter: blur(14px);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: flex-start;
   opacity: 0; pointer-events: none;
   transition: opacity 0.28s;
 }
@@ -223,6 +226,9 @@ body {
   letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--accent); text-shadow: 0 0 12px var(--accent);
   text-align: center; margin-bottom: 22px;
+}
+#pet-selector-panel, #appearance-panel {
+  margin-left: max(24px, calc(var(--primary-w) / 2 - 290px));
 }
 .selector-close {
   position: absolute; top: 14px; right: 18px;
@@ -284,32 +290,90 @@ body {
 }
 
 /* ══════════════════════════════
-   CHAT PANEL — bottom LEFT
-   width = full screen minus pet zone (200px) minus margin (24px) minus buffer (20px)
+   CHAT — floating messenger bubble
 ══════════════════════════════ */
+#chat-bubble-btn {
+  position: fixed;
+  bottom: 18px; left: 18px;
+  z-index: 35;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid rgba(217,102,255,0.45);
+  box-shadow: 0 4px 22px rgba(217,102,255,0.35);
+  font-size: 26px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#chat-bubble-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(217,102,255,0.55);
+}
+.chat-unread-dot {
+  position: absolute; top: 3px; right: 3px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #ff4444;
+  border: 2px solid var(--bg);
+  display: none;
+}
 #chat-panel {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: calc(100vw - 260px);
-  z-index: 20;
+  bottom: 84px; left: 18px;
+  z-index: 34;
+  width: 320px;
+  max-height: 520px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 28px 20px 20px 24px;
-  background: linear-gradient(0deg, var(--chat-panel-bg) 50%, transparent 100%);
+  background: rgba(13,13,26,0.97);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(217,102,255,0.22);
+  border-radius: 22px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(217,102,255,0.06);
+  overflow: hidden;
+  transform-origin: bottom left;
+  opacity: 0; pointer-events: none;
+  transform: scale(0.88) translateY(12px);
+  transition: opacity 0.22s, transform 0.22s cubic-bezier(.34,1.56,.64,1);
 }
+#chat-panel.chat-open {
+  opacity: 1; pointer-events: auto;
+  transform: scale(1) translateY(0);
+}
+#chat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+#chat-header-info { display: flex; flex-direction: column; gap: 2px; }
+#chat-header-name { font-size: 13px; font-weight: 900; color: var(--text); }
+#chat-header-status { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 0.06em; }
+#chat-close-btn {
+  background: none; border: none;
+  color: var(--text-dim); font-size: 18px;
+  cursor: pointer; padding: 4px 6px; line-height: 1;
+  transition: color 0.15s; font-family: sans-serif;
+}
+#chat-close-btn:hover { color: var(--text); }
 
 /* Quick pills */
 #pill-row {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  padding: 8px 12px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
 }
+#pill-row::-webkit-scrollbar { display: none; }
 .pill {
   font-family: 'Nunito', sans-serif;
-  font-size: 11.5px; font-weight: 800;
-  padding: 5px 13px;
+  font-size: 11px; font-weight: 800;
+  padding: 5px 11px;
+  white-space: nowrap;
   border-radius: 999px;
   background: var(--surface2);
   border: 1.5px solid rgba(217,102,255,0.18);
@@ -328,20 +392,44 @@ body {
 .pill:active { transform:scale(0.95); }
 
 /* Chat history */
+#chat-history-wrap {
+  flex: 1;
+  min-height: 80px;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
 #chat-history {
   width: 100%;
-  height: 160px;
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(217,102,255,0.3) transparent;
-  padding-right: 4px;
+  padding: 8px 12px;
+  cursor: grab;
+  user-select: none;
 }
+#chat-history.dragging { cursor: grabbing; }
 #chat-history::-webkit-scrollbar { width:4px; }
 #chat-history::-webkit-scrollbar-thumb { background:rgba(217,102,255,0.3); border-radius:4px; }
 #chat-history::-webkit-scrollbar-track { background:transparent; }
+#chat-scroll-up, #chat-scroll-down {
+  flex-shrink: 0;
+  width: 100%; height: 22px;
+  background: none;
+  border: none;
+  color: rgba(217,102,255,0.4);
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+  line-height: 1;
+}
+#chat-scroll-up:hover, #chat-scroll-down:hover { color: rgba(217,102,255,0.9); }
 
 .msg-row {
   display: flex; gap: 7px;
@@ -362,11 +450,11 @@ body {
   font-size: 13px; flex-shrink:0; align-self:flex-end;
 }
 .msg-bubble {
-  padding: 7px 13px;
-  border-radius: 14px;
+  padding: 8px 13px;
+  border-radius: 16px;
   font-size: 12.5px; font-weight: 700;
-  line-height: 1.45;
-  max-width: 82%;
+  line-height: 1.5;
+  max-width: 78%;
   word-break: break-word;
 }
 .msg-row.user .msg-bubble {
@@ -385,6 +473,9 @@ body {
 #input-row {
   display: flex; gap: 9px;
   width: 100%; align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
 }
 #chat-input {
   flex: 1;
@@ -432,7 +523,8 @@ body {
 /* ── HARDWARE PANEL ── */
 #hw-panel {
   position: fixed;
-  top: 120px; right: 24px;
+  top: 120px;
+  left: calc(var(--primary-w) - 212px);
   z-index: 5;
   width: 188px;
   background: rgba(13,13,26,0.78);
@@ -482,7 +574,9 @@ body {
 /* ── MODE INDICATOR ── */
 #mode-indicator {
   position: fixed;
-  top: 36px; right: 24px;
+  top: 36px;
+  left: calc(var(--primary-w) - 24px);
+  transform: translateX(-100%);
   z-index: 5;
   display: flex;
   align-items: center;
@@ -512,7 +606,8 @@ body {
 /* ── SETTINGS BUTTON + PANEL ── */
 #settings-btn {
   position: fixed;
-  top: 80px; right: 24px;
+  top: 80px;
+  left: calc(var(--primary-w) - 54px);
   z-index: 31;
   width: 30px; height: 30px;
   border-radius: 50%;
@@ -530,8 +625,10 @@ body {
 }
 #settings-panel {
   position: fixed;
-  top: 118px; right: 18px;
-  bottom: auto; left: auto;
+  top: 118px;
+  left: calc(var(--primary-w) - 18px);
+  transform: translateX(-100%) translateY(8px) scale(0.96);
+  bottom: auto;
   z-index: 31;
   background: rgba(13,13,26,0.96);
   border: 1px solid rgba(217,102,255,0.24);
@@ -540,13 +637,12 @@ body {
   backdrop-filter: blur(14px);
   min-width: 180px;
   opacity: 0; pointer-events: none;
-  transform: translateY(8px) scale(0.96);
   transition: opacity 0.2s, transform 0.2s;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 #settings-panel.open {
   opacity: 1; pointer-events: auto;
-  transform: translateY(0) scale(1);
+  transform: translateX(-100%) translateY(0) scale(1);
 }
 .settings-title {
   font-size: 9px; font-weight: 900;
@@ -591,7 +687,7 @@ body {
 #appearance-overlay {
   position: fixed; inset: 0; z-index: 210;
   background: rgba(5,5,14,0.88); backdrop-filter: blur(14px);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: flex-start;
   opacity: 0; pointer-events: none; transition: opacity 0.28s;
 }
 #appearance-overlay.open { opacity: 1; pointer-events: auto; }
@@ -695,6 +791,25 @@ body {
   transition: background 0.2s, border-color 0.2s;
 }
 .ap-open-btn:hover { background: rgba(217,102,255,0.2); border-color: var(--accent); }
+#bg-scene-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.bg-scene-btn {
+  flex: 1 1 calc(50% - 4px);
+  background: var(--surface2);
+  border: 2px solid rgba(255,255,255,0.06);
+  border-radius: 14px; padding: 10px 8px 8px;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.18s, transform 0.18s;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.bg-scene-btn:hover { transform: translateY(-2px); border-color: rgba(217,102,255,0.4); }
+.bg-scene-btn.active { border-color: var(--accent); }
+.bg-scene-icon { font-size: 22px; }
+.bg-scene-name {
+  font-size: 10px; font-weight: 800;
+  color: var(--text); letter-spacing: 0.06em;
+}
 </style>
 </head>
 <body>
@@ -770,11 +885,42 @@ body {
     <span class="settings-label">Quick Replies</span>
     <label class="tog"><input type="checkbox" id="tog-bubble" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
   </div>
+  <div class="settings-row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)">
+    <span class="settings-label">Display width</span>
+    <input id="display-w-input" type="number" min="800" max="7680" step="80"
+      style="width:60px;background:var(--surface2);border:1px solid rgba(217,102,255,0.28);border-radius:6px;color:var(--text);font-family:inherit;font-size:10px;font-weight:800;padding:3px 5px;text-align:center;outline:none"
+      onchange="setDisplayWidth(parseInt(this.value)||displayW)">
+  </div>
+  <div class="settings-row">
+    <span class="settings-label">Display height</span>
+    <input id="display-h-input" type="number" min="400" max="4320" step="40"
+      style="width:60px;background:var(--surface2);border:1px solid rgba(217,102,255,0.28);border-radius:6px;color:var(--text);font-family:inherit;font-size:10px;font-weight:800;padding:3px 5px;text-align:center;outline:none"
+      onchange="setDisplayHeight(parseInt(this.value)||displayH)">
+  </div>
+  <div class="settings-row" style="justify-content:flex-end">
+    <button onclick="resetDisplaySize()"
+      style="font-family:inherit;font-size:9px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;border-radius:999px;border:1px solid rgba(217,102,255,0.28);background:none;color:var(--text-dim);cursor:pointer;transition:color 0.15s,border-color 0.15s"
+      onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
+      onmouseout="this.style.color='';this.style.borderColor=''">↺ Reset to detected</button>
+  </div>
   <button class="ap-open-btn" onclick="openAppearance()">🎨 Appearance</button>
 </div>
 
-<!-- Chat panel bottom-left -->
+<!-- Chat bubble trigger -->
+<button id="chat-bubble-btn" onclick="toggleChat()" title="Chat">
+  <span id="chat-bubble-emoji">🐾</span>
+  <span class="chat-unread-dot" id="chat-unread-dot"></span>
+</button>
+
+<!-- Chat panel (floating) -->
 <div id="chat-panel">
+  <div id="chat-header">
+    <div id="chat-header-info">
+      <div id="chat-header-name">Pixel</div>
+      <div id="chat-header-status">● Offline</div>
+    </div>
+    <button id="chat-close-btn" onclick="toggleChat()">✕</button>
+  </div>
   <div id="pill-row">
     <button class="pill" onclick="handlePill('Tell me a fun fact!')">🧠 Fact</button>
     <button class="pill" onclick="handlePill('Tell me a joke!')">😂 Joke</button>
@@ -785,7 +931,11 @@ body {
     <button class="pill" onclick="handlePill('What time is it?')">🕐 Time</button>
     <button class="pill" onclick="handlePCPill()">💻 My PC</button>
   </div>
-  <div id="chat-history"></div>
+  <div id="chat-history-wrap">
+    <button id="chat-scroll-up" onclick="chatScroll(-120)" title="Scroll up">▲</button>
+    <div id="chat-history"></div>
+    <button id="chat-scroll-down" onclick="chatScroll(120)" title="Scroll down">▼</button>
+  </div>
   <div id="input-row">
     <input id="chat-input" type="text" placeholder="Ask Pixel anything…" maxlength="250" autocomplete="off"/>
     <button id="send-btn" onclick="sendMessage()">➤</button>
@@ -822,7 +972,7 @@ function spawnShootingStar(){
   shootingStars.push({x:Math.random()*bgCanvas.width*.7,y:Math.random()*bgCanvas.height*.4,
     len:80+Math.random()*120,life:1,spd:0.04});
 }
-function drawBg(t){
+function drawBgSpace(t){
   const W=bgCanvas.width,H=bgCanvas.height;
   const grad=bgCtx.createLinearGradient(0,0,0,H);
   grad.addColorStop(0,bgGradTop); grad.addColorStop(1,bgGradBot);
@@ -856,6 +1006,267 @@ function drawBg(t){
 }
 
 // ══════════════════════════════════════════════════
+//  DISPLAY WIDTH (span / multi-monitor support)
+// ══════════════════════════════════════════════════
+// Auto-detect single-monitor width even in span mode.
+// In span, screen.height stays at one monitor's height, so height * (16/9) = single monitor width.
+// If the saved value equals the full innerWidth in a wide layout, it was auto-set wrong — reset it.
+function detectDisplayWidth() {
+  const saved = parseInt(localStorage.getItem('displayW'));
+  const heuristic = Math.min(window.innerWidth, Math.round(window.screen.height * 16 / 9));
+  if (saved && saved < window.innerWidth) return saved;
+  return heuristic || 1920;
+}
+function detectDisplayHeight() {
+  const saved = parseInt(localStorage.getItem('displayH'));
+  if (saved) return saved;
+  return Math.min(window.innerHeight, window.screen.height) || 1080;
+}
+let displayW = detectDisplayWidth();
+let displayH = detectDisplayHeight();
+
+function setDisplayWidth(w) {
+  displayW = Math.max(800, Math.min(7680, w || displayW));
+  localStorage.setItem('displayW', displayW);
+  document.documentElement.style.setProperty('--primary-w', displayW + 'px');
+  const inp = document.getElementById('display-w-input');
+  if (inp) inp.value = displayW;
+}
+function setDisplayHeight(h) {
+  displayH = Math.max(400, Math.min(4320, h || displayH));
+  localStorage.setItem('displayH', displayH);
+  document.documentElement.style.setProperty('--primary-h', displayH + 'px');
+  const inp = document.getElementById('display-h-input');
+  if (inp) inp.value = displayH;
+}
+function resetDisplaySize() {
+  localStorage.removeItem('displayW');
+  localStorage.removeItem('displayH');
+  setDisplayWidth(detectDisplayWidth());
+  setDisplayHeight(detectDisplayHeight());
+}
+
+// Keyboard shortcut: Ctrl+, opens settings even when button is off-screen
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === ',') { e.preventDefault(); toggleSettings(); }
+  if (e.key === 'Escape') {
+    if (appearanceOpen) closeAppearance();
+    else if (selectorOpen) closePetSelector();
+    else if (settingsPanelOpen) { settingsPanelOpen = false; document.getElementById('settings-panel').classList.remove('open'); }
+  }
+});
+
+let currentBgScene = 'space';
+
+function drawBg(t) {
+  switch(currentBgScene) {
+    case 'ocean':  drawBgOcean(t);  break;
+    case 'forest': drawBgForest(t); break;
+    case 'office': drawBgOffice(t); break;
+    default:       drawBgSpace(t);  break;
+  }
+}
+
+function drawBgOcean(t) {
+  const W=bgCanvas.width,H=bgCanvas.height;
+  // Sky
+  const sky=bgCtx.createLinearGradient(0,0,0,H*0.6);
+  sky.addColorStop(0,'#010a1a'); sky.addColorStop(0.5,'#051830'); sky.addColorStop(1,'#0a2848');
+  bgCtx.fillStyle=sky; bgCtx.fillRect(0,0,W,H*0.7);
+  // Stars
+  bgCtx.save(); bgCtx.beginPath(); bgCtx.rect(0,0,W,H*0.52); bgCtx.clip();
+  for(const s of STARS){
+    const a=Math.max(0,0.1+Math.sin(t*s.spd+s.ph)*0.2);
+    bgCtx.beginPath(); bgCtx.arc(s.x*W,s.y*H*0.52,s.r*0.7,0,Math.PI*2);
+    bgCtx.fillStyle='#ffffff'; bgCtx.globalAlpha=a; bgCtx.fill();
+  }
+  bgCtx.globalAlpha=1; bgCtx.restore();
+  // Moon
+  const mX=W*0.74,mY=H*0.14;
+  const mg=bgCtx.createRadialGradient(mX,mY,0,mX,mY,65);
+  mg.addColorStop(0,'rgba(200,220,255,0.18)'); mg.addColorStop(1,'transparent');
+  bgCtx.beginPath(); bgCtx.arc(mX,mY,65,0,Math.PI*2); bgCtx.fillStyle=mg; bgCtx.fill();
+  bgCtx.beginPath(); bgCtx.arc(mX,mY,19,0,Math.PI*2); bgCtx.fillStyle='#d4e8f5'; bgCtx.fill();
+  // Water
+  const wY=H*0.58;
+  const wat=bgCtx.createLinearGradient(0,wY,0,H*0.82);
+  wat.addColorStop(0,'#041520'); wat.addColorStop(1,'#061c30');
+  bgCtx.fillStyle=wat; bgCtx.fillRect(0,wY,W,H*0.25);
+  // Moon reflection
+  bgCtx.save(); bgCtx.beginPath(); bgCtx.rect(0,wY,W,H*0.25); bgCtx.clip();
+  const refl=bgCtx.createLinearGradient(mX-25,wY,mX+25,wY);
+  refl.addColorStop(0,'transparent'); refl.addColorStop(0.5,'rgba(200,225,255,0.1)'); refl.addColorStop(1,'transparent');
+  bgCtx.fillStyle=refl; bgCtx.fillRect(mX-50,wY,100,H*0.25); bgCtx.restore();
+  // Waves
+  for(let l=0;l<4;l++){
+    const yb=wY+l*20+8, amp=3+l*1.5, spd=0.0008+l*0.0003;
+    bgCtx.beginPath(); bgCtx.moveTo(0,yb);
+    for(let x=0;x<=W;x+=4){ bgCtx.lineTo(x,yb+Math.sin(x*0.018+t*spd*1000)*amp); }
+    bgCtx.strokeStyle=`rgba(100,180,220,${0.12-l*0.025})`; bgCtx.lineWidth=1.5; bgCtx.stroke();
+  }
+  // Sand
+  const sandY=H*0.82;
+  const sand=bgCtx.createLinearGradient(0,sandY,0,H);
+  sand.addColorStop(0,'#7a6445'); sand.addColorStop(0.3,'#967a58'); sand.addColorStop(1,'#b8976e');
+  bgCtx.fillStyle=sand; bgCtx.fillRect(0,sandY,W,H-sandY);
+  // Wet sand shimmer
+  const sAlpha=0.18+Math.sin(t*0.0009)*0.06;
+  const shim=bgCtx.createLinearGradient(0,sandY-2,0,sandY+14);
+  shim.addColorStop(0,`rgba(80,140,190,${sAlpha})`); shim.addColorStop(1,'transparent');
+  bgCtx.fillStyle=shim; bgCtx.fillRect(0,sandY-2,W,16);
+  // Horizon glow
+  const hg=bgCtx.createLinearGradient(0,wY-20,0,wY+30);
+  hg.addColorStop(0,'transparent'); hg.addColorStop(0.5,'rgba(60,130,200,0.08)'); hg.addColorStop(1,'transparent');
+  bgCtx.fillStyle=hg; bgCtx.fillRect(0,wY-20,W,50);
+}
+
+function drawBgForest(t) {
+  const W=bgCanvas.width,H=bgCanvas.height;
+  // Sky
+  const sky=bgCtx.createLinearGradient(0,0,0,H*0.5);
+  sky.addColorStop(0,'#010804'); sky.addColorStop(1,'#031208');
+  bgCtx.fillStyle=sky; bgCtx.fillRect(0,0,W,H);
+  // Stars through canopy
+  bgCtx.save(); bgCtx.beginPath(); bgCtx.rect(0,0,W,H*0.38); bgCtx.clip();
+  for(const s of STARS){
+    const a=Math.max(0,0.08+Math.sin(t*s.spd+s.ph)*0.18);
+    bgCtx.beginPath(); bgCtx.arc(s.x*W,s.y*H*0.38,s.r*0.6,0,Math.PI*2);
+    bgCtx.fillStyle='#ccffcc'; bgCtx.globalAlpha=a*0.65; bgCtx.fill();
+  }
+  bgCtx.globalAlpha=1; bgCtx.restore();
+  // Pine tree helper
+  function pine(x,y,h,col){
+    const w=h*0.48;
+    for(let i=0;i<3;i++){
+      const ty=y-h*0.28*i-h*0.18, tw=w*(1-i*0.18)*(1+i*0.08);
+      bgCtx.beginPath(); bgCtx.moveTo(x,ty-h*0.32); bgCtx.lineTo(x-tw/2,ty); bgCtx.lineTo(x+tw/2,ty); bgCtx.closePath();
+      bgCtx.fillStyle=col; bgCtx.fill();
+    }
+    bgCtx.fillStyle='#0e0804'; bgCtx.fillRect(x-3,y-h*0.12,6,h*0.16);
+  }
+  // Far trees
+  for(let i=0;i<22;i++){
+    pine((i/22)*W*1.1-W*0.05, H*0.54, 55+(i*37%38), '#061506');
+  }
+  // Mid trees
+  for(let i=0;i<15;i++){
+    pine((i/15)*W*1.1-W*0.04, H*0.67, 90+(i*53%55), '#040e04');
+  }
+  // Ground
+  const gnd=bgCtx.createLinearGradient(0,H*0.64,0,H);
+  gnd.addColorStop(0,'#020c02'); gnd.addColorStop(1,'#010601');
+  bgCtx.fillStyle=gnd; bgCtx.fillRect(0,H*0.64,W,H);
+  // Near trees
+  for(let i=0;i<10;i++){
+    pine((i/10)*W*1.1-W*0.05, H*0.88, 150+(i*71%75), '#020802');
+  }
+  // Fireflies
+  for(let i=0;i<20;i++){
+    const ph=i*2.399;
+    const fx=(0.08+((Math.sin(t*0.00025+ph)*0.5+0.5)*0.84))*W;
+    const fy=H*0.42+(Math.cos(t*0.00035+ph*1.3)*0.5+0.5)*H*0.38;
+    const fa=Math.max(0,Math.sin(t*0.0022+ph)*0.65+0.35);
+    if(fa>0.12){
+      const fg=bgCtx.createRadialGradient(fx,fy,0,fx,fy,9);
+      fg.addColorStop(0,`rgba(190,255,80,${fa*0.85})`); fg.addColorStop(1,'transparent');
+      bgCtx.beginPath(); bgCtx.arc(fx,fy,9,0,Math.PI*2); bgCtx.fillStyle=fg; bgCtx.fill();
+      bgCtx.beginPath(); bgCtx.arc(fx,fy,1.8,0,Math.PI*2); bgCtx.fillStyle=`rgba(210,255,130,${fa})`; bgCtx.fill();
+    }
+  }
+  // Ground fog
+  for(let i=0;i<5;i++){
+    const fx=(Math.sin(t*0.00018+i*1.5)*0.3+0.15+i*0.17)*W;
+    const fy=H*0.69+i*12;
+    const fg=bgCtx.createRadialGradient(fx,fy,0,fx,fy,100+i*18);
+    fg.addColorStop(0,'rgba(160,255,160,0.035)'); fg.addColorStop(1,'transparent');
+    bgCtx.beginPath(); bgCtx.ellipse(fx,fy,130+i*28,18,0,0,Math.PI*2); bgCtx.fillStyle=fg; bgCtx.fill();
+  }
+}
+
+function drawBgOffice(t) {
+  const W=bgCanvas.width,H=bgCanvas.height;
+  // Room walls
+  bgCtx.fillStyle='#0e0c0a'; bgCtx.fillRect(0,0,W,H);
+  // Subtle wall grid
+  bgCtx.strokeStyle='rgba(255,255,255,0.014)'; bgCtx.lineWidth=1;
+  for(let x=0;x<=W;x+=44){ bgCtx.beginPath(); bgCtx.moveTo(x,0); bgCtx.lineTo(x,H*0.74); bgCtx.stroke(); }
+  for(let y=0;y<=H*0.74;y+=44){ bgCtx.beginPath(); bgCtx.moveTo(0,y); bgCtx.lineTo(W,y); bgCtx.stroke(); }
+  // Window
+  const wX=W*0.15,wY=H*0.09,wW=W*0.28,wH=H*0.44;
+  bgCtx.fillStyle='#04070e'; bgCtx.fillRect(wX,wY,wW,wH);
+  bgCtx.save(); bgCtx.beginPath(); bgCtx.rect(wX,wY,wW,wH); bgCtx.clip();
+  // City building silhouettes
+  const buildings=[[0.05,0.55,0.12,0.45],[0.18,0.4,0.1,0.6],[0.3,0.6,0.13,0.4],[0.44,0.45,0.1,0.55],[0.56,0.65,0.11,0.35],[0.68,0.48,0.09,0.52],[0.8,0.58,0.14,0.42]];
+  buildings.forEach(([bx,top,bw,bh])=>{
+    bgCtx.fillStyle='#0a0e18';
+    bgCtx.fillRect(wX+bx*wW, wY+top*wH, bw*wW, bh*wH);
+    // windows on buildings
+    for(let wy2=0;wy2<5;wy2++) for(let wx2=0;wx2<3;wx2++){
+      if(Math.sin(bx*97+wy2*13+wx2*7)>0.1){
+        const fa=0.4+Math.sin(t*0.0008+bx*20+wy2*7)*0.3;
+        const wc=['#ffdd88','#aaccff','#ffaa44','#88ddff'][((bx*17+wy2*5)&3)];
+        bgCtx.fillStyle=wc; bgCtx.globalAlpha=fa;
+        bgCtx.fillRect(wX+bx*wW+wx2*bw*wW*0.28+bw*wW*0.12, wY+top*wH+wy2*bh*wH*0.18+bh*wH*0.06, bw*wW*0.14, bh*wH*0.1);
+      }
+    }
+    bgCtx.globalAlpha=1;
+  });
+  // Rain
+  for(let i=0;i<22;i++){
+    const rx=wX+(i*137.508%1)*wW;
+    const ry=wY+((t*0.065+i*29)%(wH*1.3))-wH*0.15;
+    const rl=5+(i%5)*3;
+    bgCtx.beginPath(); bgCtx.moveTo(rx,ry); bgCtx.lineTo(rx-1,ry+rl);
+    bgCtx.strokeStyle='rgba(140,190,255,0.32)'; bgCtx.lineWidth=1; bgCtx.stroke();
+  }
+  bgCtx.restore();
+  // Window glow spill
+  const wglow=bgCtx.createRadialGradient(wX+wW/2,wY+wH/2,0,wX+wW/2,wY+wH/2,wW*0.95);
+  wglow.addColorStop(0,'rgba(80,120,200,0.05)'); wglow.addColorStop(1,'transparent');
+  bgCtx.beginPath(); bgCtx.ellipse(wX+wW/2,wY+wH/2,wW,wH*0.75,0,0,Math.PI*2); bgCtx.fillStyle=wglow; bgCtx.fill();
+  // Window frame
+  bgCtx.strokeStyle='#2a2218'; bgCtx.lineWidth=6; bgCtx.strokeRect(wX,wY,wW,wH);
+  bgCtx.beginPath(); bgCtx.moveTo(wX+wW/2,wY); bgCtx.lineTo(wX+wW/2,wY+wH); bgCtx.moveTo(wX,wY+wH/2); bgCtx.lineTo(wX+wW,wY+wH/2); bgCtx.stroke();
+  // Desk lamp
+  const lX=W*0.82,lY=H*0.4;
+  const lg=bgCtx.createRadialGradient(lX,lY+40,0,lX,lY+40,130);
+  lg.addColorStop(0,`rgba(255,215,90,${0.2+Math.sin(t*0.0009)*0.02})`);
+  lg.addColorStop(0.5,'rgba(255,170,40,0.06)'); lg.addColorStop(1,'transparent');
+  bgCtx.beginPath(); bgCtx.ellipse(lX,lY+70,145,90,0,0,Math.PI*2); bgCtx.fillStyle=lg; bgCtx.fill();
+  bgCtx.fillStyle='#2a2014';
+  bgCtx.beginPath(); bgCtx.ellipse(lX,lY,23,13,-0.3,0,Math.PI*2); bgCtx.fill();
+  bgCtx.fillStyle='#ffe07a';
+  bgCtx.beginPath(); bgCtx.ellipse(lX+2,lY-2,10,6,-0.3,0,Math.PI*2); bgCtx.fill();
+  bgCtx.strokeStyle='#1e1810'; bgCtx.lineWidth=3;
+  bgCtx.beginPath(); bgCtx.moveTo(lX-4,lY+8); bgCtx.lineTo(lX-8,lY+56); bgCtx.stroke();
+  // Bookshelf
+  bgCtx.fillStyle='#181410'; bgCtx.fillRect(W*0.88,H*0.04,W*0.1,H*0.56);
+  const bkCols=['#7a3030','#305a7a','#30784a','#786030','#5a2e78','#784830'];
+  let bx2=W*0.893;
+  for(let i=0;i<9;i++){
+    const bw2=11+(i%3)*5,bh2=55+(i%4)*18,by2=H*0.06+(75-bh2)/2;
+    bgCtx.fillStyle=bkCols[i%bkCols.length]; bgCtx.globalAlpha=0.72;
+    bgCtx.fillRect(bx2,by2,bw2-1,bh2); bx2+=bw2;
+    if(bx2>W*0.975) break;
+  }
+  bgCtx.globalAlpha=1;
+  // Desk
+  const dY=H*0.72;
+  const desk=bgCtx.createLinearGradient(0,dY,0,H*0.78);
+  desk.addColorStop(0,'#281e12'); desk.addColorStop(1,'#1c1408');
+  bgCtx.fillStyle=desk; bgCtx.fillRect(0,dY,W,H*0.08);
+  bgCtx.fillStyle='rgba(255,190,100,0.07)'; bgCtx.fillRect(0,dY,W,2);
+  // Monitor glow on desk
+  const mng=bgCtx.createRadialGradient(W*0.35,dY-20,0,W*0.35,dY-90,115);
+  mng.addColorStop(0,'rgba(90,140,255,0.1)'); mng.addColorStop(1,'transparent');
+  bgCtx.beginPath(); bgCtx.ellipse(W*0.35,dY-10,125,80,0,0,Math.PI*2); bgCtx.fillStyle=mng; bgCtx.fill();
+  // Floor
+  const flr=bgCtx.createLinearGradient(0,H*0.78,0,H);
+  flr.addColorStop(0,'#0c0a08'); flr.addColorStop(1,'#06040302');
+  bgCtx.fillStyle=flr; bgCtx.fillRect(0,H*0.78,W,H);
+}
+
+// ══════════════════════════════════════════════════
 //  CLOCK
 // ══════════════════════════════════════════════════
 function updateClock(){
@@ -885,6 +1296,10 @@ function switchPet(petId) {
   if(!pet) return;
   document.getElementById('name-tag').textContent = pet.nameTagText;
   document.getElementById('chat-input').placeholder = pet.inputPlaceholder;
+  const bubbleEmoji = document.getElementById('chat-bubble-emoji');
+  if (bubbleEmoji) bubbleEmoji.textContent = pet.avatarEmoji;
+  const headerName = document.getElementById('chat-header-name');
+  if (headerName) headerName.textContent = pet.name;
   showBubble(`Hi! I'm ${pet.name}! ${pet.tagline}`, 3200);
   setMood('excited', 2500);
 }
@@ -1182,6 +1597,41 @@ function getResponse(input){
 // ══════════════════════════════════════════════════
 const chatHistEl=document.getElementById('chat-history');
 const chatInput=document.getElementById('chat-input');
+let chatOpen = false;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-panel').classList.toggle('chat-open', chatOpen);
+  if (chatOpen) {
+    document.getElementById('chat-unread-dot').style.display = 'none';
+    setTimeout(() => chatHistEl.scrollTop = chatHistEl.scrollHeight, 50);
+    chatInput.focus();
+  }
+}
+
+function markUnread() {
+  if (!chatOpen) document.getElementById('chat-unread-dot').style.display = 'block';
+}
+
+// Scroll helpers (wallpaper-safe)
+function chatScroll(by){
+  chatHistEl.scrollBy({top:by, behavior:'smooth'});
+}
+
+// Drag-to-scroll (works even when mousewheel is swallowed by wallpaper engine)
+(function(){
+  let startY=0, startScroll=0, dragging=false;
+  chatHistEl.addEventListener('mousedown', e=>{
+    if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT') return;
+    dragging=true; startY=e.clientY; startScroll=chatHistEl.scrollTop;
+    chatHistEl.classList.add('dragging'); e.preventDefault();
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    chatHistEl.scrollTop = startScroll-(e.clientY-startY);
+  });
+  document.addEventListener('mouseup', ()=>{ dragging=false; chatHistEl.classList.remove('dragging'); });
+})();
 const sendBtn=document.getElementById('send-btn');
 let chatLog=[];
 
@@ -1192,6 +1642,7 @@ function addMessage(role,text){
   const bub=document.createElement('div'); bub.className='msg-bubble'; bub.textContent=text;
   row.appendChild(bub); chatHistEl.appendChild(row);
   chatHistEl.scrollTop=chatHistEl.scrollHeight;
+  if(role==='pet') markUnread();
 }
 
 function handlePill(text){ chatInput.value=text; sendMessage(); }
@@ -1306,6 +1757,8 @@ function updateModeIndicator(){
     dot.style.background='#ffcc44';dot.style.boxShadow='0 0 7px #ffcc44';
     lbl.textContent='Offline';
   }
+  const hs = document.getElementById('chat-header-status');
+  if (hs) hs.textContent = '● ' + (isOnline ? 'Claude AI' : 'Offline');
 }
 
 async function probeConnection(){
@@ -1532,6 +1985,7 @@ function initAppearance() {
   if (!cfg.theme) cfg.theme = 'midnight';
   if (!cfg.font)  cfg.font  = 'Nunito';
   if (cfg.chatOpacity === undefined) cfg.chatOpacity = 0.97;
+  if (cfg.bgScene) currentBgScene = cfg.bgScene;
   applyAppearance(cfg);
 }
 
@@ -1545,6 +1999,30 @@ function openAppearance() {
   if (!cfg.theme) cfg.theme = 'midnight';
   if (!cfg.font)  cfg.font  = 'Nunito';
   if (cfg.chatOpacity === undefined) cfg.chatOpacity = 0.97;
+  if (cfg.bgScene) currentBgScene = cfg.bgScene;
+
+  // Build background scene grid
+  const BG_SCENES = [
+    { id:'space',  name:'Space',  icon:'🌌' },
+    { id:'ocean',  name:'Ocean',  icon:'🏖️' },
+    { id:'forest', name:'Forest', icon:'🌲' },
+    { id:'office', name:'Office', icon:'🏢' },
+  ];
+  const bgGrid = document.getElementById('bg-scene-grid');
+  bgGrid.innerHTML = '';
+  BG_SCENES.forEach(sc => {
+    const btn = document.createElement('button');
+    btn.className = 'bg-scene-btn' + (currentBgScene === sc.id ? ' active' : '');
+    btn.dataset.sceneId = sc.id;
+    btn.innerHTML = `<div class="bg-scene-icon">${sc.icon}</div><div class="bg-scene-name">${sc.name}</div>`;
+    btn.onclick = () => {
+      currentBgScene = sc.id;
+      cfg.bgScene = sc.id;
+      bgGrid.querySelectorAll('.bg-scene-btn').forEach(b => b.classList.toggle('active', b.dataset.sceneId === sc.id));
+      saveAppearance(cfg);
+    };
+    bgGrid.appendChild(btn);
+  });
 
   // Build theme grid
   const grid = document.getElementById('theme-grid');
@@ -1624,7 +2102,8 @@ function applySettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
   document.getElementById('clock-widget').style.display = s.clock ? '' : 'none';
   document.getElementById('hw-panel').style.display     = s.hw    ? '' : 'none';
-  document.getElementById('chat-panel').style.display   = s.chat  ? '' : 'none';
+  document.getElementById('chat-panel').style.display      = s.chat ? '' : 'none';
+  document.getElementById('chat-bubble-btn').style.display = s.chat ? '' : 'none';
   document.getElementById('pill-row').style.display = s.bubble ? '' : 'none';
 }
 
@@ -1640,6 +2119,12 @@ function initSettings() {
 function toggleSettings() {
   settingsPanelOpen = !settingsPanelOpen;
   document.getElementById('settings-panel').classList.toggle('open', settingsPanelOpen);
+  if (settingsPanelOpen) {
+    const wi = document.getElementById('display-w-input');
+    if (wi) wi.value = displayW;
+    const hi = document.getElementById('display-h-input');
+    if (hi) hi.value = displayH;
+  }
 }
 
 document.addEventListener('click', e => {
@@ -1667,6 +2152,7 @@ let petMouseNear = false;
 document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
 function getChatRect() {
+  if (!chatOpen) return null;
   const el = document.getElementById('chat-panel');
   return el ? el.getBoundingClientRect() : null;
 }
@@ -1680,7 +2166,7 @@ function overlapsChat(x, y, cr) {
 }
 
 function pickWanderTarget() {
-  const pad = 60, w = window.innerWidth, h = window.innerHeight;
+  const pad = 60, w = Math.min(window.innerWidth, displayW), h = Math.min(window.innerHeight, displayH);
   const cr = getChatRect();
   let attempts = 0;
   do {
@@ -1708,8 +2194,8 @@ function updatePetMovement() {
   const speed = petMouseNear ? 0.05 : 0.012;
   petX += (tx - petX) * speed;
   petY += (ty - petY) * speed;
-  petX = Math.max(10, Math.min(window.innerWidth - PET_W - 10, petX));
-  petY = Math.max(100, Math.min(window.innerHeight - PET_H - 10, petY));
+  petX = Math.max(10, Math.min(Math.min(window.innerWidth, displayW) - PET_W - 10, petX));
+  petY = Math.max(100, Math.min(Math.min(window.innerHeight, displayH) - PET_H - 10, petY));
   // Push pet away from chat panel if overlapping
   const cr = getChatRect();
   if (cr && overlapsChat(petX, petY, cr)) {
@@ -1741,9 +2227,11 @@ function mainLoop(ts){
 }
 
 window.addEventListener('load',()=>{
+  setDisplayWidth(displayW);
+  setDisplayHeight(displayH);
   // Init pet position (bottom-right, then starts wandering after 3s)
-  petX = window.innerWidth - PET_W - 24;
-  petY = window.innerHeight - PET_H - 10;
+  petX = Math.min(window.innerWidth, displayW) - PET_W - 24;
+  petY = Math.min(window.innerHeight, displayH) - PET_H - 10;
   petTargetX = petX; petTargetY = petY;
   nextWanderTime = Date.now() + 3000;
 
@@ -1756,6 +2244,10 @@ window.addEventListener('load',()=>{
     if(pet){
       document.getElementById('name-tag').textContent=pet.nameTagText;
       document.getElementById('chat-input').placeholder=pet.inputPlaceholder;
+      const bubbleEmoji = document.getElementById('chat-bubble-emoji');
+      if (bubbleEmoji) bubbleEmoji.textContent = pet.avatarEmoji;
+      const headerName = document.getElementById('chat-header-name');
+      if (headerName) headerName.textContent = pet.name;
     }
   })();
 
@@ -1795,6 +2287,11 @@ window.addEventListener('load',()=>{
   <div id="appearance-panel">
     <button class="selector-close" onclick="closeAppearance()">✕</button>
     <div class="selector-title">🎨 Appearance</div>
+
+    <div class="ap-section">
+      <div class="ap-section-title">Background</div>
+      <div id="bg-scene-grid"></div>
+    </div>
 
     <div class="ap-section">
       <div class="ap-section-title">Theme</div>
