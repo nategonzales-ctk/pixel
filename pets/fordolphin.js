@@ -1,0 +1,201 @@
+/* ══════════════════════════════════════════════════
+   FORDOLPHIN — Cheerful ocean dolphin companion
+══════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  window.PET_REGISTRY = window.PET_REGISTRY || [];
+
+  const li = (h, a) => {
+    const n = parseInt(h.replace('#',''), 16);
+    return `rgb(${Math.min(255,(n>>16)+a)},${Math.min(255,((n>>8)&255)+a)},${Math.min(255,(n&255)+a)})`;
+  };
+
+  const MOODS = {
+    happy:    { body:'#00b4d8', belly:'#caf0f8', pupil:'#023e8a', mouth:'smile', glow:'#48cae4' },
+    thinking: { body:'#0096c7', belly:'#ade8f4', pupil:'#03045e', mouth:'flat',  glow:'#00b4d8' },
+    surprised:{ body:'#48cae4', belly:'#e0f7fa', pupil:'#023e8a', mouth:'open',  glow:'#90e0ef' },
+    sad:      { body:'#0077b6', belly:'#ade8f4', pupil:'#03045e', mouth:'frown', glow:'#00b4d8' },
+    excited:  { body:'#00d4f4', belly:'#e0f9ff', pupil:'#023e8a', mouth:'open',  glow:'#48cae4' },
+    love:     { body:'#00b4d8', belly:'#e0f7ff', pupil:'#023e8a', mouth:'smile', glow:'#ff80b0' },
+    sleepy:   { body:'#0096c7', belly:'#caf0f8', pupil:'#03045e', mouth:'flat',  glow:'#0077b6' },
+  };
+
+  let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
+
+  function draw(ctx, t, mood) {
+    ctx.clearRect(0, 0, 160, 160);
+    const m = MOODS[mood] || MOODS.happy;
+    const b = Math.sin(t * 0.0018) * 4; // gentle bob
+
+    // Water ripple glow
+    const au = ctx.createRadialGradient(80, 84+b, 6, 80, 84+b, 68);
+    au.addColorStop(0, m.glow + '55'); au.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.ellipse(80, 86+b, 62, 56, 0, 0, Math.PI*2);
+    ctx.fillStyle = au; ctx.fill();
+
+    // Tail fluke (behind body)
+    const flukeWag = Math.sin(t * 0.005) * 0.45;
+    ctx.save(); ctx.translate(80, 110+b); ctx.rotate(flukeWag);
+    // Left fluke lobe
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-16, 8, -28, 6, -24, 20);
+    ctx.bezierCurveTo(-18, 28, -6, 20, 0, 16);
+    ctx.fillStyle = m.body; ctx.fill();
+    // Right fluke lobe
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(16, 8, 28, 6, 24, 20);
+    ctx.bezierCurveTo(18, 28, 6, 20, 0, 16);
+    ctx.fillStyle = m.body; ctx.fill();
+    // Fluke center notch
+    ctx.beginPath(); ctx.moveTo(-6, 16); ctx.lineTo(0, 10); ctx.lineTo(6, 16);
+    ctx.fillStyle = li(m.body, -20); ctx.fill();
+    ctx.restore();
+
+    // Body (oval, dolphin-like)
+    const bg = ctx.createRadialGradient(68, 80+b, 4, 80, 88+b, 50);
+    bg.addColorStop(0, li(m.body, 30)); bg.addColorStop(1, m.body);
+    ctx.beginPath(); ctx.ellipse(80, 92+b, 36, 32, 0, 0, Math.PI*2);
+    ctx.fillStyle = bg; ctx.fill();
+
+    // Belly (lighter underside)
+    const bl = ctx.createRadialGradient(80, 98+b, 2, 80, 100+b, 22);
+    bl.addColorStop(0, m.belly); bl.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.ellipse(80, 100+b, 22, 18, 0, 0, Math.PI*2);
+    ctx.fillStyle = bl; ctx.fill();
+
+    // Pectoral fin (left side)
+    ctx.save(); ctx.translate(54, 96+b);
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-18, -4, -22, 12, -12, 18);
+    ctx.bezierCurveTo(-4, 22, 4, 12, 0, 0);
+    ctx.fillStyle = li(m.body, -10); ctx.fill();
+    ctx.restore();
+
+    // Pectoral fin (right side, mirrored)
+    ctx.save(); ctx.translate(106, 96+b);
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(18, -4, 22, 12, 12, 18);
+    ctx.bezierCurveTo(4, 22, -4, 12, 0, 0);
+    ctx.fillStyle = li(m.body, -10); ctx.fill();
+    ctx.restore();
+
+    // Dorsal fin (top of body)
+    const dorsalWave = Math.sin(t * 0.003) * 0.1;
+    ctx.save(); ctx.translate(80, 62+b); ctx.rotate(dorsalWave);
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(-6, -18, -2, -28, 4, -26);
+    ctx.bezierCurveTo(10, -24, 8, -10, 0, 0);
+    ctx.fillStyle = m.body; ctx.fill();
+    ctx.restore();
+
+    // Head (rounded dolphin snout)
+    const hg = ctx.createRadialGradient(72, 46+b, 4, 80, 54+b, 34);
+    hg.addColorStop(0, li(m.body, 36)); hg.addColorStop(1, m.body);
+    ctx.beginPath(); ctx.ellipse(80, 56+b, 30, 26, 0, 0, Math.PI*2);
+    ctx.fillStyle = hg; ctx.fill();
+
+    // Snout / beak (rostrum)
+    const sg = ctx.createLinearGradient(80, 65+b, 80, 78+b);
+    sg.addColorStop(0, li(m.body, 20)); sg.addColorStop(1, m.body);
+    ctx.beginPath(); ctx.ellipse(80, 72+b, 14, 9, 0, 0, Math.PI*2);
+    ctx.fillStyle = sg; ctx.fill();
+
+    // Belly color on snout bottom
+    ctx.beginPath(); ctx.ellipse(80, 73+b, 11, 6, 0, 0, Math.PI);
+    ctx.fillStyle = m.belly + 'bb'; ctx.fill();
+
+    // Blink
+    blinkTimer++; if (blinkTimer > 155) blinkOpen = false; if (blinkTimer > 164) { blinkOpen = true; blinkTimer = 0; }
+    [[62, 50], [98, 50]].forEach(([ex, ey]) => {
+      ey += b;
+      if (!blinkOpen || mood === 'sleepy') {
+        ctx.beginPath(); ctx.moveTo(ex-8, ey); ctx.lineTo(ex+8, ey);
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
+        if (mood === 'sleepy') { ctx.font='bold 10px serif'; ctx.fillStyle='rgba(200,240,255,0.7)'; ctx.fillText('z', ex+10, ey-6); }
+      } else {
+        ctx.beginPath(); ctx.ellipse(ex, ey, 9, 10, 0, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+        const pw = mood === 'surprised' ? 7 : 6;
+        ctx.beginPath(); ctx.ellipse(ex+1, ey+1, pw, pw, 0, 0, Math.PI*2); ctx.fillStyle = m.pupil; ctx.fill();
+        ctx.beginPath(); ctx.arc(ex-2, ey-3, 2.5, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+      }
+    });
+
+    // Cheeks
+    if (['happy','excited','love'].includes(mood)) {
+      [58, 102].forEach(cx => {
+        const cg = ctx.createRadialGradient(cx, 62+b, 0, cx, 62+b, 11);
+        cg.addColorStop(0, 'rgba(100,220,255,0.4)'); cg.addColorStop(1, 'transparent');
+        ctx.beginPath(); ctx.arc(cx, 62+b, 11, 0, Math.PI*2); ctx.fillStyle = cg; ctx.fill();
+      });
+    }
+
+    // Mouth (dolphin always has a natural smile curve)
+    mouthVal += 0.034 * mouthDir; if (mouthVal > 1) mouthDir = -1; if (mouthVal < 0) { mouthVal = 0; mouthDir = 1; }
+    ctx.save(); ctx.translate(80, 70+b);
+    ctx.strokeStyle = li(m.body, -30); ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    if (m.mouth === 'smile' || m.mouth === 'flat') {
+      // Natural dolphin grin
+      ctx.beginPath(); ctx.arc(0, 2, 12, 0.1, Math.PI-0.1); ctx.stroke();
+    } else if (m.mouth === 'frown') {
+      ctx.beginPath(); ctx.arc(0, 10, 12, Math.PI+0.1, -0.1); ctx.stroke();
+    } else if (m.mouth === 'open') {
+      const mo = 3 + mouthVal * 3;
+      ctx.beginPath(); ctx.ellipse(0, 4, 10, mo, 0, 0, Math.PI*2);
+      ctx.fillStyle = '#004466'; ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+
+    // Love hearts
+    if (mood === 'love') {
+      ctx.font = '12px serif'; ctx.fillStyle = 'rgba(255,120,180,0.9)';
+      ctx.fillText('♥', 60+Math.sin(t*0.003)*3, 34+b);
+      ctx.fillText('♥', 96+Math.cos(t*0.004)*2, 30+b);
+    }
+    // Thinking bubbles
+    if (mood === 'thinking') {
+      [0,1,2].forEach(i => {
+        ctx.beginPath(); ctx.arc(112+i*10, 28-i*9+b, 2.5+i*1.5, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(150,230,255,0.75)'; ctx.fill();
+      });
+    }
+    // Splash sparkles when excited
+    if (mood === 'excited') {
+      const sparkles = [[-30,-12],[30,-10],[-24,20],[28,18],[-10,-22],[12,-20]];
+      sparkles.forEach(([sx, sy], i) => {
+        const pulse = 0.5 + 0.5 * Math.sin(t * 0.012 + i * 1.2);
+        ctx.beginPath(); ctx.arc(80+sx, 80+sy+b, 3 * pulse, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(150,240,255,${0.6*pulse})`; ctx.fill();
+      });
+    }
+  }
+
+  window.PET_REGISTRY.push({
+    id: 'fordolphin',
+    name: 'Fordolphin',
+    accentColor: '#00b4d8',
+    tagline: 'Joyful & Free 🐬',
+    nameTagText: '✦ FORDOLPHIN ✦',
+    inputPlaceholder: 'Chat with Fordolphin…',
+    avatarEmoji: '🐬',
+    aboutText: "Splash! I'm Fordolphin! 🐬 Your bubbly ocean friend, leaping through the waves of your desktop. Always happy, always splashing!",
+    introText: "Fordolphin here! 🐬 Your cheerful aquatic companion. Connect the bridge or chat in the waves!",
+    clickResponses: ['*clicks and squeaks* 🐬','Wheee~! Splash!','*spins in the water* 🌊','Eee eee! 🐬','*leaps with joy!*','Squeak squeak! 💙','*does a flip* 🌊'],
+    idleMessages: [
+      { text:"*leaps joyfully over the taskbar* SPLASH! 🐬", mood:'excited' },
+      { text:"*floats gently and dreams of the ocean* 🌊", mood:'sleepy' },
+      { text:"Did you know dolphins sleep with one eye open? Like me right now~ 👁️", mood:'thinking' },
+      { text:"*clicks and whistles a little tune* 🎵🐬", mood:'happy' },
+      { text:"The ocean is infinite, and so is my happiness! 💙", mood:'love' },
+      { text:"*blows a bubble* Pop! Hehe 🫧", mood:'excited' },
+      { text:"*circles playfully* Come swim with me sometime!", mood:'happy' },
+      { text:"Waves say hi! 🌊 And so do I~ 🐬", mood:'happy' },
+    ],
+    greetings: {
+      am:    ["Good morning! *leaps from the waves* A fresh new day! 🐬","Rise and splash! 🌊 Fordolphin is SO ready for today!","Morning! *clicks happily* The ocean is sparkling today~ 💙"],
+      pm:    ["Good afternoon! 🌊 How are the currents treating you?","*splashes in* Afternoon! Still riding the waves of productivity? 🐬","Hey hey! 💙 Hope your afternoon is as blue as the sea!"],
+      eve:   ["Evening! *floats on calm waters* How was your day? 🌊","*gentle splashing* Good evening~ The sea is calm tonight 🐬","The tide comes in as the day winds down~ 🌅 How are you?"],
+      night: ["*quiet dolphin squeaks* Late night? I'll swim beside you 🌙","Night swimming! 🌊 The stars look like bioluminescence~ 🐬","Even the ocean sleeps at night 💙 You should too, friend~"],
+    },
+    draw,
+  });
+})();
