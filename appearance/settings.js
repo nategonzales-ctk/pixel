@@ -79,6 +79,15 @@ function initSettings() {
   initDayNight();
 }
 
+function switchSettingsTab(tab) {
+  document.querySelectorAll('.stab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById('stab-' + tab);
+  if (pane) pane.classList.add('active');
+  const btn = document.querySelector(`.stab[onclick*="${tab}"]`);
+  if (btn) btn.classList.add('active');
+}
+
 function toggleSettings() {
   settingsPanelOpen = !settingsPanelOpen;
   document.getElementById('settings-panel').classList.toggle('open', settingsPanelOpen);
