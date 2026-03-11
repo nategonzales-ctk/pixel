@@ -8,7 +8,7 @@ const LAYOUT_KEY  = 'widgetPositions';
 const GRID        = 20;
 const MIN_VW      = 60;   // minimum visual width  (px)
 const MIN_VH      = 36;   // minimum visual height (px)
-const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'settings-btn', 'open-pet-selector'];
+const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'settings-btn', 'open-pet-selector', 'weather-widget', 'calendar-widget'];
 const HANDLE_DIRS = ['nw','n','ne','e','se','s','sw','w'];
 
 let layoutMode = false;
@@ -206,17 +206,21 @@ function toggleLayoutMode() {
     WIDGET_IDS.forEach(id => {
       const el = document.getElementById(id);
       if (!el || el.style.display === 'none') return;
+      // Add class FIRST — its transition:none !important stops any active CSS
+      // transition before we read getBoundingClientRect() or change the transform.
+      el.classList.add('layout-drag-mode');
+      // getBoundingClientRect() forces a synchronous reflow, applying the class
+      // so transition:none is active.  r now reflects the settled visual position.
       const r = el.getBoundingClientRect();
-      // Compute current visual scale (handles elements that have CSS transforms)
+      // Preserve existing visual scale (handles elements with CSS transforms)
       const sx = r.width  / (el.offsetWidth  || 1);
       const sy = r.height / (el.offsetHeight || 1);
       el.style.left            = r.left + 'px';
       el.style.top             = r.top  + 'px';
-      el.style.right           = '';
-      el.style.bottom          = '';
+      el.style.right           = 'auto'; // 'auto' overrides CSS bottom/right rules
+      el.style.bottom          = 'auto'; // '' would only clear inline, letting CSS rule stretch the element
       el.style.transformOrigin = 'top left';
       el.style.transform       = `scaleX(${sx}) scaleY(${sy})`;
-      el.classList.add('layout-drag-mode');
       _createOverlay(el);
     });
     gridCanvas.width  = window.innerWidth;
@@ -357,8 +361,8 @@ function _applyAllPositions() {
       if (!el) return;
       el.style.left            = pos.x + 'px';
       el.style.top             = pos.y + 'px';
-      el.style.right           = '';
-      el.style.bottom          = '';
+      el.style.right           = 'auto'; // override CSS right/bottom so element doesn't stretch
+      el.style.bottom          = 'auto';
       el.style.transformOrigin = 'top left';
       el.style.transform       = `scaleX(${pos.sx || 1}) scaleY(${pos.sy || 1})`;
     });

@@ -8,10 +8,11 @@
 //    3. node server.js  (or double-click start-bridge.bat)
 // ─────────────────────────────────────────────────────────────
 require('dotenv').config();
-const http = require('http');
-const fs   = require('fs');
-const path = require('path');
-const os   = require('os');
+const http  = require('http');
+const https = require('https');
+const fs    = require('fs');
+const path  = require('path');
+const os    = require('os');
 const Anthropic = require('@anthropic-ai/sdk');
 const si = require('systeminformation');
 
@@ -114,6 +115,96 @@ async function refreshHardware() {
 refreshHardware();
 setInterval(refreshHardware, 3000);
 
+// ── LOCATION (IP-based, server-side to bypass WebView2 restrictions) ─────────
+let locationCache = null;
+let locationCacheTs = 0;
+const LOCATION_TTL = 60 * 60 * 1000; // 1 hour
+
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+    }).on('error', reject);
+  });
+}
+
+async function fetchIpLocation() {
+  const services = [
+    {
+      url: 'https://ip-api.com/json/?fields=status,city,lat,lon',
+      parse: d => d.status === 'success' ? { city: d.city, lat: d.lat, lon: d.lon } : null,
+    },
+    {
+      url: 'https://ipapi.co/json/',
+      parse: d => d.latitude ? { city: d.city, lat: d.latitude, lon: d.longitude } : null,
+    },
+    {
+      url: 'https://ipinfo.io/json',
+      parse: d => {
+        if (!d.loc) return null;
+        const [lat, lon] = d.loc.split(',').map(Number);
+        return { city: d.city, lat, lon };
+      },
+    },
+  ];
+
+  for (const svc of services) {
+    try {
+      console.log('[location] trying', svc.url);
+      const data = await httpsGet(svc.url);
+      const result = svc.parse(data);
+      if (result && result.lat) {
+        console.log('[location] success:', JSON.stringify(result));
+        return result;
+      }
+      console.warn('[location] bad response from', svc.url, JSON.stringify(data));
+    } catch(e) {
+      console.error('[location] error from', svc.url, ':', e.message);
+    }
+  }
+  throw new Error('all location services failed');
+}
+
+// ── WEATHER (wttr.in — combined location + weather, no key needed) ────────────
+let weatherCache = null;
+let weatherCacheTs = 0;
+const WEATHER_TTL = 15 * 60 * 1000; // 15 minutes
+
+function wttrCodeToEmoji(code) {
+  if (code === 113) return '☀️';
+  if (code === 116) return '🌤️';
+  if (code <= 122) return '☁️';
+  if (code === 143 || code === 248 || code === 260) return '🌫️';
+  if (code >= 386) return '⛈️';
+  if (code >= 317) return '🌨️';
+  if (code >= 227) return '❄️';
+  if (code === 200) return '⛈️';
+  if (code === 353 || code === 356 || code === 359) return '🌦️';
+  if (code >= 293) return '🌧️';
+  if (code >= 263) return '🌦️';
+  return '🌡️';
+}
+
+async function fetchWttrWeather() {
+  console.log('[weather] trying wttr.in');
+  const data = await httpsGet('https://wttr.in/?format=j1');
+  const cur  = data.current_condition[0];
+  const area = data.nearest_area[0];
+  const code = parseInt(cur.weatherCode);
+  return {
+    city:      area.areaName[0].value + ', ' + area.country[0].value,
+    lat:       parseFloat(area.latitude),
+    lon:       parseFloat(area.longitude),
+    temp:      parseInt(cur.temp_C),
+    condition: cur.weatherDesc[0].value,
+    icon:      wttrCodeToEmoji(code),
+    humidity:  parseInt(cur.humidity),
+    wind:      parseInt(cur.windspeedKmph),
+  };
+}
+
 // ── FILE SEARCH ───────────────────────────────────────────────
 const SEARCH_ROOTS = (() => {
   const home = os.homedir();
@@ -168,6 +259,41 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok', claude: !!process.env.ANTHROPIC_API_KEY, version: '1.0.0' }));
+    return;
+  }
+
+  // GET /weather  (wttr.in — location + weather in one call, 15-min cache)
+  if (req.method === 'GET' && req.url === '/weather') {
+    try {
+      const now = Date.now();
+      if (!weatherCache || now - weatherCacheTs > WEATHER_TTL) {
+        weatherCache = await fetchWttrWeather();
+        weatherCacheTs = now;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(weatherCache));
+    } catch (err) {
+      console.error('[weather] wttr.in failed:', err.message);
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // GET /location
+  if (req.method === 'GET' && req.url === '/location') {
+    try {
+      const now = Date.now();
+      if (!locationCache || now - locationCacheTs > LOCATION_TTL) {
+        locationCache = await fetchIpLocation();
+        locationCacheTs = now;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(locationCache));
+    } catch (err) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
     return;
   }
 

@@ -685,11 +685,105 @@ body {
 }
 .tog input:checked ~ .tog-thumb { transform: translateX(15px); }
 
+/* ── WEATHER WIDGET ── */
+#weather-widget {
+  position: fixed;
+  bottom: 36px; right: 36px;
+  z-index: 5;
+  width: 176px;
+  background: rgba(13,13,26,0.78);
+  border: 1px solid rgba(217,102,255,0.18);
+  border-radius: 14px;
+  padding: 11px 14px 12px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 0.4s, transform 0.4s;
+  font-family: 'Nunito', sans-serif;
+}
+#weather-widget.visible { opacity: 1; transform: translateY(0); }
+#weather-location {
+  font-size: 9px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(238,238,255,0.4);
+  margin-bottom: 7px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#weather-main {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-bottom: 3px;
+}
+#weather-icon { font-size: 26px; line-height: 1; }
+#weather-temp {
+  font-size: 28px; font-weight: 900;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: -1px; line-height: 1;
+}
+#weather-desc {
+  font-size: 11px; font-weight: 700;
+  color: rgba(238,238,255,0.55);
+  margin-bottom: 7px;
+}
+#weather-details {
+  display: flex; gap: 10px;
+  font-size: 10px; font-weight: 800;
+  color: rgba(238,238,255,0.45);
+}
+
+/* ── CALENDAR WIDGET ── */
+#calendar-widget {
+  position: fixed;
+  bottom: 36px; right: 228px;
+  z-index: 5;
+  width: 176px;
+  background: rgba(13,13,26,0.78);
+  border: 1px solid rgba(217,102,255,0.18);
+  border-radius: 14px;
+  padding: 11px 14px 12px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  font-family: 'Nunito', sans-serif;
+}
+#cal-month-year {
+  font-size: 10px; font-weight: 900;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(238,238,255,0.55);
+  display: block; text-align: center;
+  margin-bottom: 8px;
+}
+#cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-dow {
+  font-size: 8px; font-weight: 900;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  color: rgba(217,102,255,0.6);
+  text-align: center; padding-bottom: 3px;
+}
+.cal-day {
+  font-size: 10px; font-weight: 700;
+  color: rgba(238,238,255,0.55);
+  text-align: center;
+  line-height: 1.9;
+  border-radius: 4px;
+}
+.cal-day.cal-today {
+  background: rgba(217,102,255,0.28);
+  color: #fff;
+  font-weight: 900;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(217,102,255,0.5);
+}
+.cal-empty { visibility: hidden; }
+
 /* ── LAYOUT DRAG MODE ── */
 .layout-drag-mode {
   cursor: move !important;
   user-select: none;
   pointer-events: auto !important;
+  transition: none !important; /* stop CSS transitions so overlay captures correct position */
 }
 
 /* ── LAYOUT HANDLE OVERLAY ── */
@@ -926,6 +1020,14 @@ body {
     <span class="settings-label">Quick Replies</span>
     <label class="tog"><input type="checkbox" id="tog-bubble" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
   </div>
+  <div class="settings-row">
+    <span class="settings-label">Weather</span>
+    <label class="tog"><input type="checkbox" id="tog-weather" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+  </div>
+  <div class="settings-row">
+    <span class="settings-label">Calendar</span>
+    <label class="tog"><input type="checkbox" id="tog-calendar" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+  </div>
   <div class="settings-row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)">
     <span class="settings-label">Display width</span>
     <input id="display-w-input" type="number" min="800" max="7680" step="80"
@@ -980,6 +1082,26 @@ body {
   <button class="ap-open-btn" id="layout-edit-btn" onclick="toggleLayoutMode()" style="margin-top:8px">⊞ Edit Layout</button>
   <button class="ap-open-btn" onclick="resetLayout()" style="margin-top:6px;opacity:0.7">↺ Reset Layout</button>
   <button class="ap-open-btn" onclick="openAppearance()">🎨 Appearance</button>
+</div>
+
+<!-- Weather + Location widget -->
+<div id="weather-widget">
+  <div id="weather-location">📍 Locating…</div>
+  <div id="weather-main">
+    <span id="weather-icon">⏳</span>
+    <span id="weather-temp">--°C</span>
+  </div>
+  <div id="weather-desc">Fetching weather…</div>
+  <div id="weather-details">
+    <span id="weather-humidity">💧 --%</span>
+    <span id="weather-wind">💨 -- km/h</span>
+  </div>
+</div>
+
+<!-- Calendar widget -->
+<div id="calendar-widget">
+  <span id="cal-month-year">Loading…</span>
+  <div id="cal-grid"></div>
 </div>
 
 <!-- Chat bubble trigger -->
@@ -1053,6 +1175,9 @@ body {
 <script src="widgets/clock.js"></script>
 <script src="widgets/hw.js"></script>
 <script src="widgets/chat.js"></script>
+<script src="widgets/weather.js"></script>
+<script src="widgets/calendar.js"></script>
+<script src="widgets/events.js"></script>
 <!-- Layout -->
 <script src="layout/layout.js"></script>
 <script>
@@ -1497,6 +1622,9 @@ window.addEventListener('load',()=>{
   initBehaviorClickListener();
   initAppearance();
   initLayout();
+  initWeather();
+  initCalendar();
+  initEvents();
 
   // Apply saved pet state
   (function initPet(){

@@ -50,25 +50,31 @@ function loadSettings() {
 
 function applySettings() {
   const s = {
-    clock:  document.getElementById('tog-clock').checked,
-    hw:     document.getElementById('tog-hw').checked,
-    chat:   document.getElementById('tog-chat').checked,
-    bubble: document.getElementById('tog-bubble').checked,
+    clock:    document.getElementById('tog-clock').checked,
+    hw:       document.getElementById('tog-hw').checked,
+    chat:     document.getElementById('tog-chat').checked,
+    bubble:   document.getElementById('tog-bubble').checked,
+    weather:  document.getElementById('tog-weather').checked,
+    calendar: document.getElementById('tog-calendar').checked,
   };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
-  document.getElementById('clock-widget').style.display = s.clock ? '' : 'none';
-  document.getElementById('hw-panel').style.display     = s.hw    ? '' : 'none';
-  document.getElementById('chat-panel').style.display      = s.chat ? '' : 'none';
-  document.getElementById('chat-bubble-btn').style.display = s.chat ? '' : 'none';
-  document.getElementById('pill-row').style.display = s.bubble ? '' : 'none';
+  document.getElementById('clock-widget').style.display    = s.clock    ? '' : 'none';
+  document.getElementById('hw-panel').style.display        = s.hw       ? '' : 'none';
+  document.getElementById('chat-panel').style.display      = s.chat     ? '' : 'none';
+  document.getElementById('chat-bubble-btn').style.display = s.chat     ? '' : 'none';
+  document.getElementById('pill-row').style.display        = s.bubble   ? '' : 'none';
+  document.getElementById('weather-widget').style.display  = s.weather  ? '' : 'none';
+  document.getElementById('calendar-widget').style.display = s.calendar ? '' : 'none';
 }
 
 function initSettings() {
   const s = loadSettings();
-  if (s.clock  === false) document.getElementById('tog-clock').checked  = false;
-  if (s.hw     === false) document.getElementById('tog-hw').checked     = false;
-  if (s.chat   === false) document.getElementById('tog-chat').checked   = false;
-  if (s.bubble === false) document.getElementById('tog-bubble').checked = false;
+  if (s.clock    === false) document.getElementById('tog-clock').checked    = false;
+  if (s.hw       === false) document.getElementById('tog-hw').checked       = false;
+  if (s.chat     === false) document.getElementById('tog-chat').checked     = false;
+  if (s.bubble   === false) document.getElementById('tog-bubble').checked   = false;
+  if (s.weather  === false) document.getElementById('tog-weather').checked  = false;
+  if (s.calendar === false) document.getElementById('tog-calendar').checked = false;
   applySettings();
 }
 

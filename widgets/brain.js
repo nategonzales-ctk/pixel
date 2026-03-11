@@ -154,9 +154,12 @@ function getResponse(input) {
   // Thanks
   if (/\b(thank(s| you)|thx|ty|appreciate)\b/.test(q))
     return { text: pick(["*wiggles excitedly* You're SO welcome!! 💜🐾","Aww anytime! That's what I'm here for! ✨","*nuzzles* Of course! Always! 💕"]), mood: 'love' };
-  // Weather
-  if (/\b(weather|rain|sunny|temperature|forecast)\b/.test(q))
-    return { text: "I can't peek outside from your wallpaper 😅 Check your weather app for that! 🌤️ But I hope it's beautiful out there!", mood: 'thinking' };
+  // Weather — use live widget data if available
+  if (/\b(weather|rain|sunny|temperature|forecast|outside|hot|cold|humid|wind)\b/.test(q)) {
+    const w = (typeof getWeatherForChat === 'function') ? getWeatherForChat() : null;
+    if (w) return { text: `Right now in ${w.city} it's ${w.icon} ${w.temp} — ${w.desc}! 🌍`, mood: 'happy' };
+    return { text: "I can't peek outside from your wallpaper 😅 Check your weather app for that! 🌤️", mood: 'thinking' };
+  }
   // Bye
   if (/\b(bye|goodbye|see you|later|gtg|gotta go)\b/.test(q))
     return { text: pick(["Bye bye! *waves paw* Come back soon! 💜🐾","See you! *tiny wave* I'll miss you~ 🥺✨","Take care!! I'll be right here on your wallpaper! 🌟"]), mood: 'sad' };
