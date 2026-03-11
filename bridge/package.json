@@ -1,0 +1,17 @@
+{
+  "name": "pixel-bridge",
+  "version": "1.0.0",
+  "description": "Bridge between Pixel wallpaper and Claude AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "dotenv": "^16.0.0",
+    "systeminformation": "^5.23.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
