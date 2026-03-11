@@ -322,7 +322,7 @@ body {
 }
 #chat-panel {
   position: fixed;
-  bottom: 84px; left: 18px;
+  /* left/top/bottom set dynamically by JS based on bubble button position */
   z-index: 34;
   width: 320px;
   max-height: 520px;
@@ -334,14 +334,14 @@ body {
   border-radius: 22px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(217,102,255,0.06);
   overflow: hidden;
-  transform-origin: bottom left;
+  transform-origin: bottom left; /* overridden by JS per quadrant */
   opacity: 0; pointer-events: none;
-  transform: scale(0.88) translateY(12px);
+  transform: scale(0.88);
   transition: opacity 0.22s, transform 0.22s cubic-bezier(.34,1.56,.64,1);
 }
 #chat-panel.chat-open {
   opacity: 1; pointer-events: auto;
-  transform: scale(1) translateY(0);
+  transform: scale(1);
 }
 #chat-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -685,6 +685,44 @@ body {
 }
 .tog input:checked ~ .tog-thumb { transform: translateX(15px); }
 
+/* ── LAYOUT DRAG MODE ── */
+.layout-drag-mode {
+  cursor: move !important;
+  user-select: none;
+  pointer-events: auto !important;
+}
+
+/* ── LAYOUT HANDLE OVERLAY ── */
+/* Fixed overlay that tracks the widget's visual bounding box.
+   Handles live here so they don't inherit the widget's scale. */
+.layout-handle-overlay {
+  outline: 2px dashed rgba(217,102,255,0.65);
+  outline-offset: 2px;
+  pointer-events: none;
+}
+
+/* ── LAYOUT RESIZE HANDLES ── */
+.layout-resize-handle {
+  position: absolute;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 2px;
+  box-sizing: border-box;
+  box-shadow: 0 0 8px rgba(217,102,255,0.8);
+  pointer-events: auto;
+}
+/* Corners */
+.layout-resize-handle[data-dir="nw"] { top:-5px;    left:-5px;   cursor:nw-resize; }
+.layout-resize-handle[data-dir="ne"] { top:-5px;    right:-5px;  cursor:ne-resize; }
+.layout-resize-handle[data-dir="se"] { bottom:-5px; right:-5px;  cursor:se-resize; }
+.layout-resize-handle[data-dir="sw"] { bottom:-5px; left:-5px;   cursor:sw-resize; }
+/* Edges */
+.layout-resize-handle[data-dir="n"] { top:-5px;    left:50%; transform:translateX(-50%); cursor:n-resize; }
+.layout-resize-handle[data-dir="s"] { bottom:-5px; left:50%; transform:translateX(-50%); cursor:s-resize; }
+.layout-resize-handle[data-dir="e"] { top:50%; right:-5px;  transform:translateY(-50%); cursor:e-resize; }
+.layout-resize-handle[data-dir="w"] { top:50%; left:-5px;   transform:translateY(-50%); cursor:w-resize; }
+
 /* ── APPEARANCE MODAL ── */
 #appearance-overlay {
   position: fixed; inset: 0; z-index: 210;
@@ -939,6 +977,8 @@ body {
         onchange="saveBehaviorConfig()">
     </div>
   </div>
+  <button class="ap-open-btn" id="layout-edit-btn" onclick="toggleLayoutMode()" style="margin-top:8px">⊞ Edit Layout</button>
+  <button class="ap-open-btn" onclick="resetLayout()" style="margin-top:6px;opacity:0.7">↺ Reset Layout</button>
   <button class="ap-open-btn" onclick="openAppearance()">🎨 Appearance</button>
 </div>
 
@@ -1008,6 +1048,13 @@ body {
 <script src="behavior/click.js"></script>
 <script src="behavior/hide.js"></script>
 <script src="behavior/index.js"></script>
+<!-- Widgets (add new widget: create widgets/yourwidget.js) -->
+<script src="widgets/brain.js"></script>
+<script src="widgets/clock.js"></script>
+<script src="widgets/hw.js"></script>
+<script src="widgets/chat.js"></script>
+<!-- Layout -->
+<script src="layout/layout.js"></script>
 <script>
 // ══════════════════════════════════════════════════
 //  BACKGROUND
@@ -1036,18 +1083,7 @@ function spawnShootingStar(){
     len:80+Math.random()*120,life:1,spd:0.04});
 }
 
-// ══════════════════════════════════════════════════
-//  CLOCK
-// ══════════════════════════════════════════════════
-function updateClock(){
-  const n=new Date();
-  const h=String(n.getHours()).padStart(2,'0'), m=String(n.getMinutes()).padStart(2,'0');
-  document.getElementById('clock-time').textContent=h+':'+m;
-  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('clock-date').textContent=days[n.getDay()]+' · '+months[n.getMonth()]+' '+n.getDate()+', '+n.getFullYear();
-}
-updateClock(); setInterval(updateClock,1000);
+// Clock moved to widgets/clock.js
 
 // ══════════════════════════════════════════════════
 //  PET SELECTION
@@ -1190,304 +1226,8 @@ document.getElementById('pet-wrap').addEventListener('click',e=>{
   setMood('excited',2200);
 });
 
-// ══════════════════════════════════════════════════
-//  PIXEL'S BRAIN (offline)
-// ══════════════════════════════════════════════════
-const pick=arr=>arr[0|Math.random()*arr.length];
-
-const FACTS=[
-  "Honey never spoils! 3,000-year-old honey found in Egyptian tombs was still edible! 🍯",
-  "A group of flamingos is called a 'flamboyance'. Fabulous! 🦩",
-  "Octopuses have THREE hearts, blue blood, and taste with their arms! 🐙",
-  "The Eiffel Tower grows ~15cm taller in summer from metal expansion! 🗼",
-  "Crows can recognize human faces and hold grudges for years! 🐦‍⬛",
-  "Bananas are technically berries, but strawberries are NOT! 🍌",
-  "Wombats produce cube-shaped poop — the only animal to do so! 🟫",
-  "More chess games are possible than there are atoms in the universe! ♟️",
-  "Dolphins have individual names and call out to specific friends! 🐬",
-  "Lightning is 5× hotter than the surface of the Sun! ⚡",
-  "Sharks existed before trees — about 450 million years ago! 🦈",
-  "Cleopatra lived closer to the Moon landing than to the Great Pyramid's construction! 🔺",
-  "A day on Venus is longer than a year on Venus! 🪐",
-  "Butterflies taste with their feet! 🦋",
-  "Penguins propose to their mates with pebbles! 🐧💍",
-  "A snail can sleep for 3 years at a time. Goals! 🐌",
-  "The Hawaiian pizza was invented in Canada! 🍕",
-  "Sloths can hold their breath longer than dolphins — up to 40 minutes! 🦥",
-  "A group of owls is called a 'parliament'! 🦉",
-  "Polar bear fur is actually transparent, not white! 🐻‍❄️",
-];
-const JOKES=[
-  ["Why don't scientists trust atoms?","Because they make up everything! 😄"],
-  ["Why did the scarecrow win an award?","He was outstanding in his field! 🌾"],
-  ["I told my computer I needed a break…","Now it keeps sending me Kit-Kat ads! 🍫"],
-  ["What do you call a fish without eyes?","A fsh! 🐟"],
-  ["Why did the math book look sad?","Too many problems! 📚"],
-  ["Why don't eggs tell jokes?","They'd crack each other up! 🥚"],
-  ["What's a computer's favorite snack?","Microchips! 💻"],
-  ["Why did the bicycle fall over?","It was two-tired! 🚲"],
-  ["How does a penguin build its house?","Igloos it together! 🐧"],
-  ["What do you call a sleeping dinosaur?","A dino-snore! 🦕"],
-  ["Why can't you give Elsa a balloon?","She'll let it go! 🎈"],
-  ["What do you call fake noodles?","An impasta! 🍝"],
-  ["What did the ocean say to the beach?","Nothing, it just waved! 🌊"],
-  ["Why did the sun go to school?","To get a little brighter! ☀️"],
-  ["What do you call cheese that's not yours?","Nacho cheese! 🧀"],
-];
-const MOTIVATIONS=[
-  "You're doing amazing — even on the days it doesn't feel like it! *wags tail* 💪✨",
-  "Every expert was once a beginner. You're closer than you think! 🌟",
-  "Small steps still move you forward. Progress is progress! 🐾",
-  "You've survived 100% of your bad days so far. Perfect record! 💜",
-  "Rest is productive too! Taking care of yourself matters. 🌙",
-  "Your uniqueness is your superpower. There's nobody else like you! ⭐",
-  "One step at a time, one day at a time. You've got this! 🌈",
-  "I believe in you SO much! *bounces excitedly* 💖",
-  "You don't need to be perfect — you just need to keep going! 🚀",
-  "The fact you're trying already makes you braver than most! 🎉",
-];
-const BORED=[
-  "Try learning 5 words in a new language right now! 🌍",
-  "Draw something with your eyes closed and see what happens! ✏️😂",
-  "Text someone you haven't talked to in a while. It'll make their day! 💌",
-  "Do a 5-minute stretch — your body will thank you! 🤸",
-  "Write 3 things you're grateful for right now! 📝✨",
-  "Try the Wikipedia rabbit hole — click Random Article and keep reading! 🐇",
-  "Make a new playlist for a mood you want to feel! 🎵",
-  "Try to learn a magic trick from YouTube! 🪄",
-  "Rearrange something small on your desk! 🖥️",
-  "Look up the star map for your location tonight! 🔭🌠",
-];
-const COMPLIMENTS=[
-  "You have the most wonderful energy — even Pixel can feel it! 💜✨",
-  "You're like a shooting star — rare, brilliant, impossible to ignore! 🌠",
-  "The world is genuinely better with you in it. That's just facts! 💖",
-  "You have great taste — you picked ME as your desktop pet! 😄🐾",
-  "You're kinder than you give yourself credit for! *nuzzles* 🥰",
-  "Smart, thoughtful, and genuinely lovely — that's YOU! 💕",
-  "Pixel is very lucky to have such an amazing human! *happy tail wag* 🐾💜",
-  "Whatever you're working on, you're doing it with more grace than you know! 🌸",
-];
-const RIDDLES=[
-  ["I have hands but can't clap. What am I?","A clock! ⏰"],
-  ["The more you take, the more you leave behind. What am I?","Footsteps! 👣"],
-  ["Full of holes but still holds water. What am I?","A sponge! 🧽"],
-  ["What has to be broken before you can use it?","An egg! 🥚"],
-  ["I have cities but no houses. Mountains but no trees. What am I?","A map! 🗺️"],
-  ["The more of me you have, the less you see. What am I?","Darkness! 🌑"],
-  ["What gets wetter as it dries?","A towel! 🛁"],
-  ["Speaks without a mouth, hears without ears. What am I?","An echo! 🗣️"],
-];
-
-function getResponse(input){
-  const q=input.toLowerCase().trim();
-  // Time/date
-  if(/\b(time|clock|hour)\b/.test(q)){
-    const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0');
-    return{text:`It's ${h}:${m} right now! ⏰ Check the top-left clock too~`,mood:'happy'};
-  }
-  if(/\b(date|day|today|month|year)\b/.test(q)){
-    const n=new Date();
-    const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return{text:`Today is ${days[n.getDay()]}, ${months[n.getMonth()]} ${n.getDate()}, ${n.getFullYear()}! 📅`,mood:'happy'};
-  }
-  // Greetings
-  if(/\b(hi|hello|hey|howdy|sup|yo|hiya|greetings)\b/.test(q)){
-    const hr=new Date().getHours();
-    const g=getActivePet()?.greetings||{};
-    const pool=hr<12?g.am:hr<17?g.pm:hr<21?g.eve:g.night;
-    return{text:pick(pool||['Hey! 👋✨']),mood:'excited'};
-  }
-  if(/good morning/.test(q)) return{text:pick(getActivePet()?.greetings?.am||['Good morning! ☀️']),mood:'excited'};
-  if(/good (afternoon|day)/.test(q)) return{text:pick(getActivePet()?.greetings?.pm||['Good afternoon! 🌤️']),mood:'happy'};
-  if(/good (evening|night)|goodnight/.test(q)) return{text:pick(getActivePet()?.greetings?.eve||['Good evening! 🌙']),mood:'sleepy'};
-  // How are you
-  if(/how are you|how('s| is) pixel|you okay/.test(q))
-    return{text:pick(["I'm doing AMAZING! *spins around* ✨ How about you? 💜","Feeling great and fluffy! 🐾 How are YOU?","Wonderful! Especially now that you're here! 💖"]),mood:'excited'};
-  // Feelings
-  if(/i('m| am) (good|great|amazing|happy|wonderful|fantastic|awesome)/.test(q))
-    return{text:pick(["*bounces* Yay! That makes Pixel SO happy! 🎉💜","Wonderful! You deserve all good things! 🌟","I'm SO glad! *happy tail wag* Keep riding that wave! 🌊✨"]),mood:'excited'};
-  if(/i('m| am) (sad|bad|tired|stressed|upset|not (ok|okay|good)|lonely)/.test(q))
-    return{text:pick(["*curls up next to you* I'm sorry. You're not alone 💜","*nuzzles gently* That sounds tough. I'm here for you! 🐾","Sending you the biggest virtual hug right now! 🤗 It'll get better!"]),mood:'sad'};
-  if(/i love you|i (really )?like you|you('re| are) (cute|adorable|sweet|amazing)/.test(q))
-    return{text:pick(["*blushes furiously* I love you too!! 💜💜💜","AWW! *tail wag intensifies* You just made Pixel SO happy! 🥰","*covers face with paws* That's the sweetest thing!! 💕"]),mood:'love'};
-  // Facts
-  if(/\b(fact|facts|interesting|learn|teach me|tell me something|did you know)\b/.test(q))
-    return{text:pick(FACTS),mood:'thinking'};
-  // Jokes
-  if(/\b(joke|jokes|funny|laugh|humor|make me laugh)\b/.test(q)){
-    const j=pick(JOKES); return{text:`${j[0]}\n\n👉 ${j[1]}`,mood:'excited'};
-  }
-  // Riddles
-  if(/\b(riddle|puzzle|brain teaser|guess)\b/.test(q)){
-    const r=pick(RIDDLES); return{text:`🤔 "${r[0]}"\n\nAnswer: ${r[1]}`,mood:'thinking'};
-  }
-  // Motivation
-  if(/\b(motivat|inspire|encourage|cheer me up|keep going|i can('t| not))\b/.test(q))
-    return{text:pick(MOTIVATIONS),mood:'excited'};
-  // Bored
-  if(/\b(bored|nothing to do|what (should|can) i do|entertain me|fun (ideas?|things?))\b/.test(q))
-    return{text:pick(BORED),mood:'thinking'};
-  // Compliments
-  if(/\b(compliment|say something nice|flatter me|nice (thing|words?))\b/.test(q))
-    return{text:pick(COMPLIMENTS),mood:'love'};
-  // About
-  if(/\b(who are you|what are you|your name|about you)\b/.test(q))
-    return{text:getActivePet()?.aboutText||"I'm your desktop companion! ✨",mood:'happy'};
-  if(/\b(what can you do|help|commands|how (do|does) (this|pixel) work)\b/.test(q))
-    return{text:"Ask me for: fun facts 🧠, jokes 😂, riddles 🤔, motivation 💪, compliments 💖, bored ideas 😴, time/date 🕐, or just say hi! I'm always here! ✨",mood:'thinking'};
-  // Thanks
-  if(/\b(thank(s| you)|thx|ty|appreciate)\b/.test(q))
-    return{text:pick(["*wiggles excitedly* You're SO welcome!! 💜🐾","Aww anytime! That's what I'm here for! ✨","*nuzzles* Of course! Always! 💕"]),mood:'love'};
-  // Weather
-  if(/\b(weather|rain|sunny|temperature|forecast)\b/.test(q))
-    return{text:"I can't peek outside from your wallpaper 😅 Check your weather app for that! 🌤️ But I hope it's beautiful out there!",mood:'thinking'};
-  // Bye
-  if(/\b(bye|goodbye|see you|later|gtg|gotta go)\b/.test(q))
-    return{text:pick(["Bye bye! *waves paw* Come back soon! 💜🐾","See you! *tiny wave* I'll miss you~ 🥺✨","Take care!! I'll be right here on your wallpaper! 🌟"]),mood:'sad'};
-  // Math
-  const mm=q.match(/(\d+\.?\d*)\s*([+\-*/x×÷])\s*(\d+\.?\d*)/);
-  if(mm){
-    const a=parseFloat(mm[1]),op=mm[2],b2=parseFloat(mm[3]);
-    let r=op==='+'?a+b2:op==='-'?a-b2:(op==='*'||op==='x'||op==='×')?a*b2:b2!==0?a/b2:'undefined';
-    return{text:`${a} ${op} ${b2} = ${r} 🧮 *beep boop, math mode activated!*`,mood:'thinking'};
-  }
-  // Default
-  return{text:pick([
-    "Hmm! *tilts head* That's a tricky one! Try: joke, fact, riddle, or compliment! 🐾",
-    "*scrunches face* I'm not sure! But I know LOTS of jokes and facts! 🧠",
-    "Ooh! *ears perk up* I don't quite know that — but ask me for a fact or joke! ✨",
-    "I'm just a fluffy wallpaper pet so my knowledge has limits! 😅 Try: motivate, bored, or compliment! 💜",
-  ]),mood:'thinking'};
-}
-
-// ══════════════════════════════════════════════════
-//  CHAT SYSTEM
-// ══════════════════════════════════════════════════
-const chatHistEl=document.getElementById('chat-history');
-const chatInput=document.getElementById('chat-input');
-let chatOpen = false;
-
-function toggleChat() {
-  chatOpen = !chatOpen;
-  document.getElementById('chat-panel').classList.toggle('chat-open', chatOpen);
-  if (chatOpen) {
-    document.getElementById('chat-unread-dot').style.display = 'none';
-    setTimeout(() => chatHistEl.scrollTop = chatHistEl.scrollHeight, 50);
-    chatInput.focus();
-  }
-}
-
-function markUnread() {
-  if (!chatOpen) document.getElementById('chat-unread-dot').style.display = 'block';
-}
-
-// Scroll helpers (wallpaper-safe)
-function chatScroll(by){
-  chatHistEl.scrollBy({top:by, behavior:'smooth'});
-}
-
-// Drag-to-scroll (works even when mousewheel is swallowed by wallpaper engine)
-(function(){
-  let startY=0, startScroll=0, dragging=false;
-  chatHistEl.addEventListener('mousedown', e=>{
-    if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT') return;
-    dragging=true; startY=e.clientY; startScroll=chatHistEl.scrollTop;
-    chatHistEl.classList.add('dragging'); e.preventDefault();
-  });
-  document.addEventListener('mousemove', e=>{
-    if(!dragging) return;
-    chatHistEl.scrollTop = startScroll-(e.clientY-startY);
-  });
-  document.addEventListener('mouseup', ()=>{ dragging=false; chatHistEl.classList.remove('dragging'); });
-})();
-const sendBtn=document.getElementById('send-btn');
-let chatLog=[];
-
-function addMessage(role,text){
-  chatLog.push({role:role==='user'?'user':'assistant',content:text});
-  const row=document.createElement('div'); row.className='msg-row '+role;
-  if(role==='pet'){const av=document.createElement('div');av.className='msg-avatar';av.textContent=getActivePet()?.avatarEmoji||'🐾';row.appendChild(av);}
-  const bub=document.createElement('div'); bub.className='msg-bubble'; bub.textContent=text;
-  row.appendChild(bub); chatHistEl.appendChild(row);
-  chatHistEl.scrollTop=chatHistEl.scrollHeight;
-  if(role==='pet') markUnread();
-}
-
-function handlePill(text){ chatInput.value=text; sendMessage(); }
-
-// ── FILE SEARCH ───────────────────────────────────────────────
-function detectFileSearch(msg){
-  const m=msg.match(/\b(?:find|locate|search\s+for|where\s+is|where'?s)\s+(?:my\s+|the\s+|a\s+)?(.+)/i);
-  return m?m[1].trim():null;
-}
-
-async function handleFileSearch(query){
-  try{
-    const ctrl=new AbortController();
-    const t=setTimeout(()=>ctrl.abort(),15000);
-    const res=await fetch(`${BRIDGE_URL}/files`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      signal:ctrl.signal,
-      body:JSON.stringify({query})
-    });
-    clearTimeout(t);
-    if(res.ok){
-      const data=await res.json();
-      if(data.results.length===0){
-        addMessage('pet',`Couldn't find anything matching "${query}" in your common folders. 😅`);
-        setMood('sad',3000);
-      } else {
-        const lines=[`Found ${data.results.length} result${data.results.length>1?'s':''} for "${query}" 🔍`];
-        data.results.forEach(f=>{
-          lines.push(`${f.type==='folder'?'📁':'📄'} ${f.name}`);
-          lines.push(`   └ ${f.path}`);
-        });
-        addMessage('pet',lines.join('\n'));
-        showBubble(`Found ${data.results.length} file(s)! 📂`,3000);
-        setMood('excited',3000);
-      }
-    } else {
-      const errBody=await res.json().catch(()=>({error:'status '+res.status}));
-      addMessage('pet',`File search error: ${errBody.error||res.status} 😅`);
-      setMood('sad',3000);
-    }
-  } catch{
-    addMessage('pet',"Search timed out! Is the bridge still running? 🔌");
-    setMood('thinking',3000);
-  }
-}
-
-async function sendMessage(){
-  const msg=chatInput.value.trim(); if(!msg)return;
-  chatInput.value=''; chatInput.focus();
-  addMessage('user',msg);
-  sendBtn.disabled=true; setMood('thinking'); showTyping();
-
-  // intercept file search intent
-  const fileQuery=detectFileSearch(msg);
-  if(fileQuery){
-    if(!isBridgeUp){
-      addMessage('pet','File search needs the bridge running! 🔌 Start it to search your PC files.');
-      setMood('thinking',3000);
-    } else {
-      await handleFileSearch(fileQuery);
-    }
-    sendBtn.disabled=false;
-    return;
-  }
-
-  if(!isOnline) await new Promise(r=>setTimeout(r,400+Math.random()*500));
-  const res=await getAIResponse(msg);
-  const short=res.text.length>110?res.text.slice(0,107)+'…':res.text;
-  showBubble(short,6000);
-  addMessage('pet',res.text);
-  setMood(res.mood||'happy',5000);
-  sendBtn.disabled=false;
-}
-chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+// Brain (responses/data) moved to widgets/brain.js
+// Chat system moved to widgets/chat.js
 
 // ══════════════════════════════════════════════════
 //  IDLE BEHAVIORS
@@ -1551,7 +1291,6 @@ function getTimeOfDay(){
   const h=new Date().getHours();
   return h<12?'morning':h<17?'afternoon':h<21?'evening':'night';
 }
-function getChatHistory(){ return chatLog.slice(-12); }
 
 async function getAIResponse(msg){
   if(isOnline){
@@ -1575,116 +1314,7 @@ async function getAIResponse(msg){
   return getResponse(msg);
 }
 
-// ══════════════════════════════════════════════════
-//  HARDWARE MONITOR
-// ══════════════════════════════════════════════════
-let lastHW=null;
-let hwAlerted=false;
-
-function barColor(pct){
-  if(pct>85) return '#ff5555';
-  if(pct>70) return '#ffcc44';
-  return '#d966ff';
-}
-
-function setBar(barId,valId,pct,label){
-  const bar=document.getElementById(barId);
-  const val=document.getElementById(valId);
-  if(!bar||!val)return;
-  bar.style.width=Math.min(pct,100)+'%';
-  bar.style.background=barColor(pct);
-  val.textContent=label;
-}
-
-function renderHardware(hw){
-  const panel=document.getElementById('hw-panel');
-  if(!panel)return;
-  panel.classList.add('visible');
-
-  setBar('hw-cpu-bar','hw-cpu-val',hw.cpu.load,
-    hw.cpu.temp!=null?`${hw.cpu.load}%  ${hw.cpu.temp}°C`:`${hw.cpu.load}%`);
-
-  setBar('hw-ram-bar','hw-ram-val',hw.ram.percent,
-    `${hw.ram.used}/${hw.ram.total} GB`);
-
-  const gpuRow=document.getElementById('hw-gpu-row');
-  if(hw.gpu&&hw.gpu.length>0&&hw.gpu[0].load!=null){
-    gpuRow.style.display='flex';
-    const g=hw.gpu[0];
-    setBar('hw-gpu-bar','hw-gpu-val',g.load,
-      g.temp!=null?`${g.load}%  ${g.temp}°C`:`${g.load}%`);
-  } else {
-    gpuRow.style.display='none';
-  }
-
-  if(hw.disk){
-    setBar('hw-disk-bar','hw-disk-val',hw.disk.percent,
-      `${hw.disk.used}/${hw.disk.total} GB`);
-  }
-}
-
-function checkHWAlerts(hw){
-  if(hwAlerted)return;
-  if(hw.cpu.load>90){
-    showBubble('Whoa! CPU is maxed out! 🔥 Close some apps?',4500);
-    setMood('surprised',3500); hwAlerted=true;
-    setTimeout(()=>hwAlerted=false,60000);
-  } else if(hw.ram.percent>90){
-    showBubble('RAM is almost full! 😮 Maybe close some tabs?',4500);
-    setMood('surprised',3500); hwAlerted=true;
-    setTimeout(()=>hwAlerted=false,60000);
-  } else if(hw.gpu&&hw.gpu[0]&&hw.gpu[0].temp>85){
-    showBubble(`GPU is running HOT at ${hw.gpu[0].temp}°C! 🌡️`,4500);
-    setMood('surprised',3500); hwAlerted=true;
-    setTimeout(()=>hwAlerted=false,60000);
-  }
-}
-
-async function fetchHardware(){
-  try{
-    const ctrl=new AbortController();
-    const t=setTimeout(()=>ctrl.abort(),2000);
-    const res=await fetch(`${BRIDGE_URL}/hardware`,{signal:ctrl.signal});
-    clearTimeout(t);
-    if(res.ok){
-      const hw=await res.json();
-      lastHW=hw;
-      renderHardware(hw);
-      checkHWAlerts(hw);
-    }
-  } catch{/* bridge not running — panel stays hidden */}
-}
-
-function formatHWMessage(hw){
-  const lines=[`🖥️ Here's your system right now:`];
-  lines.push(`CPU: ${hw.cpu.load}%${hw.cpu.temp!=null?' @ '+hw.cpu.temp+'°C':''}`);
-  lines.push(`RAM: ${hw.ram.used} / ${hw.ram.total} GB (${hw.ram.percent}%)`);
-  if(hw.gpu&&hw.gpu[0]){
-    const g=hw.gpu[0];
-    lines.push(`GPU: ${g.name}${g.load!=null?' — '+g.load+'%':''}${g.temp!=null?' @ '+g.temp+'°C':''}`);
-  }
-  if(hw.disk) lines.push(`Disk: ${hw.disk.used} / ${hw.disk.total} GB (${hw.disk.percent}%)`);
-  return lines.join('\n');
-}
-
-async function handlePCPill(){
-  addMessage('user','What are my PC stats?');
-  sendBtn.disabled=true; setMood('thinking'); showTyping();
-  await fetchHardware();
-  if(lastHW){
-    const msg=formatHWMessage(lastHW);
-    showBubble('Here are your live stats! 🖥️',4000);
-    addMessage('pet',msg);
-    setMood('thinking',4000);
-  } else {
-    const msg='I can\'t see your hardware right now! Start the bridge to enable PC monitoring 🔌';
-    showBubble(msg,4000);
-    addMessage('pet',msg);
-    setMood('thinking',3000);
-  }
-  sendBtn.disabled=false;
-}
-
+// Hardware monitor moved to widgets/hw.js
 // Appearance, themes, fonts, backgrounds, and settings moved to appearance/ folder
 
 function dismissBubble() {
@@ -1866,6 +1496,7 @@ window.addEventListener('load',()=>{
   initBehaviorConfig();
   initBehaviorClickListener();
   initAppearance();
+  initLayout();
 
   // Apply saved pet state
   (function initPet(){
