@@ -56,6 +56,7 @@ function applySettings() {
     bubble:   document.getElementById('tog-bubble').checked,
     weather:  document.getElementById('tog-weather').checked,
     calendar: document.getElementById('tog-calendar').checked,
+    todo:     document.getElementById('tog-todo').checked,
   };
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
   document.getElementById('clock-widget').style.display    = s.clock    ? '' : 'none';
@@ -65,6 +66,7 @@ function applySettings() {
   document.getElementById('pill-row').style.display        = s.bubble   ? '' : 'none';
   document.getElementById('weather-widget').style.display  = s.weather  ? '' : 'none';
   document.getElementById('calendar-widget').style.display = s.calendar ? '' : 'none';
+  document.getElementById('todo-widget').style.display     = s.todo     ? '' : 'none';
 }
 
 function initSettings() {
@@ -75,6 +77,7 @@ function initSettings() {
   if (s.bubble   === false) document.getElementById('tog-bubble').checked   = false;
   if (s.weather  === false) document.getElementById('tog-weather').checked  = false;
   if (s.calendar === false) document.getElementById('tog-calendar').checked = false;
+  if (s.todo     === false) document.getElementById('tog-todo').checked     = false;
   applySettings();
   initDayNight();
 }

@@ -871,6 +871,89 @@ body {
 }
 .cal-empty { visibility: hidden; }
 
+/* ── TO-DO WIDGET ── */
+#todo-widget {
+  position: fixed;
+  top: 120px; left: 44px;
+  z-index: 5;
+  width: 200px;
+  background: rgba(13,13,26,0.78);
+  border: 1px solid rgba(217,102,255,0.18);
+  border-radius: 14px;
+  padding: 11px 13px 12px;
+  backdrop-filter: blur(10px);
+  font-family: 'Nunito', sans-serif;
+}
+#todo-title {
+  font-size: 9px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(238,238,255,0.35);
+  margin-bottom: 8px;
+}
+#todo-add-row {
+  display: flex; gap: 5px; margin-bottom: 8px;
+}
+#todo-input {
+  flex: 1; min-width: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(217,102,255,0.22);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: inherit; font-size: 10px; font-weight: 700;
+  padding: 4px 7px; outline: none;
+}
+#todo-input:focus { border-color: rgba(217,102,255,0.55); }
+#todo-add-btn {
+  background: rgba(217,102,255,0.18);
+  border: 1px solid rgba(217,102,255,0.35);
+  border-radius: 7px;
+  color: var(--accent);
+  font-family: inherit; font-size: 13px; font-weight: 900;
+  padding: 2px 9px; cursor: pointer; line-height: 1;
+}
+#todo-add-btn:hover { background: rgba(217,102,255,0.3); }
+#todo-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+#todo-list::-webkit-scrollbar { width: 3px; }
+#todo-list::-webkit-scrollbar-thumb { background: rgba(217,102,255,0.3); border-radius: 99px; }
+.todo-empty {
+  font-size: 10px; font-weight: 700;
+  color: rgba(238,238,255,0.25);
+  text-align: center; padding: 6px 0;
+}
+.todo-row {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 7px; padding: 4px 5px;
+}
+.todo-row.done .todo-label {
+  text-decoration: line-through;
+  color: rgba(238,238,255,0.28);
+}
+.todo-check {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border-radius: 4px;
+  border: 1.5px solid rgba(217,102,255,0.45);
+  background: rgba(217,102,255,0.08);
+  color: var(--accent); font-size: 10px; font-weight: 900;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.todo-row.done .todo-check {
+  background: rgba(217,102,255,0.28);
+  border-color: var(--accent);
+}
+.todo-label {
+  flex: 1; font-size: 10px; font-weight: 700;
+  color: rgba(238,238,255,0.8); word-break: break-word;
+  line-height: 1.3;
+}
+.todo-del {
+  flex-shrink: 0; background: none; border: none;
+  color: rgba(238,238,255,0.22); font-size: 10px;
+  cursor: pointer; padding: 0 2px; line-height: 1;
+}
+.todo-del:hover { color: #ff6b6b; }
+
 /* ── LAYOUT DRAG MODE ── */
 .layout-drag-mode {
   cursor: move !important;
@@ -1144,6 +1227,10 @@ body {
       <span class="settings-label">Calendar</span>
       <label class="tog"><input type="checkbox" id="tog-calendar" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">To-Do List</span>
+      <label class="tog"><input type="checkbox" id="tog-todo" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
   </div>
 
   <!-- Ambiance tab -->
@@ -1228,6 +1315,16 @@ body {
   <div id="cal-grid"></div>
 </div>
 
+<!-- To-do widget -->
+<div id="todo-widget">
+  <div id="todo-title">✦ To-Do</div>
+  <div id="todo-add-row">
+    <input id="todo-input" type="text" placeholder="Add a task…" maxlength="80">
+    <button id="todo-add-btn" onclick="todoAdd()" title="Add">+</button>
+  </div>
+  <div id="todo-list"></div>
+</div>
+
 <!-- Chat bubble trigger -->
 <button id="chat-bubble-btn" onclick="toggleChat()" title="Chat">
   <span id="chat-bubble-emoji">🐾</span>
@@ -1306,6 +1403,7 @@ body {
 <script src="widgets/weather.js"></script>
 <script src="widgets/calendar.js"></script>
 <script src="widgets/events.js"></script>
+<script src="widgets/todo.js"></script>
 <!-- Layout -->
 <script src="layout/layout.js"></script>
 <script>
@@ -1753,6 +1851,7 @@ window.addEventListener('load',()=>{
   initWeather();
   initCalendar();
   initEvents();
+  initTodo();
 
   // Apply saved pet state
   (function initPet(){
