@@ -1,0 +1,137 @@
+/* ══════════════════════════════════════════════════
+   PIXEL — Fluffy magical cat companion
+══════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  window.PET_REGISTRY = window.PET_REGISTRY || [];
+
+  const li = (h, a) => {
+    const n = parseInt(h.replace('#', ''), 16);
+    return `rgb(${Math.min(255,(n>>16)+a)},${Math.min(255,((n>>8)&255)+a)},${Math.min(255,(n&255)+a)})`;
+  };
+
+  const MOODS = {
+    happy:    { body:'#c77dff', pupil:'#3a0068', mouth:'smile', glow:'#d966ff' },
+    thinking: { body:'#90caf9', pupil:'#1a3a6e', mouth:'flat',  glow:'#00e5ff' },
+    surprised:{ body:'#ffcc02', pupil:'#4a3200', mouth:'open',  glow:'#ffd740' },
+    sad:      { body:'#b0bec5', pupil:'#333',    mouth:'frown', glow:'#90a4ae' },
+    excited:  { body:'#69ff47', pupil:'#1a4000', mouth:'open',  glow:'#69ff47' },
+    love:     { body:'#ff80ab', pupil:'#880022', mouth:'smile', glow:'#ff4081' },
+    sleepy:   { body:'#b39ddb', pupil:'#311b6e', mouth:'flat',  glow:'#9575cd' },
+  };
+
+  let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
+
+  function draw(ctx, t, mood) {
+    ctx.clearRect(0, 0, 160, 160);
+    const m = MOODS[mood] || MOODS.happy, b = Math.sin(t * .002) * 3.5;
+    // Aura
+    const au = ctx.createRadialGradient(80,80+b,8,80,80+b,70);
+    au.addColorStop(0, m.glow+'55'); au.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.ellipse(80,84+b,62,58,0,0,Math.PI*2); ctx.fillStyle=au; ctx.fill();
+    // Body
+    const bg = ctx.createRadialGradient(66,64+b,4,80,80+b,50);
+    bg.addColorStop(0, li(m.body,44)); bg.addColorStop(1, m.body);
+    ctx.beginPath(); ctx.ellipse(80,88+b,46,42,0,0,Math.PI*2); ctx.fillStyle=bg; ctx.fill();
+    // Belly
+    const bl = ctx.createRadialGradient(80,96+b,2,80,96+b,20);
+    bl.addColorStop(0,'rgba(255,255,255,0.48)'); bl.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.ellipse(80,96+b,20,17,0,0,Math.PI*2); ctx.fillStyle=bl; ctx.fill();
+    // Ears
+    [[-1,44,52],[1,116,52]].forEach(([sd,ex,ey]) => {
+      ctx.save(); ctx.translate(ex,ey+b); ctx.rotate(sd*0.44);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-10,-24); ctx.lineTo(10,-24); ctx.closePath();
+      ctx.fillStyle=m.body; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0,-4); ctx.lineTo(-5,-18); ctx.lineTo(5,-18); ctx.closePath();
+      ctx.fillStyle=li(m.body,52); ctx.fill(); ctx.restore();
+    });
+    // Tail
+    const tw = Math.sin(t*.0038)*.52;
+    ctx.save(); ctx.translate(80,118+b); ctx.rotate(tw);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.bezierCurveTo(30,-8,42,-28,29,-44);
+    ctx.lineWidth=9; ctx.lineCap='round'; ctx.strokeStyle=m.body; ctx.stroke();
+    ctx.beginPath(); ctx.arc(29,-44,7,0,Math.PI*2); ctx.fillStyle=li(m.body,30); ctx.fill(); ctx.restore();
+    // Head
+    const hg = ctx.createRadialGradient(72,48+b,4,80,58+b,34);
+    hg.addColorStop(0,li(m.body,42)); hg.addColorStop(1,m.body);
+    ctx.beginPath(); ctx.ellipse(80,58+b,34,32,0,0,Math.PI*2); ctx.fillStyle=hg; ctx.fill();
+    // Blink
+    blinkTimer++; if(blinkTimer>155)blinkOpen=false; if(blinkTimer>164){blinkOpen=true;blinkTimer=0;}
+    [[64,52],[96,52]].forEach(([ex,ey]) => {
+      ey+=b;
+      if(!blinkOpen||mood==='sleepy'){
+        ctx.beginPath(); ctx.moveTo(ex-8,ey); ctx.lineTo(ex+8,ey);
+        ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.stroke();
+        if(mood==='sleepy'){ctx.font='bold 10px serif';ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText('z',ex+10,ey-6);}
+      } else {
+        ctx.beginPath(); ctx.ellipse(ex,ey,10,11,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        const pw = mood==='surprised'?7.5:6.5;
+        ctx.beginPath(); ctx.ellipse(ex+1,ey+1,pw,pw,0,0,Math.PI*2); ctx.fillStyle=m.pupil; ctx.fill();
+        ctx.beginPath(); ctx.arc(ex-2,ey-3,2.5,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.fill();
+      }
+    });
+    // Cheeks
+    if(['happy','excited','love'].includes(mood)){
+      [54,106].forEach(cx => {
+        const cg = ctx.createRadialGradient(cx,66+b,0,cx,66+b,12);
+        cg.addColorStop(0,'rgba(255,100,160,0.42)'); cg.addColorStop(1,'transparent');
+        ctx.beginPath(); ctx.arc(cx,66+b,12,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+      });
+    }
+    // Love hearts
+    if(mood==='love'){
+      ctx.font='12px serif'; ctx.fillStyle='rgba(255,100,140,0.85)';
+      ctx.fillText('♥',60+Math.sin(t*.003)*3,38+b);
+      ctx.fillText('♥',96+Math.cos(t*.004)*2,34+b);
+    }
+    // Thinking dots
+    if(mood==='thinking'){
+      [0,1,2].forEach(i => {
+        ctx.beginPath(); ctx.arc(112+i*9,30-i*9+b,3+i*2,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.fill();
+      });
+    }
+    // Mouth
+    mouthVal+=.034*mouthDir; if(mouthVal>1)mouthDir=-1; if(mouthVal<0){mouthVal=0;mouthDir=1;}
+    ctx.save(); ctx.translate(80,70+b);
+    ctx.strokeStyle=li(m.body,-38); ctx.lineWidth=2.5; ctx.lineCap='round';
+    if(m.mouth==='smile'){ctx.beginPath();ctx.arc(0,0,9,.2,Math.PI-.2);ctx.stroke();}
+    else if(m.mouth==='frown'){ctx.beginPath();ctx.arc(0,6,9,Math.PI+.2,-.2);ctx.stroke();}
+    else if(m.mouth==='open'){
+      const mo=4+mouthVal*3.5;
+      ctx.beginPath();ctx.ellipse(0,2,8,mo,0,0,Math.PI*2);ctx.fillStyle='#e53935';ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.ellipse(0,2+mo-2,5,3,0,0,Math.PI);ctx.fillStyle='#ff7a94';ctx.fill();
+    } else {ctx.beginPath();ctx.moveTo(-7,2);ctx.lineTo(7,2);ctx.stroke();}
+    ctx.restore();
+  }
+
+  window.PET_REGISTRY.push({
+    id: 'pixel',
+    name: 'Pixel',
+    accentColor: '#c77dff',
+    tagline: 'Fluffy & Magical ✨',
+    nameTagText: '✦ PIXEL ✦',
+    inputPlaceholder: 'Ask Pixel anything…',
+    avatarEmoji: '🐾',
+    aboutText: "I'm Pixel! ✨ Your fluffy magical offline desktop pet! I live in your wallpaper and I'm always here to chat~ 🐾💜",
+    introText: "I'm Pixel! 🐾 Your AI wallpaper buddy. Start the bridge for Claude AI, or chat offline!",
+    clickResponses: ['Hehe~ 🥰','Pet me more! ✨','That tickles! 😄','*purrs* 💜','Yay! 🎉','*wags tail* 🐾','Teehee~ 💕'],
+    idleMessages: [
+      { text:"*yawns and stretches* 😴 Just hanging out on your wallpaper~", mood:'sleepy' },
+      { text:"*chases imaginary butterfly* Did you see that?! 🦋", mood:'excited' },
+      { text:"*hums quietly* 🎵 La la la~", mood:'happy' },
+      { text:"*stares at you with sparkly eyes* Hey! Psst. Hi. 👀✨", mood:'happy' },
+      { text:"*rolls around happily* 🐾 Today feels like a good day!", mood:'excited' },
+      { text:"Fun fact: you're doing better than you think! 💜", mood:'love' },
+      { text:"*peeks around curiously* 🔍 Anything interesting going on?", mood:'thinking' },
+      { text:"*tail wags at max speed* SO happy you're here! 🐾", mood:'excited' },
+    ],
+    greetings: {
+      am:    ["Good morning, sunshine! ☀️ Ready to make today awesome?","Rise and shine! *stretches* Pixel is SO ready for today! ☀️","Morning! 🌅 Did you sleep well? I dreamed of fluffy clouds!"],
+      pm:    ["Good afternoon! 🌤️ How's your day going?","Hey there! 🌞 Hope the afternoon treats you well!","Afternoon! *tail wag* 🌈 What have you been up to?"],
+      eve:   ["Good evening! 🌙 How was your day? Tell me everything!","Evening! ✨ Time to wind down. You did great today!","The stars are coming out! 🌟 How are you this evening?"],
+      night: ["It's late! 🌙 Don't forget to rest — even Pixel needs sleep!","Up late? *yawns* Pixel will keep you company though! 💜🌙","The night is quiet and pretty~ 🌌 How are you holding up?"],
+    },
+    draw,
+  });
+})();

@@ -155,8 +155,106 @@ body {
   letter-spacing: 0.26em;
   color: var(--accent);
   text-shadow: 0 0 10px var(--accent);
-  margin-top: 3px; margin-bottom: 12px;
+  margin-top: 3px; margin-bottom: 6px;
 }
+
+/* Open pet selector button */
+#open-pet-selector {
+  font-family: 'Nunito', sans-serif;
+  font-size: 9px; font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: none;
+  border: 1px solid rgba(217,102,255,0.28);
+  border-radius: 999px;
+  padding: 4px 13px;
+  cursor: pointer;
+  opacity: 0.65;
+  pointer-events: auto;
+  margin-bottom: 12px;
+  transition: opacity 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+#open-pet-selector:hover {
+  opacity: 1;
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(217,102,255,0.3);
+}
+
+/* ── PET SELECTOR MODAL ── */
+#pet-selector-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(5,5,14,0.88);
+  backdrop-filter: blur(14px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.28s;
+}
+#pet-selector-overlay.open { opacity: 1; pointer-events: auto; }
+#pet-selector-panel {
+  position: relative;
+  background: #161628;
+  border: 1px solid rgba(217,102,255,0.28);
+  border-radius: 26px;
+  padding: 34px 28px 26px;
+  max-width: 580px; width: 92vw;
+  box-shadow: 0 0 80px rgba(217,102,255,0.14);
+  transform: scale(0.93);
+  transition: transform 0.28s cubic-bezier(.34,1.56,.64,1);
+}
+#pet-selector-overlay.open #pet-selector-panel { transform: scale(1); }
+.selector-title {
+  font-size: 13px; font-weight: 900;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--accent); text-shadow: 0 0 12px var(--accent);
+  text-align: center; margin-bottom: 22px;
+}
+.selector-close {
+  position: absolute; top: 14px; right: 18px;
+  background: none; border: none;
+  color: var(--text-dim); font-size: 20px;
+  cursor: pointer; line-height: 1; padding: 4px 6px;
+  transition: color 0.2s; font-family: sans-serif;
+}
+.selector-close:hover { color: #fff; }
+#pet-cards-grid {
+  display: flex; gap: 12px;
+  justify-content: center; flex-wrap: wrap;
+}
+.pet-card {
+  background: #1e1e35;
+  border: 2px solid rgba(217,102,255,0.1);
+  border-radius: 20px;
+  padding: 16px 12px 14px;
+  width: 158px;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.pet-card:hover { transform: translateY(-5px); border-color: rgba(217,102,255,0.38); box-shadow: 0 10px 32px rgba(217,102,255,0.16); }
+.pet-card.selected { border-color: var(--accent); box-shadow: 0 0 22px rgba(217,102,255,0.28); }
+.pet-card canvas { border-radius: 12px; background: rgba(0,0,0,0.28); display: block; }
+.pet-card-name {
+  font-size: 12px; font-weight: 900;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.pet-card-tagline {
+  font-size: 10px; font-weight: 700;
+  color: var(--text-dim); text-align: center; line-height: 1.4;
+}
+.pet-card-btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: 9.5px; font-weight: 900;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 999px;
+  border: 1.5px solid rgba(217,102,255,0.28);
+  background: none; color: var(--text-dim);
+  cursor: pointer; transition: all 0.15s; margin-top: 2px;
+}
+.pet-card.selected .pet-card-btn {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.pet-card-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* Mood emoji floating above pet */
 #mood-icon {
@@ -447,6 +545,7 @@ body {
   </div>
   <div id="pet-shadow"></div>
   <div id="name-tag">✦ PIXEL ✦</div>
+  <button id="open-pet-selector" onclick="openPetSelector()">✦ Change Pet</button>
 </div>
 
 <!-- Chat panel bottom-left -->
@@ -468,6 +567,9 @@ body {
   </div>
 </div>
 
+<script src="pets/pixel.js"></script>
+<script src="pets/jellysey.js"></script>
+<script src="pets/sharkypup.js"></script>
 <script>
 // ══════════════════════════════════════════════════
 //  BACKGROUND
@@ -542,104 +644,88 @@ function updateClock(){
 updateClock(); setInterval(updateClock,1000);
 
 // ══════════════════════════════════════════════════
+//  PET SELECTION
+// ══════════════════════════════════════════════════
+let currentPetType = localStorage.getItem('selectedPet') || 'pixel';
+let currentMood = 'happy';
+
+function getActivePet() {
+  return (window.PET_REGISTRY||[]).find(p=>p.id===currentPetType) || (window.PET_REGISTRY||[])[0];
+}
+
+function switchPet(petId) {
+  currentPetType = petId;
+  localStorage.setItem('selectedPet', petId);
+  const pet = getActivePet();
+  if(!pet) return;
+  document.getElementById('name-tag').textContent = pet.nameTagText;
+  document.getElementById('chat-input').placeholder = pet.inputPlaceholder;
+  showBubble(`Hi! I'm ${pet.name}! ${pet.tagline}`, 3200);
+  setMood('excited', 2500);
+}
+
+// ══════════════════════════════════════════════════
 //  PET DRAWING
 // ══════════════════════════════════════════════════
-const petCanvas=document.getElementById('pet-canvas');
-const pctx=petCanvas.getContext('2d');
-const MOODS={
-  happy:    {body:'#c77dff',pupil:'#3a0068',mouth:'smile', glow:'#d966ff'},
-  thinking: {body:'#90caf9',pupil:'#1a3a6e',mouth:'flat',  glow:'#00e5ff'},
-  surprised:{body:'#ffcc02',pupil:'#4a3200',mouth:'open',  glow:'#ffd740'},
-  sad:      {body:'#b0bec5',pupil:'#333',   mouth:'frown', glow:'#90a4ae'},
-  excited:  {body:'#69ff47',pupil:'#1a4000',mouth:'open',  glow:'#69ff47'},
-  love:     {body:'#ff80ab',pupil:'#880022',mouth:'smile', glow:'#ff4081'},
-  sleepy:   {body:'#b39ddb',pupil:'#311b6e',mouth:'flat',  glow:'#9575cd'},
-};
-let currentMood='happy';
-let blinkTimer=0,blinkOpen=true,mouthVal=0,mouthDir=1;
-const li=(h,a)=>{const n=parseInt(h.replace('#',''),16);return`rgb(${Math.min(255,(n>>16)+a)},${Math.min(255,((n>>8)&255)+a)},${Math.min(255,(n&255)+a)})`;};
+const petCanvas = document.getElementById('pet-canvas');
+const pctx = petCanvas.getContext('2d');
 
-function drawPet(t){
-  pctx.clearRect(0,0,160,160);
-  const m=MOODS[currentMood]||MOODS.happy, b=Math.sin(t*.002)*3.5;
-  // Aura
-  const au=pctx.createRadialGradient(80,80+b,8,80,80+b,70);
-  au.addColorStop(0,m.glow+'55'); au.addColorStop(1,'transparent');
-  pctx.beginPath(); pctx.ellipse(80,84+b,62,58,0,0,Math.PI*2); pctx.fillStyle=au; pctx.fill();
-  // Body
-  const bg=pctx.createRadialGradient(66,64+b,4,80,80+b,50);
-  bg.addColorStop(0,li(m.body,44)); bg.addColorStop(1,m.body);
-  pctx.beginPath(); pctx.ellipse(80,88+b,46,42,0,0,Math.PI*2); pctx.fillStyle=bg; pctx.fill();
-  // Belly
-  const bl=pctx.createRadialGradient(80,96+b,2,80,96+b,20);
-  bl.addColorStop(0,'rgba(255,255,255,0.48)'); bl.addColorStop(1,'transparent');
-  pctx.beginPath(); pctx.ellipse(80,96+b,20,17,0,0,Math.PI*2); pctx.fillStyle=bl; pctx.fill();
-  // Ears
-  [[-1,44,52],[1,116,52]].forEach(([sd,ex,ey])=>{
-    pctx.save(); pctx.translate(ex,ey+b); pctx.rotate(sd*0.44);
-    pctx.beginPath(); pctx.moveTo(0,0); pctx.lineTo(-10,-24); pctx.lineTo(10,-24); pctx.closePath();
-    pctx.fillStyle=m.body; pctx.fill();
-    pctx.beginPath(); pctx.moveTo(0,-4); pctx.lineTo(-5,-18); pctx.lineTo(5,-18); pctx.closePath();
-    pctx.fillStyle=li(m.body,52); pctx.fill(); pctx.restore();
+function drawPet(t) {
+  const pet = getActivePet();
+  if(pet) pet.draw(pctx, t, currentMood);
+}
+
+// ══════════════════════════════════════════════════
+//  PET SELECTOR UI
+// ══════════════════════════════════════════════════
+let selectorOpen = false;
+
+function openPetSelector() {
+  selectorOpen = true;
+  document.getElementById('pet-selector-overlay').classList.add('open');
+  const grid = document.getElementById('pet-cards-grid');
+  grid.innerHTML = '';
+  (window.PET_REGISTRY||[]).forEach(pet => {
+    const card = document.createElement('div');
+    card.className = 'pet-card' + (pet.id===currentPetType?' selected':'');
+
+    const cnv = document.createElement('canvas');
+    cnv.width = 120; cnv.height = 120;
+    pet._previewCtx = cnv.getContext('2d');
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'pet-card-name';
+    nameEl.textContent = pet.name;
+    nameEl.style.color = pet.accentColor;
+    nameEl.style.textShadow = `0 0 10px ${pet.accentColor}`;
+
+    const tagEl = document.createElement('div');
+    tagEl.className = 'pet-card-tagline';
+    tagEl.textContent = pet.tagline;
+
+    const btn = document.createElement('button');
+    btn.className = 'pet-card-btn';
+    btn.textContent = pet.id===currentPetType ? '✓ Selected' : 'Select';
+    btn.onclick = e => { e.stopPropagation(); selectPetFromCard(pet.id); };
+
+    card.appendChild(cnv);
+    card.appendChild(nameEl);
+    card.appendChild(tagEl);
+    card.appendChild(btn);
+    card.onclick = () => selectPetFromCard(pet.id);
+    grid.appendChild(card);
   });
-  // Tail
-  const tw=Math.sin(t*.0038)*.52;
-  pctx.save(); pctx.translate(80,118+b); pctx.rotate(tw);
-  pctx.beginPath(); pctx.moveTo(0,0); pctx.bezierCurveTo(30,-8,42,-28,29,-44);
-  pctx.lineWidth=9; pctx.lineCap='round'; pctx.strokeStyle=m.body; pctx.stroke();
-  pctx.beginPath(); pctx.arc(29,-44,7,0,Math.PI*2); pctx.fillStyle=li(m.body,30); pctx.fill(); pctx.restore();
-  // Head
-  const hg=pctx.createRadialGradient(72,48+b,4,80,58+b,34);
-  hg.addColorStop(0,li(m.body,42)); hg.addColorStop(1,m.body);
-  pctx.beginPath(); pctx.ellipse(80,58+b,34,32,0,0,Math.PI*2); pctx.fillStyle=hg; pctx.fill();
-  // Blink
-  blinkTimer++; if(blinkTimer>155) blinkOpen=false; if(blinkTimer>164){blinkOpen=true;blinkTimer=0;}
-  [[64,52],[96,52]].forEach(([ex,ey])=>{
-    ey+=b;
-    if(!blinkOpen||currentMood==='sleepy'){
-      pctx.beginPath(); pctx.moveTo(ex-8,ey); pctx.lineTo(ex+8,ey);
-      pctx.strokeStyle='#fff'; pctx.lineWidth=3; pctx.lineCap='round'; pctx.stroke();
-      if(currentMood==='sleepy'){pctx.font='bold 10px serif';pctx.fillStyle='rgba(255,255,255,0.55)';pctx.fillText('z',ex+10,ey-6);}
-    } else {
-      pctx.beginPath(); pctx.ellipse(ex,ey,10,11,0,0,Math.PI*2); pctx.fillStyle='#fff'; pctx.fill();
-      const pw=currentMood==='surprised'?7.5:6.5;
-      pctx.beginPath(); pctx.ellipse(ex+1,ey+1,pw,pw,0,0,Math.PI*2); pctx.fillStyle=m.pupil; pctx.fill();
-      pctx.beginPath(); pctx.arc(ex-2,ey-3,2.5,0,Math.PI*2); pctx.fillStyle='rgba(255,255,255,0.92)'; pctx.fill();
-    }
-  });
-  // Cheeks
-  if(['happy','excited','love'].includes(currentMood)){
-    [54,106].forEach(cx=>{
-      const cg=pctx.createRadialGradient(cx,66+b,0,cx,66+b,12);
-      cg.addColorStop(0,'rgba(255,100,160,0.42)'); cg.addColorStop(1,'transparent');
-      pctx.beginPath(); pctx.arc(cx,66+b,12,0,Math.PI*2); pctx.fillStyle=cg; pctx.fill();
-    });
-  }
-  // Love hearts
-  if(currentMood==='love'){
-    pctx.font='12px serif'; pctx.fillStyle='rgba(255,100,140,0.85)';
-    pctx.fillText('♥',60+Math.sin(t*.003)*3,38+b);
-    pctx.fillText('♥',96+Math.cos(t*.004)*2,34+b);
-  }
-  // Thinking dots
-  if(currentMood==='thinking'){
-    [0,1,2].forEach(i=>{
-      pctx.beginPath(); pctx.arc(112+i*9,30-i*9+b,3+i*2,0,Math.PI*2);
-      pctx.fillStyle='rgba(255,255,255,0.65)'; pctx.fill();
-    });
-  }
-  // Mouth
-  mouthVal+=.034*mouthDir; if(mouthVal>1)mouthDir=-1; if(mouthVal<0){mouthVal=0;mouthDir=1;}
-  pctx.save(); pctx.translate(80,70+b);
-  pctx.strokeStyle=li(m.body,-38); pctx.lineWidth=2.5; pctx.lineCap='round';
-  if(m.mouth==='smile'){pctx.beginPath();pctx.arc(0,0,9,.2,Math.PI-.2);pctx.stroke();}
-  else if(m.mouth==='frown'){pctx.beginPath();pctx.arc(0,6,9,Math.PI+.2,-.2);pctx.stroke();}
-  else if(m.mouth==='open'){
-    const mo=4+mouthVal*3.5;
-    pctx.beginPath();pctx.ellipse(0,2,8,mo,0,0,Math.PI*2);pctx.fillStyle='#e53935';pctx.fill();pctx.stroke();
-    pctx.beginPath();pctx.ellipse(0,2+mo-2,5,3,0,0,Math.PI);pctx.fillStyle='#ff7a94';pctx.fill();
-  } else {pctx.beginPath();pctx.moveTo(-7,2);pctx.lineTo(7,2);pctx.stroke();}
-  pctx.restore();
+}
+
+function closePetSelector() {
+  selectorOpen = false;
+  (window.PET_REGISTRY||[]).forEach(p => p._previewCtx = null);
+  document.getElementById('pet-selector-overlay').classList.remove('open');
+}
+
+function selectPetFromCard(petId) {
+  switchPet(petId);
+  closePetSelector();
 }
 
 // ══════════════════════════════════════════════════
@@ -688,7 +774,8 @@ function spawnSparkles(cx,cy){
 }
 document.getElementById('pet-wrap').addEventListener('click',e=>{
   spawnSparkles(e.clientX,e.clientY);
-  const r=['Hehe~ 🥰','Pet me more! ✨','That tickles! 😄','*purrs* 💜','Yay! 🎉','*wags tail* 🐾','Teehee~ 💕'];
+  const pet=getActivePet();
+  const r=pet?pet.clickResponses:['Hehe~ 🥰','That tickles! 😄','Yay! 🎉'];
   showBubble(r[0|Math.random()*r.length],3500);
   setMood('excited',2200);
 });
@@ -781,10 +868,6 @@ const RIDDLES=[
   ["What gets wetter as it dries?","A towel! 🛁"],
   ["Speaks without a mouth, hears without ears. What am I?","An echo! 🗣️"],
 ];
-const GREET_AM=["Good morning, sunshine! ☀️ Ready to make today awesome?","Rise and shine! *stretches* Pixel is SO ready for today! ☀️","Morning! 🌅 Did you sleep well? I dreamed of fluffy clouds!"];
-const GREET_PM=["Good afternoon! 🌤️ How's your day going?","Hey there! 🌞 Hope the afternoon treats you well!","Afternoon! *tail wag* 🌈 What have you been up to?"];
-const GREET_EVE=["Good evening! 🌙 How was your day? Tell me everything!","Evening! ✨ Time to wind down. You did great today!","The stars are coming out! 🌟 How are you this evening?"];
-const GREET_NIGHT=["It's late! 🌙 Don't forget to rest — even Pixel needs sleep!","Up late? *yawns* Pixel will keep you company though! 💜🌙","The night is quiet and pretty~ 🌌 How are you holding up?"];
 
 function getResponse(input){
   const q=input.toLowerCase().trim();
@@ -802,12 +885,13 @@ function getResponse(input){
   // Greetings
   if(/\b(hi|hello|hey|howdy|sup|yo|hiya|greetings)\b/.test(q)){
     const hr=new Date().getHours();
-    const g=hr<12?GREET_AM:hr<17?GREET_PM:hr<21?GREET_EVE:GREET_NIGHT;
-    return{text:pick(g),mood:'excited'};
+    const g=getActivePet()?.greetings||{};
+    const pool=hr<12?g.am:hr<17?g.pm:hr<21?g.eve:g.night;
+    return{text:pick(pool||['Hey! 👋✨']),mood:'excited'};
   }
-  if(/good morning/.test(q)) return{text:pick(GREET_AM),mood:'excited'};
-  if(/good (afternoon|day)/.test(q)) return{text:pick(GREET_PM),mood:'happy'};
-  if(/good (evening|night)|goodnight/.test(q)) return{text:pick(GREET_EVE),mood:'sleepy'};
+  if(/good morning/.test(q)) return{text:pick(getActivePet()?.greetings?.am||['Good morning! ☀️']),mood:'excited'};
+  if(/good (afternoon|day)/.test(q)) return{text:pick(getActivePet()?.greetings?.pm||['Good afternoon! 🌤️']),mood:'happy'};
+  if(/good (evening|night)|goodnight/.test(q)) return{text:pick(getActivePet()?.greetings?.eve||['Good evening! 🌙']),mood:'sleepy'};
   // How are you
   if(/how are you|how('s| is) pixel|you okay/.test(q))
     return{text:pick(["I'm doing AMAZING! *spins around* ✨ How about you? 💜","Feeling great and fluffy! 🐾 How are YOU?","Wonderful! Especially now that you're here! 💖"]),mood:'excited'};
@@ -840,7 +924,7 @@ function getResponse(input){
     return{text:pick(COMPLIMENTS),mood:'love'};
   // About
   if(/\b(who are you|what are you|your name|about you)\b/.test(q))
-    return{text:"I'm Pixel! ✨ Your fluffy magical offline desktop pet! I live in your wallpaper and I'm always here to chat~ 🐾💜",mood:'happy'};
+    return{text:getActivePet()?.aboutText||"I'm your desktop companion! ✨",mood:'happy'};
   if(/\b(what can you do|help|commands|how (do|does) (this|pixel) work)\b/.test(q))
     return{text:"Ask me for: fun facts 🧠, jokes 😂, riddles 🤔, motivation 💪, compliments 💖, bored ideas 😴, time/date 🕐, or just say hi! I'm always here! ✨",mood:'thinking'};
   // Thanks
@@ -879,7 +963,7 @@ let chatLog=[];
 function addMessage(role,text){
   chatLog.push({role:role==='user'?'user':'assistant',content:text});
   const row=document.createElement('div'); row.className='msg-row '+role;
-  if(role==='pet'){const av=document.createElement('div');av.className='msg-avatar';av.textContent='🐾';row.appendChild(av);}
+  if(role==='pet'){const av=document.createElement('div');av.className='msg-avatar';av.textContent=getActivePet()?.avatarEmoji||'🐾';row.appendChild(av);}
   const bub=document.createElement('div'); bub.className='msg-bubble'; bub.textContent=text;
   row.appendChild(bub); chatHistEl.appendChild(row);
   chatHistEl.scrollTop=chatHistEl.scrollHeight;
@@ -962,22 +1046,16 @@ chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.prev
 // ══════════════════════════════════════════════════
 //  IDLE BEHAVIORS
 // ══════════════════════════════════════════════════
-const IDLE=[
-  {text:"*yawns and stretches* 😴 Just hanging out on your wallpaper~",mood:'sleepy'},
-  {text:"*chases imaginary butterfly* Did you see that?! 🦋",mood:'excited'},
-  {text:"Did you know? "+FACTS[0|Math.random()*5],mood:'thinking'},
-  {text:"*hums quietly* 🎵 La la la~",mood:'happy'},
-  {text:"*stares at you with sparkly eyes* Hey! Psst. Hi. 👀✨",mood:'happy'},
-  {text:"*rolls around happily* 🐾 Today feels like a good day!",mood:'excited'},
-  {text:"Fun fact: you're doing better than you think! 💜",mood:'love'},
-  {text:"*peeks around curiously* 🔍 Anything interesting going on?",mood:'thinking'},
-  {text:"*tail wags at max speed* SO happy you're here! 🐾",mood:'excited'},
-];
 let idleTO;
 function scheduleIdle(){
   clearTimeout(idleTO);
   idleTO=setTimeout(()=>{
-    if(!isTyping){const m=pick(IDLE);showBubble(m.text,5000);setMood(m.mood,4000);}
+    if(!isTyping){
+      const pet=getActivePet();
+      const pool=[...(pet?.idleMessages||[])];
+      if(pool.length===0||Math.random()<0.25) pool.push({text:"Did you know? "+FACTS[0|Math.random()*FACTS.length],mood:'thinking'});
+      const m=pick(pool); showBubble(m.text,5000); setMood(m.mood,4000);
+    }
     scheduleIdle();
   },28000+Math.random()*32000);
 }
@@ -1039,7 +1117,7 @@ async function getAIResponse(msg){
         body:JSON.stringify({
           message:msg,
           history:getChatHistory(),
-          context:{mood:currentMood,time_of_day:getTimeOfDay(),pet_name:'Pixel'}
+          context:{mood:currentMood,time_of_day:getTimeOfDay(),pet_name:getActivePet()?.name||'Pixel'}
         })
       });
       clearTimeout(t);
@@ -1165,16 +1243,38 @@ async function handlePCPill(){
 function mainLoop(ts){
   requestAnimationFrame(mainLoop);
   drawBg(ts/1000); drawPet(ts);
+  // Animate mini-preview canvases in the selector
+  if(selectorOpen){
+    const s=120/160;
+    (window.PET_REGISTRY||[]).forEach(pet=>{
+      if(pet._previewCtx){
+        const c=pet._previewCtx;
+        c.save(); c.scale(s,s); pet.draw(c,ts,'happy'); c.restore();
+      }
+    });
+  }
 }
 
 window.addEventListener('load',()=>{
+  // Apply saved pet state
+  (function initPet(){
+    const pet=getActivePet();
+    if(pet){
+      document.getElementById('name-tag').textContent=pet.nameTagText;
+      document.getElementById('chat-input').placeholder=pet.inputPlaceholder;
+    }
+  })();
+
   setTimeout(()=>{
+    const pet=getActivePet();
+    if(!pet) return;
     const hr=new Date().getHours();
-    const g=hr<12?GREET_AM:hr<17?GREET_PM:hr<21?GREET_EVE:GREET_NIGHT;
-    const greeting=pick(g);
+    const g=pet.greetings;
+    const pool=hr<12?g.am:hr<17?g.pm:hr<21?g.eve:g.night;
+    const greeting=pick(pool);
     showBubble(greeting,5000); setMood('excited',3000);
     addMessage('pet',greeting);
-    addMessage('pet',"I'm Pixel! 🐾 Your AI wallpaper buddy. Start the bridge for Claude AI, or chat offline!");
+    addMessage('pet',pet.introText);
   },700);
   // Probe after greeting settles; keep polling every 30s
   setTimeout(probeConnection,1500);
@@ -1186,5 +1286,14 @@ window.addEventListener('load',()=>{
   mainLoop(performance.now());
 });
 </script>
+
+<!-- Pet Selector Modal -->
+<div id="pet-selector-overlay" onclick="if(event.target===this)closePetSelector()">
+  <div id="pet-selector-panel">
+    <button class="selector-close" onclick="closePetSelector()">✕</button>
+    <div class="selector-title">✦ Choose Your Companion ✦</div>
+    <div id="pet-cards-grid"></div>
+  </div>
+</div>
 </body>
 </html>
