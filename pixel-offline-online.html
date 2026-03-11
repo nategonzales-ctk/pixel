@@ -606,6 +606,24 @@ body {
 }
 
 /* ── SETTINGS BUTTON + PANEL ── */
+#dn-btn {
+  position: fixed;
+  top: 80px;
+  left: calc(var(--primary-w) - 90px);
+  z-index: 31;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(10,10,30,0.72);
+  border: 1px solid rgba(217,102,255,0.28);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#dn-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(217,102,255,0.3);
+}
 #settings-btn {
   position: fixed;
   top: 80px;
@@ -1001,6 +1019,7 @@ body {
 
 <button id="open-pet-selector" onclick="openPetSelector()">✦ Change Pet</button>
 
+<button id="dn-btn" onclick="setDayNight(_dayNightTarget<0.5)" title="Toggle Day / Night">🌙</button>
 <button id="settings-btn" onclick="toggleSettings()" title="Settings">⚙</button>
 <div id="settings-panel">
   <div class="settings-title">⚙ Widgets</div>
@@ -1027,6 +1046,17 @@ body {
   <div class="settings-row">
     <span class="settings-label">Calendar</span>
     <label class="tog"><input type="checkbox" id="tog-calendar" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+  </div>
+  <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)">
+    <div class="settings-title" style="margin-bottom:8px">🌙 Ambiance</div>
+    <div class="settings-row">
+      <span class="settings-label">Day mode</span>
+      <label class="tog"><input type="checkbox" id="tog-dn" onchange="toggleDayNight()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Auto (time-based)</span>
+      <label class="tog"><input type="checkbox" id="tog-dn-auto" onchange="setDayNightAuto(this.checked)"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
   </div>
   <div class="settings-row" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)">
     <span class="settings-label">Display width</span>

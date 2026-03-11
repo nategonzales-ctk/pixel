@@ -76,6 +76,7 @@ function initSettings() {
   if (s.weather  === false) document.getElementById('tog-weather').checked  = false;
   if (s.calendar === false) document.getElementById('tog-calendar').checked = false;
   applySettings();
+  initDayNight();
 }
 
 function toggleSettings() {
@@ -87,6 +88,67 @@ function toggleSettings() {
     const hi = document.getElementById('display-h-input');
     if (hi) hi.value = displayH;
   }
+}
+
+// ── Day / Night mode ──────────────────────────────
+const DN_KEY = 'ambiance';
+let _dnAuto = false;
+let _autoCheckTimer = null;
+
+function _isDayHour() {
+  const hr = new Date().getHours();
+  return hr >= 6 && hr < 18;
+}
+
+function setDayNight(isDay, save = true) {
+  _dayNightTarget = isDay ? 1 : 0;
+  const btn = document.getElementById('dn-btn');
+  if (btn) btn.textContent = isDay ? '☀️' : '🌙';
+  const tog = document.getElementById('tog-dn');
+  if (tog) tog.checked = isDay;
+  if (save) {
+    localStorage.setItem(DN_KEY, JSON.stringify({ isDay, auto: _dnAuto }));
+  }
+}
+
+function toggleDayNight() {
+  // Called by the "Day mode" checkbox onchange
+  const tog = document.getElementById('tog-dn');
+  const isDay = tog ? tog.checked : _dayNightTarget < 0.5;
+  _dnAuto = false;
+  const autoCk = document.getElementById('tog-dn-auto');
+  if (autoCk) autoCk.checked = false;
+  setDayNight(isDay);
+}
+
+function setDayNightAuto(auto) {
+  _dnAuto = auto;
+  if (auto) setDayNight(_isDayHour(), false);
+  const stored = JSON.parse(localStorage.getItem(DN_KEY) || '{}');
+  stored.auto = auto;
+  localStorage.setItem(DN_KEY, JSON.stringify(stored));
+}
+
+function initDayNight() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem(DN_KEY)) || {};
+    _dnAuto = !!cfg.auto;
+    const autoCk = document.getElementById('tog-dn-auto');
+    if (autoCk) autoCk.checked = _dnAuto;
+    const isDay = _dnAuto ? _isDayHour() : !!cfg.isDay;
+    // Set blend immediately (no animation on load)
+    dayNightBlend = isDay ? 1 : 0;
+    _dayNightTarget = dayNightBlend;
+    const btn = document.getElementById('dn-btn');
+    if (btn) btn.textContent = isDay ? '☀️' : '🌙';
+    const tog = document.getElementById('tog-dn');
+    if (tog) tog.checked = isDay;
+  } catch(e) {}
+
+  // Check every minute if auto is on
+  _autoCheckTimer = setInterval(() => {
+    if (_dnAuto) setDayNight(_isDayHour(), false);
+  }, 60 * 1000);
 }
 
 // ── Keyboard shortcut: Ctrl+, opens settings ──
