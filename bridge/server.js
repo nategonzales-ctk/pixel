@@ -13,6 +13,7 @@ const https = require('https');
 const fs    = require('fs');
 const path  = require('path');
 const os    = require('os');
+const { execFile } = require('child_process');
 const Anthropic = require('@anthropic-ai/sdk');
 const si = require('systeminformation');
 
@@ -114,6 +115,9 @@ async function refreshHardware() {
 // Warm up immediately, then refresh every 3 s
 refreshHardware();
 setInterval(refreshHardware, 3000);
+
+// Warm up network stats so rx_sec/tx_sec is available on first request
+si.networkStats().catch(() => {});
 
 // ── LOCATION (IP-based, server-side to bypass WebView2 restrictions) ─────────
 let locationCache = null;
@@ -398,6 +402,116 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'claude_unavailable', message: err.message }));
     }
+    return;
+  }
+
+  // GET /network  — live upload/download speeds
+  if (req.method === 'GET' && req.url === '/network') {
+    try {
+      const stats = await si.networkStats();
+      // Sum all active non-loopback interfaces; rx_sec is null on the very first call
+      const active = stats.filter(s => s.iface && s.iface !== 'lo' &&
+        !s.iface.toLowerCase().includes('loopback'));
+      const rx_sec = active.reduce((sum, s) => sum + (s.rx_sec != null && s.rx_sec >= 0 ? s.rx_sec : 0), 0);
+      const tx_sec = active.reduce((sum, s) => sum + (s.tx_sec != null && s.tx_sec >= 0 ? s.tx_sec : 0), 0);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ rx_sec, tx_sec }));
+    } catch (err) {
+      res.writeHead(503); res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // GET /battery  — battery status
+  if (req.method === 'GET' && req.url === '/battery') {
+    try {
+      const bat = await si.battery();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        percent:      bat.percent,
+        isCharging:   bat.isCharging,
+        timeRemaining: bat.timeRemaining > 0 ? bat.timeRemaining : null,
+        hasBattery:   bat.hasBattery,
+      }));
+    } catch (err) {
+      res.writeHead(503); res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // GET /processes  — top 5 CPU processes
+  if (req.method === 'GET' && req.url === '/processes') {
+    try {
+      const data = await si.processes();
+      const SKIP = new Set(['System Idle Process', 'Idle', 'idle']);
+      const top = data.list
+        .filter(p => !SKIP.has(p.name))
+        .sort((a, b) => b.cpu - a.cpu)
+        .slice(0, 5)
+        .map(p => ({ name: p.name, pcpu: +p.cpu.toFixed(1), pmem: +p.mem.toFixed(1) }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ list: top }));
+    } catch (err) {
+      res.writeHead(503); res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // GET /nowplaying  — Windows SMTC (Spotify, browsers, etc.) + window-title fallback
+  if (req.method === 'GET' && req.url === '/nowplaying') {
+    // Script tries SMTC first (works with modern Spotify), falls back to window title
+    const psScript = `
+$ErrorActionPreference = 'SilentlyContinue'
+Add-Type -AssemblyName System.Runtime.WindowsRuntime
+try {
+  $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows.Media.Control,ContentType=WindowsRuntime]
+  $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties,Windows.Media.Control,ContentType=WindowsRuntime]
+  $asTask = [System.WindowsRuntimeSystemExtensions].GetMethods() |
+    Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.IsGenericMethod } |
+    Select-Object -First 1
+  function Await($op, [type]$t) {
+    $m = $asTask.MakeGenericMethod($t)
+    $task = $m.Invoke($null, @($op))
+    $null = $task.Wait(2000)
+    if ($task.IsCompleted -and -not $task.IsFaulted) { $task.Result } else { $null }
+  }
+  $mgr  = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
+  $sess = if ($mgr) { $mgr.GetCurrentSession() }
+  if ($sess) {
+    $props = Await ($sess.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])
+    if ($props -and $props.Title -ne '') { Write-Output "SMTC|$($props.Title)|$($props.Artist)"; exit }
+  }
+} catch {}
+$players = @('Spotify','vlc','wmplayer','groove','foobar2000','aimp','MusicBee','iTunes')
+foreach ($p in $players) {
+  $proc = Get-Process -Name $p -EA SilentlyContinue |
+    Where-Object { $_.MainWindowTitle -ne '' -and $_.MainWindowTitle -ne $p } |
+    Select-Object -First 1
+  if ($proc) { Write-Output "WIN|$($proc.Name)|$($proc.MainWindowTitle)"; exit }
+}`;
+    // Encode as UTF-16LE base64 (required by PowerShell -EncodedCommand)
+    const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
+    execFile('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
+      { timeout: 6000 },
+      (_err, stdout) => {
+        const line = (stdout || '').trim();
+        if (!line) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ title: null }));
+          return;
+        }
+        const parts = line.split('|');
+        const source = parts[0];                    // 'SMTC' or 'WIN'
+        const title  = (parts[1] || '').trim();
+        let artist   = (parts[2] || '').trim();
+        // Window-title players often format as "Artist - Song"
+        if (source === 'WIN' && !artist && title.includes(' - ')) {
+          const idx = title.indexOf(' - ');
+          artist = title.slice(idx + 3).trim();
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ title: title || null, artist, source }));
+      });
     return;
   }
 

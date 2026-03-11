@@ -48,36 +48,50 @@ function loadSettings() {
   try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch(e) { return {}; }
 }
 
+const WIDGET_TOGGLES = [
+  ['clock',      'clock-widget'],
+  ['hw',         'hw-panel'],
+  ['chat',       'chat-panel'],
+  ['chat',       'chat-bubble-btn'],
+  ['bubble',     'pill-row'],
+  ['weather',    'weather-widget'],
+  ['calendar',   'calendar-widget'],
+  ['todo',       'todo-widget'],
+  ['pomodoro',   'pomodoro-widget'],
+  ['timer',      'timer-widget'],
+  ['habits',     'habits-widget'],
+  ['worldclock', 'worldclock-widget'],
+  ['quote',      'quote-widget'],
+  ['countdown',  'countdown-widget'],
+  ['sticky',     'sticky-widget'],
+  ['quicklinks', 'quicklinks-widget'],
+  ['network',    'network-widget'],
+  ['processes',  'processes-widget'],
+  ['battery',    'battery-widget'],
+  ['nowplaying', 'nowplaying-widget'],
+];
+
 function applySettings() {
-  const s = {
-    clock:    document.getElementById('tog-clock').checked,
-    hw:       document.getElementById('tog-hw').checked,
-    chat:     document.getElementById('tog-chat').checked,
-    bubble:   document.getElementById('tog-bubble').checked,
-    weather:  document.getElementById('tog-weather').checked,
-    calendar: document.getElementById('tog-calendar').checked,
-    todo:     document.getElementById('tog-todo').checked,
-  };
+  const s = {};
+  WIDGET_TOGGLES.forEach(([key]) => {
+    const el = document.getElementById('tog-' + key);
+    if (el) s[key] = el.checked;
+  });
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
-  document.getElementById('clock-widget').style.display    = s.clock    ? '' : 'none';
-  document.getElementById('hw-panel').style.display        = s.hw       ? '' : 'none';
-  document.getElementById('chat-panel').style.display      = s.chat     ? '' : 'none';
-  document.getElementById('chat-bubble-btn').style.display = s.chat     ? '' : 'none';
-  document.getElementById('pill-row').style.display        = s.bubble   ? '' : 'none';
-  document.getElementById('weather-widget').style.display  = s.weather  ? '' : 'none';
-  document.getElementById('calendar-widget').style.display = s.calendar ? '' : 'none';
-  document.getElementById('todo-widget').style.display     = s.todo     ? '' : 'none';
+  WIDGET_TOGGLES.forEach(([key, elId]) => {
+    const el = document.getElementById(elId);
+    if (el) el.style.display = s[key] === false ? 'none' : '';
+  });
 }
 
 function initSettings() {
   const s = loadSettings();
-  if (s.clock    === false) document.getElementById('tog-clock').checked    = false;
-  if (s.hw       === false) document.getElementById('tog-hw').checked       = false;
-  if (s.chat     === false) document.getElementById('tog-chat').checked     = false;
-  if (s.bubble   === false) document.getElementById('tog-bubble').checked   = false;
-  if (s.weather  === false) document.getElementById('tog-weather').checked  = false;
-  if (s.calendar === false) document.getElementById('tog-calendar').checked = false;
-  if (s.todo     === false) document.getElementById('tog-todo').checked     = false;
+  WIDGET_TOGGLES.forEach(([key]) => {
+    if (s[key] !== undefined) {
+      const tog = document.getElementById('tog-' + key);
+      if (tog) tog.checked = s[key];
+    }
+  });
   applySettings();
   initDayNight();
 }

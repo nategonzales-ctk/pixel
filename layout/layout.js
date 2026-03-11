@@ -8,7 +8,7 @@ const LAYOUT_KEY  = 'widgetPositions';
 const GRID        = 20;
 const MIN_VW      = 60;   // minimum visual width  (px)
 const MIN_VH      = 36;   // minimum visual height (px)
-const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'settings-btn', 'open-pet-selector', 'weather-widget', 'calendar-widget'];
+const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'settings-btn', 'open-pet-selector', 'weather-widget', 'calendar-widget', 'todo-widget', 'pomodoro-widget', 'timer-widget', 'habits-widget', 'worldclock-widget', 'quote-widget', 'countdown-widget', 'sticky-widget', 'quicklinks-widget', 'network-widget', 'processes-widget', 'battery-widget', 'nowplaying-widget'];
 const HANDLE_DIRS = ['nw','n','ne','e','se','s','sw','w'];
 
 let layoutMode = false;

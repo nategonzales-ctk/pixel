@@ -954,6 +954,220 @@ body {
 }
 .todo-del:hover { color: #ff6b6b; }
 
+/* ── SHARED WIDGET BASE ── */
+.widget-panel {
+  position: fixed; z-index: 5;
+  background: rgba(13,13,26,0.78);
+  border: 1px solid rgba(217,102,255,0.18);
+  border-radius: 14px; padding: 11px 13px 12px;
+  backdrop-filter: blur(10px);
+  font-family: 'Nunito', sans-serif;
+}
+.widget-title {
+  font-size: 9px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(238,238,255,0.35); margin-bottom: 8px;
+}
+.w-btn {
+  font-family: inherit; font-size: 10px; font-weight: 900;
+  border-radius: 7px; border: 1px solid rgba(217,102,255,0.3);
+  background: rgba(217,102,255,0.1); color: var(--accent);
+  cursor: pointer; padding: 3px 8px;
+}
+.w-btn:hover { background: rgba(217,102,255,0.25); }
+.w-inp {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(217,102,255,0.22); border-radius: 7px;
+  color: var(--text); font-family: inherit; font-size: 10px; font-weight: 700;
+  padding: 3px 7px; outline: none;
+}
+.w-inp:focus { border-color: rgba(217,102,255,0.55); }
+
+/* ── POMODORO ── */
+#pomodoro-widget { top: 130px; left: 254px; width: 186px; }
+#pomo-time {
+  font-size: 36px; font-weight: 900; text-align: center;
+  letter-spacing: -1px; line-height: 1; margin: 4px 0 2px;
+  color: rgba(238,238,255,0.9);
+}
+#pomo-state {
+  font-size: 9px; font-weight: 900; letter-spacing: 0.18em;
+  text-transform: uppercase; text-align: center;
+  color: rgba(238,238,255,0.35); margin-bottom: 8px;
+}
+#pomo-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
+.pomo-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(217,102,255,0.18); border: 1.5px solid rgba(217,102,255,0.4);
+}
+.pomo-dot.filled { background: var(--accent); border-color: var(--accent); }
+#pomo-btns { display: flex; gap: 5px; }
+#pomo-btns .w-btn { flex: 1; text-align: center; }
+
+/* ── STOPWATCH / COUNTDOWN ── */
+#timer-widget { top: 304px; left: 254px; width: 186px; }
+#timer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+#timer-display {
+  font-size: 30px; font-weight: 900; text-align: center;
+  letter-spacing: -1px; color: rgba(238,238,255,0.9); margin: 4px 0 8px;
+}
+#timer-btns { display: flex; gap: 5px; margin-bottom: 6px; }
+#timer-btns .w-btn { flex: 1; text-align: center; }
+#timer-cd-row { display: none; gap: 5px; align-items: center; margin-top: 4px; }
+#timer-cd-row .w-inp { flex: 1; }
+
+/* ── HABITS ── */
+#habits-widget { top: 424px; left: 44px; width: 190px; }
+#habits-list { display: flex; flex-direction: column; gap: 4px; }
+.habit-row {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.04); border-radius: 7px; padding: 4px 5px;
+}
+.habit-row.done .habit-label { text-decoration: line-through; color: rgba(238,238,255,0.28); }
+.habit-check {
+  width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px;
+  border: 1.5px solid rgba(217,102,255,0.45); background: rgba(217,102,255,0.08);
+  color: var(--accent); font-size: 10px; font-weight: 900;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.habit-row.done .habit-check { background: rgba(217,102,255,0.28); border-color: var(--accent); }
+.habit-label { flex: 1; font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.8); }
+.habit-streak { font-size: 9px; font-weight: 800; color: rgba(255,160,50,0.9); flex-shrink: 0; }
+
+/* ── WORLD CLOCKS ── */
+#worldclock-widget { top: 36px; left: 254px; width: 190px; }
+#wclock-list { display: flex; flex-direction: column; gap: 5px; }
+.wclock-row { display: flex; align-items: center; justify-content: space-between; }
+.wclock-label { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.45); }
+.wclock-time { font-size: 13px; font-weight: 900; color: rgba(238,238,255,0.88); letter-spacing: 0.04em; }
+
+/* ── DAILY QUOTE ── */
+#quote-widget { top: 36px; left: 464px; width: 220px; pointer-events: none; }
+#quote-text {
+  font-size: 10px; font-weight: 600; line-height: 1.55;
+  color: rgba(238,238,255,0.7); font-style: italic; margin-bottom: 6px;
+}
+#quote-author { font-size: 9px; font-weight: 900; color: rgba(217,102,255,0.7); letter-spacing: 0.08em; }
+
+/* ── COUNTDOWN ── */
+#countdown-widget { top: 438px; left: 254px; width: 188px; }
+#cdown-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.cdown-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); text-align: center; padding: 4px 0; }
+.cdown-row { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 7px; position: relative; }
+.cdown-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(238,238,255,0.4); margin-bottom: 2px; }
+.cdown-time { font-size: 15px; font-weight: 900; color: var(--accent); letter-spacing: 0.04em; }
+.cdown-del {
+  position: absolute; top: 5px; right: 5px;
+  background: none; border: none; color: rgba(238,238,255,0.2);
+  font-size: 10px; cursor: pointer; padding: 0;
+}
+.cdown-del:hover { color: #ff6b6b; }
+#cdown-form { display: flex; flex-direction: column; gap: 4px; }
+#cdown-form .w-inp { width: 100%; box-sizing: border-box; }
+
+/* ── STICKY NOTE ── */
+#sticky-widget { top: 130px; left: 464px; width: 200px; background: rgba(255,230,100,0.13); border-color: rgba(255,210,0,0.35); }
+#sticky-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+#sticky-dots { display: flex; gap: 5px; }
+.sticky-dot {
+  width: 12px; height: 12px; border-radius: 50%; cursor: pointer;
+  border: 1.5px solid transparent; opacity: 0.6; transition: opacity 0.15s, border-color 0.15s;
+}
+.sticky-dot.active { opacity: 1; border-color: rgba(255,255,255,0.6); }
+#sticky-textarea {
+  width: 100%; min-height: 110px; resize: vertical;
+  background: transparent; border: none; outline: none;
+  color: rgba(238,238,255,0.85); font-family: 'Nunito', sans-serif;
+  font-size: 11px; font-weight: 600; line-height: 1.5;
+  pointer-events: auto;
+}
+
+/* ── QUICK LINKS ── */
+#quicklinks-widget { bottom: 36px; left: 44px; width: 190px; }
+#qlinks-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.qlinks-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); padding: 3px 0; }
+.qlinks-row { display: flex; align-items: center; gap: 4px; }
+.qlinks-link {
+  flex: 1; text-align: left; font-family: inherit; font-size: 10px; font-weight: 700;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(217,102,255,0.14);
+  border-radius: 7px; color: rgba(238,238,255,0.8); cursor: pointer;
+  padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.qlinks-link:hover { background: rgba(217,102,255,0.15); color: #fff; }
+.qlinks-del { background: none; border: none; color: rgba(238,238,255,0.2); font-size: 10px; cursor: pointer; padding: 0 2px; }
+.qlinks-del:hover { color: #ff6b6b; }
+#qlinks-form { display: flex; flex-direction: column; gap: 4px; }
+#qlinks-form .w-inp { width: 100%; box-sizing: border-box; }
+#qlinks-add-btn { width: 100%; }
+
+/* ── NETWORK SPEED ── */
+#network-widget {
+  top: 244px; left: calc(var(--primary-w) - 212px); width: 188px;
+  opacity: 0; transform: translateY(-6px); transition: opacity 0.4s, transform 0.4s;
+}
+#network-widget.visible { opacity: 1; transform: translateY(0); }
+.net-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.net-row:last-child { margin-bottom: 0; }
+.net-arrow { font-size: 13px; width: 16px; flex-shrink: 0; }
+.net-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(238,238,255,0.35); width: 22px; }
+.net-val { font-size: 11px; font-weight: 800; color: rgba(238,238,255,0.8); }
+
+/* ── TOP PROCESSES ── */
+#processes-widget {
+  top: 328px; left: calc(var(--primary-w) - 212px); width: 188px;
+  opacity: 0; transform: translateY(-6px); transition: opacity 0.4s, transform 0.4s;
+}
+#processes-widget.visible { opacity: 1; transform: translateY(0); }
+#proc-list { display: flex; flex-direction: column; gap: 4px; }
+.proc-row { display: flex; align-items: center; gap: 5px; }
+.proc-name { font-size: 9px; font-weight: 800; color: rgba(238,238,255,0.6); width: 68px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proc-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.07); border-radius: 999px; overflow: hidden; }
+.proc-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.8s; }
+.proc-pct { font-size: 9px; font-weight: 800; color: rgba(238,238,255,0.45); width: 32px; text-align: right; flex-shrink: 0; }
+
+/* ── BATTERY ── */
+#battery-widget {
+  top: 36px; left: calc(var(--primary-w) - 96px); width: 76px;
+  opacity: 0; transition: opacity 0.4s;
+  padding: 8px 10px;
+}
+#battery-widget.visible { opacity: 1; }
+#bat-icon { font-size: 13px; display: block; text-align: center; }
+#bat-bar-wrap { height: 5px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; margin: 4px 0; }
+#bat-fill { height: 100%; border-radius: 999px; transition: width 0.8s, background 0.5s; }
+#bat-label { font-size: 9px; font-weight: 800; color: rgba(238,238,255,0.55); text-align: center; display: block; white-space: nowrap; }
+
+/* ── NOW PLAYING ── */
+#nowplaying-widget {
+  bottom: 36px; left: 464px; width: 220px;
+}
+#np-scroll { overflow: hidden; }
+#np-title {
+  font-size: 11px; font-weight: 800; color: rgba(238,238,255,0.9);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nowplaying-widget.np-idle #np-title { color: rgba(238,238,255,0.25); font-weight: 700; }
+#np-sub {
+  font-size: 9px; font-weight: 700; color: rgba(238,238,255,0.4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+}
+#np-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; margin-top: 6px; }
+#nowplaying-widget.np-idle .np-bar { animation: none; height: 3px; opacity: 0.2; }
+.np-bar {
+  width: 3px; border-radius: 2px; background: var(--accent);
+  animation: npBounce 0.8s ease-in-out infinite alternate;
+}
+.np-bar:nth-child(2) { animation-delay: 0.15s; }
+.np-bar:nth-child(3) { animation-delay: 0.3s; }
+.np-bar:nth-child(4) { animation-delay: 0.1s; }
+.np-bar:nth-child(5) { animation-delay: 0.25s; }
+@keyframes npBounce { from { height: 3px; } to { height: 12px; } }
+
+/* ── SETTINGS PANE SCROLL (many widgets) ── */
+.stab-pane.active { max-height: 340px; overflow-y: auto; }
+.stab-pane.active::-webkit-scrollbar { width: 3px; }
+.stab-pane.active::-webkit-scrollbar-thumb { background: rgba(217,102,255,0.3); border-radius: 99px; }
+
 /* ── LAYOUT DRAG MODE ── */
 .layout-drag-mode {
   cursor: move !important;
@@ -1231,6 +1445,54 @@ body {
       <span class="settings-label">To-Do List</span>
       <label class="tog"><input type="checkbox" id="tog-todo" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">Pomodoro</span>
+      <label class="tog"><input type="checkbox" id="tog-pomodoro" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Timer</span>
+      <label class="tog"><input type="checkbox" id="tog-timer" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Habits</span>
+      <label class="tog"><input type="checkbox" id="tog-habits" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">World Clocks</span>
+      <label class="tog"><input type="checkbox" id="tog-worldclock" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Daily Quote</span>
+      <label class="tog"><input type="checkbox" id="tog-quote" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Countdown</span>
+      <label class="tog"><input type="checkbox" id="tog-countdown" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Sticky Note</span>
+      <label class="tog"><input type="checkbox" id="tog-sticky" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Quick Links</span>
+      <label class="tog"><input type="checkbox" id="tog-quicklinks" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Network Speed</span>
+      <label class="tog"><input type="checkbox" id="tog-network" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Processes</span>
+      <label class="tog"><input type="checkbox" id="tog-processes" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Battery</span>
+      <label class="tog"><input type="checkbox" id="tog-battery" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Now Playing</span>
+      <label class="tog"><input type="checkbox" id="tog-nowplaying" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
   </div>
 
   <!-- Ambiance tab -->
@@ -1325,6 +1587,133 @@ body {
   <div id="todo-list"></div>
 </div>
 
+<!-- Pomodoro widget -->
+<div id="pomodoro-widget" class="widget-panel">
+  <div class="widget-title">🍅 Pomodoro</div>
+  <div id="pomo-time">25:00</div>
+  <div id="pomo-state">Ready</div>
+  <div id="pomo-dots"></div>
+  <div id="pomo-btns">
+    <button id="pomo-btn" class="w-btn" onclick="pomoToggle()">▶ Start</button>
+    <button class="w-btn" onclick="pomoReset()">↺</button>
+  </div>
+</div>
+
+<!-- Stopwatch / Countdown timer widget -->
+<div id="timer-widget" class="widget-panel">
+  <div id="timer-top">
+    <div class="widget-title" style="margin:0">⏱ Timer</div>
+    <button id="timer-mode-btn" class="w-btn" onclick="timerSwitchMode()" style="font-size:9px;padding:2px 6px">⏱ SW</button>
+  </div>
+  <div id="timer-display">00:00</div>
+  <div id="timer-btns">
+    <button id="timer-toggle-btn" class="w-btn" onclick="timerToggle()">▶</button>
+    <button class="w-btn" onclick="timerReset()">↺</button>
+  </div>
+  <div id="timer-cd-row">
+    <input id="timer-cd-input" class="w-inp" type="text" placeholder="MM:SS" maxlength="5" style="flex:1">
+  </div>
+</div>
+
+<!-- Habit tracker widget -->
+<div id="habits-widget" class="widget-panel">
+  <div class="widget-title">✓ Habits</div>
+  <div id="habits-list"></div>
+</div>
+
+<!-- World clocks widget -->
+<div id="worldclock-widget" class="widget-panel">
+  <div class="widget-title">🌍 World Time</div>
+  <div id="wclock-list"></div>
+</div>
+
+<!-- Daily quote widget -->
+<div id="quote-widget" class="widget-panel">
+  <div class="widget-title">✦ Daily Quote</div>
+  <div id="quote-text"></div>
+  <div id="quote-author"></div>
+</div>
+
+<!-- Countdown to date widget -->
+<div id="countdown-widget" class="widget-panel">
+  <div class="widget-title">⏳ Countdown</div>
+  <div id="cdown-list"></div>
+  <div id="cdown-form">
+    <input id="cdown-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="30">
+    <input id="cdown-date-inp" class="w-inp" type="date">
+    <button class="w-btn" onclick="cdownAdd()" style="width:100%">+ Add</button>
+  </div>
+</div>
+
+<!-- Sticky note widget -->
+<div id="sticky-widget" class="widget-panel">
+  <div id="sticky-header">
+    <div class="widget-title" style="margin:0">📝 Note</div>
+    <div id="sticky-dots">
+      <div class="sticky-dot active" style="background:#ffe664" onclick="stickySetColor(0)" title="Yellow"></div>
+      <div class="sticky-dot" style="background:#ff78a0" onclick="stickySetColor(1)" title="Pink"></div>
+      <div class="sticky-dot" style="background:#50dcb4" onclick="stickySetColor(2)" title="Mint"></div>
+      <div class="sticky-dot" style="background:#a078ff" onclick="stickySetColor(3)" title="Lavender"></div>
+    </div>
+  </div>
+  <textarea id="sticky-textarea" placeholder="Type a note…"></textarea>
+</div>
+
+<!-- Quick links widget -->
+<div id="quicklinks-widget" class="widget-panel">
+  <div class="widget-title">🔗 Quick Links</div>
+  <div id="qlinks-list"></div>
+  <div id="qlinks-form">
+    <input id="qlinks-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="24">
+    <input id="qlinks-url-inp" class="w-inp" type="text" placeholder="URL…" maxlength="200">
+    <button id="qlinks-add-btn" class="w-btn" onclick="qlinkAdd()">+ Add</button>
+  </div>
+</div>
+
+<!-- Network speed widget -->
+<div id="network-widget" class="widget-panel">
+  <div class="widget-title">📡 Network</div>
+  <div class="net-row">
+    <span class="net-arrow">↑</span>
+    <span class="net-label">Up</span>
+    <span class="net-val" id="net-up">—</span>
+  </div>
+  <div class="net-row">
+    <span class="net-arrow">↓</span>
+    <span class="net-label">Down</span>
+    <span class="net-val" id="net-down">—</span>
+  </div>
+</div>
+
+<!-- Top processes widget -->
+<div id="processes-widget" class="widget-panel">
+  <div class="widget-title">⚙ Processes</div>
+  <div id="proc-list"></div>
+</div>
+
+<!-- Battery widget -->
+<div id="battery-widget" class="widget-panel">
+  <span id="bat-icon">🔋</span>
+  <div id="bat-bar-wrap"><div id="bat-fill"></div></div>
+  <span id="bat-label">—</span>
+</div>
+
+<!-- Now Playing widget -->
+<div id="nowplaying-widget" class="widget-panel">
+  <div class="widget-title">🎵 Now Playing</div>
+  <div id="np-scroll">
+    <div id="np-title">Nothing playing</div>
+    <div id="np-sub"></div>
+  </div>
+  <div id="np-bars">
+    <div class="np-bar"></div>
+    <div class="np-bar"></div>
+    <div class="np-bar"></div>
+    <div class="np-bar"></div>
+    <div class="np-bar"></div>
+  </div>
+</div>
+
 <!-- Chat bubble trigger -->
 <button id="chat-bubble-btn" onclick="toggleChat()" title="Chat">
   <span id="chat-bubble-emoji">🐾</span>
@@ -1404,6 +1793,18 @@ body {
 <script src="widgets/calendar.js"></script>
 <script src="widgets/events.js"></script>
 <script src="widgets/todo.js"></script>
+<script src="widgets/pomodoro.js"></script>
+<script src="widgets/timer.js"></script>
+<script src="widgets/habits.js"></script>
+<script src="widgets/worldclock.js"></script>
+<script src="widgets/quote.js"></script>
+<script src="widgets/countdown.js"></script>
+<script src="widgets/sticky.js"></script>
+<script src="widgets/quicklinks.js"></script>
+<script src="widgets/network.js"></script>
+<script src="widgets/processes.js"></script>
+<script src="widgets/battery.js"></script>
+<script src="widgets/nowplaying.js"></script>
 <!-- Layout -->
 <script src="layout/layout.js"></script>
 <script>
@@ -1852,6 +2253,18 @@ window.addEventListener('load',()=>{
   initCalendar();
   initEvents();
   initTodo();
+  initPomodoro();
+  initTimer();
+  initHabits();
+  initWorldClock();
+  initQuote();
+  initCountdown();
+  initSticky();
+  initQuickLinks();
+  initNetwork();
+  initProcesses();
+  initBattery();
+  initNowPlaying();
 
   // Apply saved pet state
   (function initPet(){
