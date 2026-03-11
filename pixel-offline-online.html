@@ -361,14 +361,21 @@ body {
 #chat-close-btn:hover { color: var(--text); }
 
 /* Quick pills */
+#pill-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 #pill-row {
   display: flex;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 8px 4px;
   overflow-x: auto;
-  flex-shrink: 0;
+  flex: 1;
   flex-wrap: nowrap;
   scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 #pill-row::-webkit-scrollbar { display: none; }
 .pill {
@@ -392,6 +399,27 @@ body {
   box-shadow: 0 4px 12px rgba(217,102,255,0.22);
 }
 .pill:active { transform:scale(0.95); }
+.pill-arr {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1.5px solid rgba(217,102,255,0.22);
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  outline: none;
+  padding: 0;
+  margin: 0 3px;
+  line-height: 1;
+}
+.pill-arr:hover { background: rgba(217,102,255,0.22); color: #fff; }
+.pill-arr:disabled { opacity: 0.2; cursor: default; pointer-events: none; }
 
 /* Chat history */
 #chat-history-wrap {
@@ -1162,15 +1190,19 @@ body {
     </div>
     <button id="chat-close-btn" onclick="toggleChat()">✕</button>
   </div>
-  <div id="pill-row">
-    <button class="pill" onclick="handlePill('Tell me a fun fact!')">🧠 Fact</button>
-    <button class="pill" onclick="handlePill('Tell me a joke!')">😂 Joke</button>
-    <button class="pill" onclick="handlePill('Motivate me!')">💪 Motivate</button>
-    <button class="pill" onclick="handlePill('Give me something fun to do!')">😴 Bored</button>
-    <button class="pill" onclick="handlePill('Give me a compliment!')">💖 Compliment</button>
-    <button class="pill" onclick="handlePill('Tell me a riddle!')">🤔 Riddle</button>
-    <button class="pill" onclick="handlePill('What time is it?')">🕐 Time</button>
-    <button class="pill" onclick="handlePCPill()">💻 My PC</button>
+  <div id="pill-wrap">
+    <button id="pill-arr-l" class="pill-arr" onclick="scrollPills(-1)" disabled>&#8249;</button>
+    <div id="pill-row">
+      <button class="pill" onclick="handlePill('Tell me a fun fact!')">🧠 Fact</button>
+      <button class="pill" onclick="handlePill('Tell me a joke!')">😂 Joke</button>
+      <button class="pill" onclick="handlePill('Motivate me!')">💪 Motivate</button>
+      <button class="pill" onclick="handlePill('Give me something fun to do!')">😴 Bored</button>
+      <button class="pill" onclick="handlePill('Give me a compliment!')">💖 Compliment</button>
+      <button class="pill" onclick="handlePill('Tell me a riddle!')">🤔 Riddle</button>
+      <button class="pill" onclick="handlePill('What time is it?')">🕐 Time</button>
+      <button class="pill" onclick="handlePCPill()">💻 My PC</button>
+    </div>
+    <button id="pill-arr-r" class="pill-arr" onclick="scrollPills(1)">&#8250;</button>
   </div>
   <div id="chat-history-wrap">
     <button id="chat-scroll-up" onclick="chatScroll(-120)" title="Scroll up">▲</button>
@@ -1345,7 +1377,7 @@ function selectPetFromCard(petId) {
 // ══════════════════════════════════════════════════
 //  MOOD
 // ══════════════════════════════════════════════════
-const MOOD_EMOJIS={happy:'✨',thinking:'💭',surprised:'😲',sad:'💙',excited:'🎉',love:'💜',sleepy:'😴'};
+const MOOD_EMOJIS={happy:'✨',thinking:'💭',surprised:'😲',sad:'💙',excited:'🎉',love:'💜',sleepy:'😴',angry:'😠',scared:'😱',silly:'😜',cry:'😢'};
 let moodReset=null;
 function setMood(mood,resetAfter=0){
   currentMood=mood;

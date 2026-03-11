@@ -11,13 +11,17 @@
   };
 
   const MOODS = {
-    happy:    { body:'#c77dff', pupil:'#3a0068', mouth:'smile', glow:'#d966ff' },
-    thinking: { body:'#90caf9', pupil:'#1a3a6e', mouth:'flat',  glow:'#00e5ff' },
-    surprised:{ body:'#ffcc02', pupil:'#4a3200', mouth:'open',  glow:'#ffd740' },
-    sad:      { body:'#b0bec5', pupil:'#333',    mouth:'frown', glow:'#90a4ae' },
-    excited:  { body:'#69ff47', pupil:'#1a4000', mouth:'open',  glow:'#69ff47' },
-    love:     { body:'#ff80ab', pupil:'#880022', mouth:'smile', glow:'#ff4081' },
-    sleepy:   { body:'#b39ddb', pupil:'#311b6e', mouth:'flat',  glow:'#9575cd' },
+    happy:    { body:'#c77dff', pupil:'#3a0068', mouth:'smile',   glow:'#d966ff' },
+    thinking: { body:'#90caf9', pupil:'#1a3a6e', mouth:'flat',    glow:'#00e5ff' },
+    surprised:{ body:'#ffcc02', pupil:'#4a3200', mouth:'open',    glow:'#ffd740' },
+    sad:      { body:'#b0bec5', pupil:'#333',    mouth:'frown',   glow:'#90a4ae' },
+    excited:  { body:'#69ff47', pupil:'#1a4000', mouth:'open',    glow:'#69ff47' },
+    love:     { body:'#ff80ab', pupil:'#880022', mouth:'smile',   glow:'#ff4081' },
+    sleepy:   { body:'#b39ddb', pupil:'#311b6e', mouth:'flat',    glow:'#9575cd' },
+    angry:    { body:'#ff5e5e', pupil:'#4a0000', mouth:'grimace', glow:'#ff2222', brow:'#8b0000' },
+    scared:   { body:'#dcd0f0', pupil:'#5a3a8e', mouth:'open',   glow:'#b8a8e0' },
+    silly:    { body:'#ffe033', pupil:'#4a3200', mouth:'silly',   glow:'#ffc400' },
+    cry:      { body:'#94b4d4', pupil:'#2a3a5a', mouth:'frown',   glow:'#6a8ab0' },
   };
 
   let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
@@ -64,8 +68,9 @@
         ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.stroke();
         if(mood==='sleepy'){ctx.font='bold 10px serif';ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText('z',ex+10,ey-6);}
       } else {
-        ctx.beginPath(); ctx.ellipse(ex,ey,10,11,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-        const pw = mood==='surprised'?7.5:6.5;
+        const ew = mood==='scared'?13:10, eh = mood==='scared'?14:11;
+        ctx.beginPath(); ctx.ellipse(ex,ey,ew,eh,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        const pw = mood==='surprised'?7.5 : mood==='scared'?3 : 6.5;
         ctx.beginPath(); ctx.ellipse(ex+1,ey+1,pw,pw,0,0,Math.PI*2); ctx.fillStyle=m.pupil; ctx.fill();
         ctx.beginPath(); ctx.arc(ex-2,ey-3,2.5,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.fill();
       }
@@ -84,11 +89,35 @@
       ctx.fillText('♥',60+Math.sin(t*.003)*3,38+b);
       ctx.fillText('♥',96+Math.cos(t*.004)*2,34+b);
     }
+    // Angry brows
+    if(mood==='angry'){
+      [[64,52],[96,52]].forEach(([ex,ey],i) => {
+        ctx.beginPath();
+        ctx.moveTo(ex+(i===0?-11:11),ey-13+b); ctx.lineTo(ex+(i===0?11:-11),ey-7+b);
+        ctx.strokeStyle=m.brow||'#880000'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.stroke();
+      });
+    }
+    // Scared sweat drop
+    if(mood==='scared'){
+      const sw=((t*0.0015)%1), swy=38+sw*16+b, swa=Math.max(0,1-sw*2)*0.85;
+      ctx.beginPath(); ctx.arc(106,swy,4,0,Math.PI*2); ctx.fillStyle=`rgba(140,200,255,${swa})`; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(102,swy-2); ctx.lineTo(106,swy-9); ctx.lineTo(110,swy-2); ctx.closePath();
+      ctx.fillStyle=`rgba(140,200,255,${swa*0.6})`; ctx.fill();
+    }
     // Thinking dots
     if(mood==='thinking'){
       [0,1,2].forEach(i => {
         ctx.beginPath(); ctx.arc(112+i*9,30-i*9+b,3+i*2,0,Math.PI*2);
         ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.fill();
+      });
+    }
+    // Cry tears
+    if(mood==='cry'){
+      [[64,52],[96,52]].forEach(([ex,ey],i) => {
+        const td=((t*0.0018)+i*0.5)%1, ty=ey+14+td*28+b, ta=Math.max(0,1-td*1.8)*0.85;
+        ctx.beginPath(); ctx.arc(ex,ty,3.5,0,Math.PI*2); ctx.fillStyle=`rgba(100,160,220,${ta})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(ex,ey+14+b); ctx.lineTo(ex,ty-3);
+        ctx.strokeStyle=`rgba(120,180,240,${ta*0.5})`; ctx.lineWidth=1.8; ctx.stroke();
       });
     }
     // Mouth
@@ -101,8 +130,20 @@
       const mo=4+mouthVal*3.5;
       ctx.beginPath();ctx.ellipse(0,2,8,mo,0,0,Math.PI*2);ctx.fillStyle='#e53935';ctx.fill();ctx.stroke();
       ctx.beginPath();ctx.ellipse(0,2+mo-2,5,3,0,0,Math.PI);ctx.fillStyle='#ff7a94';ctx.fill();
+    } else if(m.mouth==='grimace'){
+      ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(-9,-2,18,7);
+      ctx.beginPath(); ctx.moveTo(-9,-2); ctx.lineTo(9,-2); ctx.moveTo(-9,5); ctx.lineTo(9,5);
+      ctx.strokeStyle=li(m.body,-40); ctx.lineWidth=2; ctx.stroke();
     } else {ctx.beginPath();ctx.moveTo(-7,2);ctx.lineTo(7,2);ctx.stroke();}
     ctx.restore();
+    // Silly tongue
+    if(mood==='silly'){
+      ctx.save(); ctx.translate(80,76+b);
+      ctx.beginPath(); ctx.ellipse(3,8,6,8,0.2,0,Math.PI*2); ctx.fillStyle='#ff7090'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-3,10); ctx.lineTo(9,10);
+      ctx.strokeStyle='rgba(200,40,70,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.restore();
+    }
   }
 
   window.PET_REGISTRY.push({
@@ -125,6 +166,10 @@
       { text:"Fun fact: you're doing better than you think! 💜", mood:'love' },
       { text:"*peeks around curiously* 🔍 Anything interesting going on?", mood:'thinking' },
       { text:"*tail wags at max speed* SO happy you're here! 🐾", mood:'excited' },
+      { text:"MEOW! I stubbed my invisible toe! 😠 Totally not my fault!", mood:'angry' },
+      { text:"*hides behind your taskbar* D-did something move out there?! 😱", mood:'scared' },
+      { text:"*balances a cracker on nose* Ta-daaaa!! 😜🐾", mood:'silly' },
+      { text:"*tiny tears* It's nothing... just dust in my magical eyes 😢", mood:'cry' },
     ],
     greetings: {
       am:    ["Good morning, sunshine! ☀️ Ready to make today awesome?","Rise and shine! *stretches* Pixel is SO ready for today! ☀️","Morning! 🌅 Did you sleep well? I dreamed of fluffy clouds!"],

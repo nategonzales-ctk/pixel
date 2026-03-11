@@ -11,13 +11,17 @@
   };
 
   const MOODS = {
-    happy:    { body:'#2a1a4e', fur:'#3d2870', pupil:'#00ff88', mouth:'smile', glow:'#7c3aed' },
-    thinking: { body:'#1e1440', fur:'#30206a', pupil:'#00e5ff', mouth:'flat',  glow:'#4c1d95' },
-    surprised:{ body:'#3a2060', fur:'#4e3290', pupil:'#00ff88', mouth:'open',  glow:'#8b5cf6' },
-    sad:      { body:'#181030', fur:'#241a50', pupil:'#9966ff', mouth:'frown', glow:'#3730a3' },
-    excited:  { body:'#2e1860', fur:'#4a2890', pupil:'#00ffcc', mouth:'open',  glow:'#7c3aed' },
-    love:     { body:'#2a1a4e', fur:'#3d2870', pupil:'#ff66aa', mouth:'smile', glow:'#c026d3' },
-    sleepy:   { body:'#1a1238', fur:'#281c5a', pupil:'#6644aa', mouth:'flat',  glow:'#4c1d95' },
+    happy:    { body:'#2a1a4e', fur:'#3d2870', pupil:'#00ff88', mouth:'smile',   glow:'#7c3aed' },
+    thinking: { body:'#1e1440', fur:'#30206a', pupil:'#00e5ff', mouth:'flat',    glow:'#4c1d95' },
+    surprised:{ body:'#3a2060', fur:'#4e3290', pupil:'#00ff88', mouth:'open',    glow:'#8b5cf6' },
+    sad:      { body:'#181030', fur:'#241a50', pupil:'#9966ff', mouth:'frown',   glow:'#3730a3' },
+    excited:  { body:'#2e1860', fur:'#4a2890', pupil:'#00ffcc', mouth:'open',    glow:'#7c3aed' },
+    love:     { body:'#2a1a4e', fur:'#3d2870', pupil:'#ff66aa', mouth:'smile',   glow:'#c026d3' },
+    sleepy:   { body:'#1a1238', fur:'#281c5a', pupil:'#6644aa', mouth:'flat',    glow:'#4c1d95' },
+    angry:    { body:'#5a0c20', fur:'#8a1432', pupil:'#ff2244', mouth:'grimace', glow:'#cc1040', brow:'#ff4466' },
+    scared:   { body:'#1e1848', fur:'#2e2668', pupil:'#aa88ff', mouth:'open',   glow:'#4a3a80' },
+    silly:    { body:'#3a2068', fur:'#5a3490', pupil:'#ffdd00', mouth:'silly',   glow:'#9955ee' },
+    cry:      { body:'#141026', fur:'#1e1840', pupil:'#7755bb', mouth:'frown',   glow:'#241860' },
   };
 
   let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
@@ -98,15 +102,17 @@
         ctx.strokeStyle = m.pupil + 'aa'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke();
         if (mood === 'sleepy') { ctx.font='bold 10px serif'; ctx.fillStyle=m.pupil+'88'; ctx.fillText('z', ex+10, ey-6); }
       } else {
-        // Slit pupil (panther-like)
-        const eyeGlow = ctx.createRadialGradient(ex, ey, 1, ex, ey, 11);
+        // Slit pupil (panther-like) — scared: wide glow, tiny slit
+        const eyeR = mood==='scared'?12:10;
+        const eyeGlow = ctx.createRadialGradient(ex, ey, 1, ex, ey, eyeR+1);
         eyeGlow.addColorStop(0, m.pupil+'cc'); eyeGlow.addColorStop(1, 'transparent');
-        ctx.beginPath(); ctx.ellipse(ex, ey, 10, 10, 0, 0, Math.PI*2);
+        ctx.beginPath(); ctx.ellipse(ex, ey, eyeR, eyeR, 0, 0, Math.PI*2);
         ctx.fillStyle = '#111'; ctx.fill();
-        ctx.beginPath(); ctx.ellipse(ex, ey, 10, 10, 0, 0, Math.PI*2);
+        ctx.beginPath(); ctx.ellipse(ex, ey, eyeR, eyeR, 0, 0, Math.PI*2);
         ctx.fillStyle = eyeGlow; ctx.fill();
-        // vertical slit
-        ctx.beginPath(); ctx.ellipse(ex, ey, 3, 8, 0, 0, Math.PI*2);
+        // vertical slit — scared: contracted (very thin)
+        const slitW = mood==='scared'?1.5:3;
+        ctx.beginPath(); ctx.ellipse(ex, ey, slitW, 8, 0, 0, Math.PI*2);
         ctx.fillStyle = '#000'; ctx.fill();
         // eye shine
         ctx.beginPath(); ctx.arc(ex+3, ey-4, 2, 0, Math.PI*2);
@@ -138,6 +144,30 @@
       });
     }
 
+    // Angry brows
+    if (mood === 'angry') {
+      [[63,52],[97,52]].forEach(([ex,ey],i) => {
+        ctx.beginPath();
+        ctx.moveTo(ex+(i===0?-11:11),ey-13+b); ctx.lineTo(ex+(i===0?11:-11),ey-7+b);
+        ctx.strokeStyle=m.brow||'#ff2244'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.stroke();
+      });
+    }
+    // Scared sweat
+    if (mood === 'scared') {
+      const sw=((t*0.0015)%1), swy=36+sw*16+b, swa=Math.max(0,1-sw*2)*0.85;
+      ctx.beginPath(); ctx.arc(108,swy,4,0,Math.PI*2); ctx.fillStyle=`rgba(140,200,255,${swa})`; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(104,swy-2); ctx.lineTo(108,swy-9); ctx.lineTo(112,swy-2); ctx.closePath();
+      ctx.fillStyle=`rgba(140,200,255,${swa*0.6})`; ctx.fill();
+    }
+    // Cry tears
+    if (mood === 'cry') {
+      [[63,52],[97,52]].forEach(([ex,ey],i) => {
+        const td=((t*0.0018)+i*0.5)%1, ty=ey+14+td*28+b, ta=Math.max(0,1-td*1.8)*0.85;
+        ctx.beginPath(); ctx.arc(ex,ty,3.5,0,Math.PI*2); ctx.fillStyle=`rgba(120,100,200,${ta})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(ex,ey+14+b); ctx.lineTo(ex,ty-3);
+        ctx.strokeStyle=`rgba(140,120,220,${ta*0.5})`; ctx.lineWidth=1.8; ctx.stroke();
+      });
+    }
     // Mouth
     mouthVal += 0.034 * mouthDir; if (mouthVal > 1) mouthDir = -1; if (mouthVal < 0) { mouthVal = 0; mouthDir = 1; }
     ctx.save(); ctx.translate(80, 71+b);
@@ -148,8 +178,20 @@
       const mo = 4 + mouthVal * 4;
       ctx.beginPath(); ctx.ellipse(0, 2, 7, mo, 0, 0, Math.PI*2);
       ctx.fillStyle = '#440022'; ctx.fill(); ctx.stroke();
+    } else if (m.mouth === 'grimace') {
+      ctx.fillStyle = 'rgba(200,100,140,0.85)'; ctx.fillRect(-9,-2,18,7);
+      ctx.beginPath(); ctx.moveTo(-9,-2); ctx.lineTo(9,-2); ctx.moveTo(-9,5); ctx.lineTo(9,5);
+      ctx.strokeStyle = 'rgba(200,180,255,0.7)'; ctx.lineWidth = 2; ctx.stroke();
     } else { ctx.beginPath(); ctx.moveTo(-6, 2); ctx.lineTo(6, 2); ctx.stroke(); }
     ctx.restore();
+    // Silly tongue
+    if (mood === 'silly') {
+      ctx.save(); ctx.translate(80, 77+b);
+      ctx.beginPath(); ctx.ellipse(2,7,6,8,0.2,0,Math.PI*2); ctx.fillStyle='#ff66aa'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(8,9);
+      ctx.strokeStyle='rgba(180,40,100,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.restore();
+    }
 
     // Love hearts
     if (mood === 'love') {
@@ -196,6 +238,10 @@
       { text:"*ears perk up suddenly* ...Did you hear that?", mood:'surprised' },
       { text:"Swift, silent, always here. That's me. 🐾", mood:'happy' },
       { text:"You are safe while I watch. Always. 💜", mood:'love' },
+      { text:"...*hiss* Someone called me a 'cute kitty'. Unacceptable. 😠🐆", mood:'angry' },
+      { text:"*back fur standing on end* The shadows moved on their own...! 😱", mood:'scared' },
+      { text:"*spotted wearing tiny hat* You saw nothing. 😜 NOTHING.", mood:'silly' },
+      { text:"*sits alone in darkness* ...Even shadows get lonely sometimes. 😢", mood:'cry' },
     ],
     greetings: {
       am:    ["...Morning. *steps from shadows* Let's see what today brings.", "Dawn breaks. Thanther has been watching all night. 🌑", "Morning. *yawns with teeth showing* Ready? 🐆"],

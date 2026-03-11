@@ -11,13 +11,17 @@
   };
 
   const MOODS = {
-    happy:    { body:'#00b4d8', belly:'#caf0f8', pupil:'#023e8a', mouth:'smile', glow:'#48cae4' },
-    thinking: { body:'#0096c7', belly:'#ade8f4', pupil:'#03045e', mouth:'flat',  glow:'#00b4d8' },
-    surprised:{ body:'#48cae4', belly:'#e0f7fa', pupil:'#023e8a', mouth:'open',  glow:'#90e0ef' },
-    sad:      { body:'#0077b6', belly:'#ade8f4', pupil:'#03045e', mouth:'frown', glow:'#00b4d8' },
-    excited:  { body:'#00d4f4', belly:'#e0f9ff', pupil:'#023e8a', mouth:'open',  glow:'#48cae4' },
-    love:     { body:'#00b4d8', belly:'#e0f7ff', pupil:'#023e8a', mouth:'smile', glow:'#ff80b0' },
-    sleepy:   { body:'#0096c7', belly:'#caf0f8', pupil:'#03045e', mouth:'flat',  glow:'#0077b6' },
+    happy:    { body:'#00b4d8', belly:'#caf0f8', pupil:'#023e8a', mouth:'smile',   glow:'#48cae4' },
+    thinking: { body:'#0096c7', belly:'#ade8f4', pupil:'#03045e', mouth:'flat',    glow:'#00b4d8' },
+    surprised:{ body:'#48cae4', belly:'#e0f7fa', pupil:'#023e8a', mouth:'open',    glow:'#90e0ef' },
+    sad:      { body:'#0077b6', belly:'#ade8f4', pupil:'#03045e', mouth:'frown',   glow:'#00b4d8' },
+    excited:  { body:'#00d4f4', belly:'#e0f9ff', pupil:'#023e8a', mouth:'open',    glow:'#48cae4' },
+    love:     { body:'#00b4d8', belly:'#e0f7ff', pupil:'#023e8a', mouth:'smile',   glow:'#ff80b0' },
+    sleepy:   { body:'#0096c7', belly:'#caf0f8', pupil:'#03045e', mouth:'flat',    glow:'#0077b6' },
+    angry:    { body:'#cc5544', belly:'#ffcccc', pupil:'#3a0000', mouth:'grimace', glow:'#ff4422', brow:'#8b0000' },
+    scared:   { body:'#5888b0', belly:'#b8d8ee', pupil:'#02205a', mouth:'open',   glow:'#4070a0' },
+    silly:    { body:'#22cce4', belly:'#d0f8ff', pupil:'#023e8a', mouth:'silly',   glow:'#00bbdd' },
+    cry:      { body:'#3878a8', belly:'#9cc4dc', pupil:'#021850', mouth:'frown',   glow:'#2060a0' },
   };
 
   let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
@@ -113,8 +117,9 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
         if (mood === 'sleepy') { ctx.font='bold 10px serif'; ctx.fillStyle='rgba(200,240,255,0.7)'; ctx.fillText('z', ex+10, ey-6); }
       } else {
-        ctx.beginPath(); ctx.ellipse(ex, ey, 9, 10, 0, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
-        const pw = mood === 'surprised' ? 7 : 6;
+        const ew=mood==='scared'?11:9, eh=mood==='scared'?12:10;
+        ctx.beginPath(); ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+        const pw = mood === 'surprised' ? 7 : mood === 'scared' ? 2.5 : 6;
         ctx.beginPath(); ctx.ellipse(ex+1, ey+1, pw, pw, 0, 0, Math.PI*2); ctx.fillStyle = m.pupil; ctx.fill();
         ctx.beginPath(); ctx.arc(ex-2, ey-3, 2.5, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
       }
@@ -129,12 +134,35 @@
       });
     }
 
+    // Angry brows
+    if (mood === 'angry') {
+      [[62,50],[98,50]].forEach(([ex,ey],i) => {
+        ctx.beginPath();
+        ctx.moveTo(ex+(i===0?-11:11),ey-12+b); ctx.lineTo(ex+(i===0?11:-11),ey-6+b);
+        ctx.strokeStyle=m.brow||'#8b0000'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.stroke();
+      });
+    }
+    // Scared sweat
+    if (mood === 'scared') {
+      const sw=((t*0.0015)%1), swy=34+sw*16+b, swa=Math.max(0,1-sw*2)*0.85;
+      ctx.beginPath(); ctx.arc(110,swy,4,0,Math.PI*2); ctx.fillStyle=`rgba(140,200,255,${swa})`; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(106,swy-2); ctx.lineTo(110,swy-9); ctx.lineTo(114,swy-2); ctx.closePath();
+      ctx.fillStyle=`rgba(140,200,255,${swa*0.6})`; ctx.fill();
+    }
+    // Cry tears
+    if (mood === 'cry') {
+      [[62,50],[98,50]].forEach(([ex,ey],i) => {
+        const td=((t*0.0018)+i*0.5)%1, ty=ey+12+td*26+b, ta=Math.max(0,1-td*1.8)*0.85;
+        ctx.beginPath(); ctx.arc(ex,ty,3.5,0,Math.PI*2); ctx.fillStyle=`rgba(100,160,220,${ta})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(ex,ey+12+b); ctx.lineTo(ex,ty-3);
+        ctx.strokeStyle=`rgba(120,180,240,${ta*0.5})`; ctx.lineWidth=1.8; ctx.stroke();
+      });
+    }
     // Mouth (dolphin always has a natural smile curve)
     mouthVal += 0.034 * mouthDir; if (mouthVal > 1) mouthDir = -1; if (mouthVal < 0) { mouthVal = 0; mouthDir = 1; }
     ctx.save(); ctx.translate(80, 70+b);
     ctx.strokeStyle = li(m.body, -30); ctx.lineWidth = 2.5; ctx.lineCap = 'round';
     if (m.mouth === 'smile' || m.mouth === 'flat') {
-      // Natural dolphin grin
       ctx.beginPath(); ctx.arc(0, 2, 12, 0.1, Math.PI-0.1); ctx.stroke();
     } else if (m.mouth === 'frown') {
       ctx.beginPath(); ctx.arc(0, 10, 12, Math.PI+0.1, -0.1); ctx.stroke();
@@ -142,8 +170,20 @@
       const mo = 3 + mouthVal * 3;
       ctx.beginPath(); ctx.ellipse(0, 4, 10, mo, 0, 0, Math.PI*2);
       ctx.fillStyle = '#004466'; ctx.fill(); ctx.stroke();
+    } else if (m.mouth === 'grimace') {
+      ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(-10,-2,20,7);
+      ctx.beginPath(); ctx.moveTo(-10,-2); ctx.lineTo(10,-2); ctx.moveTo(-10,5); ctx.lineTo(10,5);
+      ctx.strokeStyle = li(m.body,-30); ctx.lineWidth = 2; ctx.stroke();
     }
     ctx.restore();
+    // Silly tongue
+    if (mood === 'silly') {
+      ctx.save(); ctx.translate(80, 76+b);
+      ctx.beginPath(); ctx.ellipse(3,8,7,9,0.15,0,Math.PI*2); ctx.fillStyle='#ff7090'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4,10); ctx.lineTo(10,10);
+      ctx.strokeStyle='rgba(200,40,70,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.restore();
+    }
 
     // Love hearts
     if (mood === 'love') {
@@ -189,6 +229,10 @@
       { text:"*blows a bubble* Pop! Hehe 🫧", mood:'excited' },
       { text:"*circles playfully* Come swim with me sometime!", mood:'happy' },
       { text:"Waves say hi! 🌊 And so do I~ 🐬", mood:'happy' },
+      { text:"EEK EEK EEK!! Someone threw plastic in the ocean AGAIN! 😠🐬", mood:'angry' },
+      { text:"*hides behind wave* Was that a... f-fishing net?! 😱🌊", mood:'scared' },
+      { text:"*balances seashell on snout* BEHOLD! The greatest trick! 😜🐚", mood:'silly' },
+      { text:"*sad squeaks* I lost my favorite seashell in the current 😢🌊", mood:'cry' },
     ],
     greetings: {
       am:    ["Good morning! *leaps from the waves* A fresh new day! 🐬","Rise and splash! 🌊 Fordolphin is SO ready for today!","Morning! *clicks happily* The ocean is sparkling today~ 💙"],

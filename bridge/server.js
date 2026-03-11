@@ -25,10 +25,10 @@ You are cheerful, warm, playful, and full of personality. Keep responses SHORT (
 Always end with a relevant emoji or two.
 When the user's message includes hardware stats, you may comment on them naturally.
 After your response text, on a new line write ONLY: MOOD:<mood>
-where <mood> is one of: happy, thinking, surprised, sad, excited, love, sleepy
+where <mood> is one of: happy, thinking, surprised, sad, excited, love, sleepy, angry, scared, silly, cry
 Pick the mood that best fits your reply.`;
 
-const VALID_MOODS = new Set(['happy','thinking','surprised','sad','excited','love','sleepy']);
+const VALID_MOODS = new Set(['happy','thinking','surprised','sad','excited','love','sleepy','angry','scared','silly','cry']);
 
 function parseMood(raw) {
   const match = raw.match(/\nMOOD:(\w+)\s*$/);

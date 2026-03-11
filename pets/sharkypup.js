@@ -11,13 +11,17 @@
   };
 
   const MOODS = {
-    happy:    { body:'#5d8aa8', pupil:'#1a2a4a', mouth:'smile',  glow:'#4fc3f7' },
-    thinking: { body:'#7986cb', pupil:'#1a237e', mouth:'flat',   glow:'#5c6bc0' },
-    surprised:{ body:'#81d4fa', pupil:'#01579b', mouth:'open',   glow:'#81d4fa' },
-    sad:      { body:'#78909c', pupil:'#263238', mouth:'frown',  glow:'#546e7a' },
-    excited:  { body:'#29b6f6', pupil:'#01579b', mouth:'open',   glow:'#4fc3f7' },
-    love:     { body:'#f48fb1', pupil:'#880e4f', mouth:'smile',  glow:'#f06292' },
-    sleepy:   { body:'#90a4ae', pupil:'#37474f', mouth:'flat',   glow:'#78909c' },
+    happy:    { body:'#5d8aa8', pupil:'#1a2a4a', mouth:'smile',   glow:'#4fc3f7' },
+    thinking: { body:'#7986cb', pupil:'#1a237e', mouth:'flat',    glow:'#5c6bc0' },
+    surprised:{ body:'#81d4fa', pupil:'#01579b', mouth:'open',    glow:'#81d4fa' },
+    sad:      { body:'#78909c', pupil:'#263238', mouth:'frown',   glow:'#546e7a' },
+    excited:  { body:'#29b6f6', pupil:'#01579b', mouth:'open',    glow:'#4fc3f7' },
+    love:     { body:'#f48fb1', pupil:'#880e4f', mouth:'smile',   glow:'#f06292' },
+    sleepy:   { body:'#90a4ae', pupil:'#37474f', mouth:'flat',    glow:'#78909c' },
+    angry:    { body:'#e04444', pupil:'#3a0000', mouth:'grimace', glow:'#ff2211', brow:'#8b0000' },
+    scared:   { body:'#c4d8e8', pupil:'#2a3c50', mouth:'open',   glow:'#9ab8cc' },
+    silly:    { body:'#44dd88', pupil:'#00401a', mouth:'silly',   glow:'#22cc66' },
+    cry:      { body:'#5880a0', pupil:'#1a2c40', mouth:'frown',   glow:'#3060a0' },
   };
 
   let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
@@ -96,8 +100,9 @@
         ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.stroke();
         if(mood==='sleepy'){ctx.font='bold 10px serif';ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText('z',ex+10,ey-6);}
       } else {
-        ctx.beginPath(); ctx.ellipse(ex,ey,10,11,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-        const pw = mood==='surprised'?8:6.5;
+        const ew=mood==='scared'?12:10, eh=mood==='scared'?13:11;
+        ctx.beginPath(); ctx.ellipse(ex,ey,ew,eh,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        const pw = mood==='surprised'?8 : mood==='scared'?3 : 6.5;
         ctx.beginPath(); ctx.ellipse(ex+1,ey+1,pw,pw,0,0,Math.PI*2); ctx.fillStyle=m.pupil; ctx.fill();
         ctx.beginPath(); ctx.arc(ex-2.5,ey-3,2.5,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.fill();
       }
@@ -124,11 +129,35 @@
       ctx.fillText('♥',98+Math.cos(t*.004)*2,36+b);
     }
 
+    // ── Angry brows ──
+    if(mood==='angry'){
+      [[64,58],[96,58]].forEach(([ex,ey],i) => {
+        ctx.beginPath();
+        ctx.moveTo(ex+(i===0?-11:11),ey-13+b); ctx.lineTo(ex+(i===0?11:-11),ey-7+b);
+        ctx.strokeStyle=m.brow||'#880000'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.stroke();
+      });
+    }
+    // ── Scared sweat drop ──
+    if(mood==='scared'){
+      const sw=((t*0.0015)%1), swy=40+sw*16+b, swa=Math.max(0,1-sw*2)*0.85;
+      ctx.beginPath(); ctx.arc(108,swy,4,0,Math.PI*2); ctx.fillStyle=`rgba(140,200,255,${swa})`; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(104,swy-2); ctx.lineTo(108,swy-9); ctx.lineTo(112,swy-2); ctx.closePath();
+      ctx.fillStyle=`rgba(140,200,255,${swa*0.6})`; ctx.fill();
+    }
     // ── Thinking dots ──
     if(mood==='thinking'){
       [0,1,2].forEach(i => {
         ctx.beginPath(); ctx.arc(112+i*9,28-i*9+b,3+i*2,0,Math.PI*2);
         ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.fill();
+      });
+    }
+    // ── Cry tears ──
+    if(mood==='cry'){
+      [[64,58],[96,58]].forEach(([ex,ey],i) => {
+        const td=((t*0.0018)+i*0.5)%1, ty=ey+13+td*26+b, ta=Math.max(0,1-td*1.8)*0.85;
+        ctx.beginPath(); ctx.arc(ex,ty,3.5,0,Math.PI*2); ctx.fillStyle=`rgba(100,160,220,${ta})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(ex,ey+13+b); ctx.lineTo(ex,ty-3);
+        ctx.strokeStyle=`rgba(120,180,240,${ta*0.5})`; ctx.lineWidth=1.8; ctx.stroke();
       });
     }
 
@@ -138,7 +167,6 @@
     ctx.strokeStyle=li(m.body,-40); ctx.lineWidth=2.5; ctx.lineCap='round';
     if(m.mouth==='smile'){
       ctx.beginPath(); ctx.arc(0,0,9,.2,Math.PI-.2); ctx.stroke();
-      // One cute lil shark tooth
       ctx.fillStyle='#fff';
       ctx.beginPath(); ctx.moveTo(-2,4); ctx.lineTo(0,9); ctx.lineTo(2,4); ctx.closePath(); ctx.fill();
     }
@@ -146,13 +174,29 @@
     else if(m.mouth==='open'){
       const mo=4+mouthVal*4;
       ctx.beginPath();ctx.ellipse(0,2,9,mo,0,0,Math.PI*2);ctx.fillStyle='#e53935';ctx.fill();ctx.stroke();
-      // Row of shark teeth
       ctx.fillStyle='#fff';
       for(let ti=-1;ti<=1;ti++){
         ctx.beginPath(); ctx.moveTo(ti*5-2.5,2); ctx.lineTo(ti*5,8); ctx.lineTo(ti*5+2.5,2); ctx.closePath(); ctx.fill();
       }
+    } else if(m.mouth==='grimace'){
+      ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(-9,-2,18,7);
+      // Shark teeth grimace row
+      ctx.fillStyle='rgba(240,240,240,1)';
+      for(let ti=-1;ti<=1;ti++){
+        ctx.beginPath(); ctx.moveTo(ti*5-2,-2); ctx.lineTo(ti*5,3); ctx.lineTo(ti*5+2,-2); ctx.closePath(); ctx.fill();
+      }
+      ctx.beginPath(); ctx.moveTo(-9,-2); ctx.lineTo(9,-2); ctx.moveTo(-9,5); ctx.lineTo(9,5);
+      ctx.strokeStyle=li(m.body,-40); ctx.lineWidth=2; ctx.stroke();
     } else {ctx.beginPath();ctx.moveTo(-7,2);ctx.lineTo(7,2);ctx.stroke();}
     ctx.restore();
+    // ── Silly tongue ──
+    if(mood==='silly'){
+      ctx.save(); ctx.translate(80,85+b);
+      ctx.beginPath(); ctx.ellipse(2,7,6,8,0.2,0,Math.PI*2); ctx.fillStyle='#ff7090'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(8,9);
+      ctx.strokeStyle='rgba(200,40,70,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.restore();
+    }
   }
 
   window.PET_REGISTRY.push({
@@ -175,6 +219,10 @@
       { text:"*belly flop* 💦 Hehe oops~ Still the cutest sea pup!", mood:'happy' },
       { text:"I may be part shark but I only chomp bad vibes! 💙🦈", mood:'love' },
       { text:"*tail fin wagging at max velocity* SO happy you're here! 🦈🐶", mood:'excited' },
+      { text:"GRRRR! Someone said I look like a goldfish!! 😠🦈 OUTRAGEOUS!", mood:'angry' },
+      { text:"*hides dorsal fin* I'm NOT a big shark, please don't be scared of me!! 😱", mood:'scared' },
+      { text:"*balances ball on snout* LOOK LOOK! I'm a circus shark! 😜🎪", mood:'silly' },
+      { text:"*swims in sad little circles* Nobody wants to pet a shark puppy 😢", mood:'cry' },
     ],
     greetings: {
       am:    ["Good morning! *splashes excitedly* 🌊 Ready to make waves today? 🦈","Rise and CHOMP! 🦈 SharkPup is SO ready to swim through the day! ☀️","Morning! Did you know sharks never stop moving? Neither will I — too excited to see you! 🦈✨"],

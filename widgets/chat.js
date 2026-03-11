@@ -13,6 +13,7 @@ function toggleChat() {
   if (chatOpen) {
     document.getElementById('chat-unread-dot').style.display = 'none';
     setTimeout(() => chatHistEl.scrollTop = chatHistEl.scrollHeight, 50);
+    setTimeout(_updatePillArrows, 80);
     chatInput.focus();
   }
 }
@@ -94,6 +95,29 @@ function addMessage(role, text) {
 }
 
 function handlePill(text) { chatInput.value = text; sendMessage(); }
+
+function scrollPills(dir) {
+  const row = document.getElementById('pill-row');
+  if (!row) return;
+  row.scrollLeft += dir * 120;
+  setTimeout(_updatePillArrows, 150);
+}
+function _updatePillArrows() {
+  const row = document.getElementById('pill-row');
+  const l = document.getElementById('pill-arr-l');
+  const r = document.getElementById('pill-arr-r');
+  if (!row || !l || !r) return;
+  l.disabled = row.scrollLeft <= 0;
+  r.disabled = row.scrollLeft >= row.scrollWidth - row.clientWidth - 1;
+}
+// Init arrow state when chat opens
+(function() {
+  const row = document.getElementById('pill-row');
+  if (row) {
+    row.addEventListener('scroll', _updatePillArrows);
+    setTimeout(_updatePillArrows, 300);
+  }
+})();
 
 function getChatHistory() { return chatLog.slice(-12); }
 

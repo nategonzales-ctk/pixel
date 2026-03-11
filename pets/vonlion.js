@@ -11,13 +11,17 @@
   };
 
   const MOODS = {
-    happy:    { body:'#f4a827', mane:'#b5621e', pupil:'#3a1a00', mouth:'smile', glow:'#ffd060' },
-    thinking: { body:'#e8962a', mane:'#9e5219', pupil:'#2a1800', mouth:'flat',  glow:'#f4c050' },
-    surprised:{ body:'#fbbf3a', mane:'#c46e22', pupil:'#3a1a00', mouth:'open',  glow:'#ffe080' },
-    sad:      { body:'#c8922a', mane:'#7a4012', pupil:'#2a1200', mouth:'frown', glow:'#b07820' },
-    excited:  { body:'#ffcc44', mane:'#cc6a1a', pupil:'#3a1a00', mouth:'open',  glow:'#ffe044' },
-    love:     { body:'#f4a827', mane:'#c4521a', pupil:'#3a1a00', mouth:'smile', glow:'#ff9966' },
-    sleepy:   { body:'#d49030', mane:'#8a4818', pupil:'#2a1a00', mouth:'flat',  glow:'#c08840' },
+    happy:    { body:'#f4a827', mane:'#b5621e', pupil:'#3a1a00', mouth:'smile',   glow:'#ffd060' },
+    thinking: { body:'#e8962a', mane:'#9e5219', pupil:'#2a1800', mouth:'flat',    glow:'#f4c050' },
+    surprised:{ body:'#fbbf3a', mane:'#c46e22', pupil:'#3a1a00', mouth:'open',    glow:'#ffe080' },
+    sad:      { body:'#c8922a', mane:'#7a4012', pupil:'#2a1200', mouth:'frown',   glow:'#b07820' },
+    excited:  { body:'#ffcc44', mane:'#cc6a1a', pupil:'#3a1a00', mouth:'open',    glow:'#ffe044' },
+    love:     { body:'#f4a827', mane:'#c4521a', pupil:'#3a1a00', mouth:'smile',   glow:'#ff9966' },
+    sleepy:   { body:'#d49030', mane:'#8a4818', pupil:'#2a1a00', mouth:'flat',    glow:'#c08840' },
+    angry:    { body:'#e05520', mane:'#8a2200', pupil:'#3a0000', mouth:'grimace', glow:'#ff4422', brow:'#6a1100' },
+    scared:   { body:'#d4a858', mane:'#8a6828', pupil:'#3a2000', mouth:'open',   glow:'#b09040' },
+    silly:    { body:'#ffe040', mane:'#dd8800', pupil:'#3a2400', mouth:'silly',   glow:'#ffd000' },
+    cry:      { body:'#b07830', mane:'#6a4010', pupil:'#2a1800', mouth:'frown',   glow:'#806020' },
   };
 
   let blinkTimer = 0, blinkOpen = true, mouthVal = 0, mouthDir = 1;
@@ -109,8 +113,9 @@
         ctx.strokeStyle = '#fff8'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
         if (mood === 'sleepy') { ctx.font='bold 10px serif'; ctx.fillStyle='rgba(255,255,200,0.6)'; ctx.fillText('z', ex+10, ey-6); }
       } else {
-        ctx.beginPath(); ctx.ellipse(ex, ey, 9, 10, 0, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
-        const pw = mood === 'surprised' ? 7 : 6;
+        const ew=mood==='scared'?11:9, eh=mood==='scared'?12:10;
+        ctx.beginPath(); ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+        const pw = mood === 'surprised' ? 7 : mood === 'scared' ? 3 : 6;
         ctx.beginPath(); ctx.ellipse(ex+1, ey+1, pw, pw, 0, 0, Math.PI*2); ctx.fillStyle = m.pupil; ctx.fill();
         ctx.beginPath(); ctx.arc(ex-2, ey-3, 2.5, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
       }
@@ -140,6 +145,30 @@
       });
     });
 
+    // Angry brows
+    if (mood === 'angry') {
+      [[64,52],[96,52]].forEach(([ex,ey],i) => {
+        ctx.beginPath();
+        ctx.moveTo(ex+(i===0?-11:11),ey-13+b); ctx.lineTo(ex+(i===0?11:-11),ey-7+b);
+        ctx.strokeStyle=m.brow||'#6a1100'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.stroke();
+      });
+    }
+    // Scared sweat
+    if (mood === 'scared') {
+      const sw=((t*0.0015)%1), swy=36+sw*16+b, swa=Math.max(0,1-sw*2)*0.85;
+      ctx.beginPath(); ctx.arc(108,swy,4,0,Math.PI*2); ctx.fillStyle=`rgba(140,200,255,${swa})`; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(104,swy-2); ctx.lineTo(108,swy-9); ctx.lineTo(112,swy-2); ctx.closePath();
+      ctx.fillStyle=`rgba(140,200,255,${swa*0.6})`; ctx.fill();
+    }
+    // Cry tears
+    if (mood === 'cry') {
+      [[64,52],[96,52]].forEach(([ex,ey],i) => {
+        const td=((t*0.0018)+i*0.5)%1, ty=ey+14+td*28+b, ta=Math.max(0,1-td*1.8)*0.85;
+        ctx.beginPath(); ctx.arc(ex,ty,3.5,0,Math.PI*2); ctx.fillStyle=`rgba(100,160,220,${ta})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(ex,ey+14+b); ctx.lineTo(ex,ty-3);
+        ctx.strokeStyle=`rgba(120,180,240,${ta*0.5})`; ctx.lineWidth=1.8; ctx.stroke();
+      });
+    }
     // Mouth
     mouthVal += 0.034 * mouthDir; if (mouthVal > 1) mouthDir = -1; if (mouthVal < 0) { mouthVal = 0; mouthDir = 1; }
     ctx.save(); ctx.translate(80, 71+b);
@@ -149,8 +178,20 @@
     else if (m.mouth === 'open') {
       const mo = 4 + mouthVal * 4;
       ctx.beginPath(); ctx.ellipse(0, 2, 7, mo, 0, 0, Math.PI*2); ctx.fillStyle = '#c0304a'; ctx.fill(); ctx.stroke();
+    } else if (m.mouth === 'grimace') {
+      ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(-9,-2,18,7);
+      ctx.beginPath(); ctx.moveTo(-9,-2); ctx.lineTo(9,-2); ctx.moveTo(-9,5); ctx.lineTo(9,5);
+      ctx.strokeStyle = li(m.body,-40); ctx.lineWidth = 2; ctx.stroke();
     } else { ctx.beginPath(); ctx.moveTo(-6, 2); ctx.lineTo(6, 2); ctx.stroke(); }
     ctx.restore();
+    // Silly tongue
+    if (mood === 'silly') {
+      ctx.save(); ctx.translate(80, 77+b);
+      ctx.beginPath(); ctx.ellipse(2,7,6,8,0.2,0,Math.PI*2); ctx.fillStyle='#ff7090'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4,9); ctx.lineTo(8,9);
+      ctx.strokeStyle='rgba(200,40,70,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.restore();
+    }
 
     // Love hearts
     if (mood === 'love') {
@@ -187,6 +228,10 @@
       { text:"Did you know lions sleep 18 hours a day? Relatable. 😴", mood:'sleepy' },
       { text:"*flicks tail rhythmically* Something interesting out there?", mood:'thinking' },
       { text:"You're doing great! Even the bravest lion needs encouragement 🦁", mood:'love' },
+      { text:"ROOOOAR!! Someone dared to sit in MY sunny spot!! 😠🦁", mood:'angry' },
+      { text:"*mane puffed up* W-was that thunder?! VonLion fears... nothing! *shaking* 😱", mood:'scared' },
+      { text:"*wears flower crown* Hehe~ Don't tell anyone! 🌸😜", mood:'silly' },
+      { text:"*quiet roar* Not every day can be a pride's day... 😢🦁", mood:'cry' },
     ],
     greetings: {
       am:    ["ROAR! Good morning! 🦁 The pride awakens!", "Rise, champion! VonLion greets the new day with you! ☀️", "Morning! *shakes mane* Ready to conquer the day? 🦁"],
