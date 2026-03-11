@@ -262,6 +262,26 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /geocode?city=NAME  (Open-Meteo geocoding — city name → lat/lon)
+  if (req.method === 'GET' && req.url.startsWith('/geocode')) {
+    const qs   = new URL(req.url, 'http://localhost').searchParams;
+    const city = (qs.get('city') || '').trim();
+    if (!city) { res.writeHead(400); res.end(JSON.stringify({ error: 'city required' })); return; }
+    try {
+      const enc  = encodeURIComponent(city);
+      const data = await httpsGet(`https://geocoding-api.open-meteo.com/v1/search?name=${enc}&count=1&language=en&format=json`);
+      if (!data.results || !data.results.length) {
+        res.writeHead(404); res.end(JSON.stringify({ error: 'city not found' })); return;
+      }
+      const r = data.results[0];
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ name: r.name, lat: r.latitude, lon: r.longitude, country: r.country }));
+    } catch (err) {
+      res.writeHead(503); res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
   // GET /weather  (wttr.in — location + weather in one call, 15-min cache)
   if (req.method === 'GET' && req.url === '/weather') {
     try {

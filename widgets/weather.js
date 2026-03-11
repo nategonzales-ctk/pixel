@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════
 //  WEATHER + LOCATION WIDGET
-//  Location: tries browser geolocation first, then
-//  falls back to bridge /location (server-side ip-api).
+//  Priority: 1. Saved manual city  2. Browser geo
+//            3. Bridge /location (IP)  4. Bridge /weather (wttr.in)
 //  Weather: Open-Meteo (free, no key needed).
 // ══════════════════════════════════════════════════
 
@@ -36,8 +36,10 @@ function _wmoInfo(code) {
   return WMO_CODES[code] || WMO_CODES[1] || ['🌡️', 'Unknown'];
 }
 
+const WEATHER_LOC_KEY = 'weatherManualCity';
 let _weatherCoords = null;
 let _locationName  = null;
+let _refreshTimer  = null;
 
 function _setWeatherStatus(text) {
   const el = document.getElementById('weather-desc');
@@ -86,34 +88,80 @@ async function _fetchWeather(lat, lon) {
   }
 }
 
-// IP-based location via bridge (server-side, bypasses WebView2 fetch restrictions)
+// ── Geocoding: city name → lat/lon ────────────────
+// Tries Open-Meteo geocoding directly, then bridge as fallback.
+async function _geocodeCity(name) {
+  const enc = encodeURIComponent(name);
+  // Direct call (Open-Meteo geocoding)
+  try {
+    const res = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${enc}&count=1&language=en&format=json`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data.results && data.results.length) {
+        const r = data.results[0];
+        return { name: r.name, lat: r.latitude, lon: r.longitude, country: r.country };
+      }
+    }
+  } catch(e) {
+    console.warn('[weather] direct geocode failed:', e.message);
+  }
+  // Bridge fallback
+  try {
+    const bridgeUrl = typeof BRIDGE_URL !== 'undefined' ? BRIDGE_URL : 'http://localhost:7842';
+    const res = await fetch(`${bridgeUrl}/geocode?city=${enc}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.lat) return data;
+    }
+  } catch(e) {
+    console.warn('[weather] bridge geocode failed:', e.message);
+  }
+  return null;
+}
+
+// Called from settings UI when user types a city name
+async function setWeatherCity(name) {
+  name = (name || '').trim();
+  if (!name) return;
+  _setWeatherStatus('Looking up ' + name + '…');
+  const loc = await _geocodeCity(name);
+  if (!loc) {
+    _setWeatherStatus('City not found: ' + name);
+    return;
+  }
+  const label = loc.country ? `${loc.name}, ${loc.country}` : loc.name;
+  localStorage.setItem(WEATHER_LOC_KEY, JSON.stringify({ name: label, lat: loc.lat, lon: loc.lon }));
+  // Update input to show resolved name
+  const inp = document.getElementById('weather-city-input');
+  if (inp) inp.value = label;
+  await _startWithCoords(loc.lat, loc.lon, label);
+}
+
+// Remove manual city — auto-detect on next call
+function clearWeatherCity() {
+  localStorage.removeItem(WEATHER_LOC_KEY);
+  const inp = document.getElementById('weather-city-input');
+  if (inp) inp.value = '';
+  _showFailed('Location cleared — will auto-detect on reload');
+}
+
+// ── Auto-detection fallbacks ───────────────────────
 async function _ipLocation() {
   const url = typeof BRIDGE_URL !== 'undefined' ? BRIDGE_URL : 'http://localhost:7842';
   try {
-    _setWeatherStatus('Trying bridge…');
-    console.log('[weather] calling', url + '/location');
+    _setWeatherStatus('Trying IP location…');
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
     const res = await fetch(`${url}/location`, { signal: ctrl.signal });
     clearTimeout(t);
-    console.log('[weather] bridge /location HTTP', res.status);
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      console.error('[weather] bridge /location error body:', body);
-      _setWeatherStatus('Location service error ' + res.status);
-      return null;
-    }
+    if (!res.ok) return null;
     const data = await res.json();
-    console.log('[weather] bridge /location data:', JSON.stringify(data));
-    if (!data.lat) {
-      _setWeatherStatus('No coords: ' + JSON.stringify(data).slice(0, 40));
-      return null;
-    }
+    if (!data.lat) return null;
     return { lat: data.lat, lon: data.lon, city: data.city || null };
   } catch(e) {
-    const msg = e.name === 'AbortError' ? 'bridge timeout' : e.message;
-    console.error('[weather] bridge location error:', msg);
-    _setWeatherStatus('Bridge: ' + msg);
+    console.warn('[weather] IP location failed:', e.message);
     return null;
   }
 }
@@ -123,30 +171,25 @@ function _showFailed(reason) {
   const elLoc  = document.getElementById('weather-location');
   const elIcon = document.getElementById('weather-icon');
   const elTemp = document.getElementById('weather-temp');
-  if (elLoc)  elLoc.textContent  = '📍 Unknown';
+  if (elLoc)  elLoc.textContent  = '📍 Set city in Settings';
   if (elIcon) elIcon.textContent = '🌡️';
   if (elTemp) elTemp.textContent = '--°C';
-  console.error('[weather] failed:', reason);
 }
 
-// Use bridge /weather (wttr.in) as final fallback — returns location+weather combined
 async function _bridgeWeather() {
   const url = typeof BRIDGE_URL !== 'undefined' ? BRIDGE_URL : 'http://localhost:7842';
   try {
     _setWeatherStatus('Trying wttr.in…');
-    console.log('[weather] calling', url + '/weather');
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 8000);
     const res = await fetch(`${url}/weather`, { signal: ctrl.signal });
     clearTimeout(t);
-    console.log('[weather] /weather HTTP', res.status);
     if (!res.ok) return null;
     const d = await res.json();
-    console.log('[weather] /weather data:', JSON.stringify(d));
     if (!d.temp && d.temp !== 0) return null;
-    return d; // { city, temp, condition, icon, humidity, wind }
+    return d;
   } catch(e) {
-    console.error('[weather] /weather error:', e.message);
+    console.warn('[weather] wttr.in failed:', e.message);
     return null;
   }
 }
@@ -167,7 +210,6 @@ function _renderBridgeWeather(d) {
   const panel = document.getElementById('weather-widget');
   if (panel) panel.classList.add('visible');
   if (typeof onWeatherReady === 'function') onWeatherReady();
-  // Store coords so 15-min refresh can use Open-Meteo instead of wttr.in
   if (d.lat) { _weatherCoords = { lat: d.lat, lon: d.lon }; _locationName = d.city; }
 }
 
@@ -180,27 +222,38 @@ async function refreshWeather() {
 }
 
 async function _startWithCoords(lat, lon, city) {
-  console.log('[weather] got coords:', lat, lon, 'city:', city);
+  console.log('[weather] coords:', lat, lon, 'city:', city);
   _weatherCoords = { lat, lon };
   if (city) _locationName = city;
   await refreshWeather();
-  setInterval(refreshWeather, 15 * 60 * 1000);
+  if (_refreshTimer) clearInterval(_refreshTimer);
+  _refreshTimer = setInterval(refreshWeather, 15 * 60 * 1000);
 }
 
 async function _tryFallbacks() {
-  // 1. Bridge /location (ip-api → ipapi.co → ipinfo.io)
+  // 1. Browser geolocation
+  if (navigator.geolocation) {
+    const geo = await new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        ()  => resolve(null),
+        { timeout: 5000, maximumAge: 5 * 60 * 1000 }
+      );
+    });
+    if (geo) { await _startWithCoords(geo.lat, geo.lon, null); return; }
+  }
+  // 2. Bridge IP location
   const loc = await _ipLocation();
   if (loc) { await _startWithCoords(loc.lat, loc.lon, loc.city); return; }
-
-  // 2. Bridge /weather (wttr.in — combined location + weather)
+  // 3. Bridge wttr.in
   const wd = await _bridgeWeather();
   if (wd) {
     _renderBridgeWeather(wd);
-    setInterval(refreshWeather, 15 * 60 * 1000);
+    if (_refreshTimer) clearInterval(_refreshTimer);
+    _refreshTimer = setInterval(refreshWeather, 15 * 60 * 1000);
     return;
   }
-
-  _showFailed('Start bridge for weather!');
+  _showFailed('Set your city in Settings ⚙');
 }
 
 function initWeather() {
@@ -210,25 +263,20 @@ function initWeather() {
   _setWeatherStatus('Locating…');
   panel.classList.add('visible');
 
-  console.log('[weather] geolocation available:', !!navigator.geolocation);
+  // Priority 1: user-saved manual city
+  try {
+    const saved = JSON.parse(localStorage.getItem(WEATHER_LOC_KEY));
+    if (saved && saved.lat) {
+      console.log('[weather] using saved city:', saved.name);
+      const inp = document.getElementById('weather-city-input');
+      if (inp) inp.value = saved.name;
+      _startWithCoords(saved.lat, saved.lon, saved.name);
+      return;
+    }
+  } catch(e) {}
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      async pos => {
-        console.log('[weather] geolocation success');
-        await _startWithCoords(pos.coords.latitude, pos.coords.longitude, null);
-      },
-      async err => {
-        console.warn('[weather] geolocation denied/failed:', err.code, err.message);
-        await _tryFallbacks();
-      },
-      { timeout: 5000, maximumAge: 5 * 60 * 1000 }
-    );
-  } else {
-    console.warn('[weather] no geolocation API');
-    _tryFallbacks().then(() => {
-    });
-  }
+  // Priority 2-4: auto-detect
+  _tryFallbacks();
 }
 
 // ── Weather chat integration ───────────────────────

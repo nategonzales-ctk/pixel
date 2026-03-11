@@ -1043,6 +1043,19 @@ body {
     <span class="settings-label">Weather</span>
     <label class="tog"><input type="checkbox" id="tog-weather" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
   </div>
+  <div class="settings-row" style="gap:5px">
+    <span class="settings-label">📍 City</span>
+    <input id="weather-city-input" type="text" placeholder="e.g. Manila"
+      style="flex:1;min-width:0;background:var(--surface2);border:1px solid rgba(217,102,255,0.28);border-radius:6px;color:var(--text);font-family:inherit;font-size:10px;font-weight:700;padding:3px 6px;outline:none"
+      onkeydown="if(event.key==='Enter')setWeatherCity(this.value)">
+    <button onclick="setWeatherCity(document.getElementById('weather-city-input').value)"
+      style="font-family:inherit;font-size:9px;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid rgba(217,102,255,0.4);background:none;color:var(--accent);cursor:pointer;white-space:nowrap"
+      onmouseover="this.style.background='rgba(217,102,255,0.12)'"
+      onmouseout="this.style.background='none'">Set</button>
+    <button onclick="clearWeatherCity()" title="Clear — auto-detect on reload"
+      style="font-family:inherit;font-size:9px;font-weight:900;padding:3px 7px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:none;color:var(--text-dim);cursor:pointer"
+      onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color=''">✕</button>
+  </div>
   <div class="settings-row">
     <span class="settings-label">Calendar</span>
     <label class="tog"><input type="checkbox" id="tog-calendar" checked onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
