@@ -8,8 +8,10 @@ const LAYOUT_KEY  = 'widgetPositions';
 const GRID        = 20;
 const MIN_VW      = 60;   // minimum visual width  (px)
 const MIN_VH      = 36;   // minimum visual height (px)
-const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'chat-panel', 'settings-btn', 'open-pet-selector', 'dn-btn', 'weather-widget', 'calendar-widget', 'todo-widget', 'pomodoro-widget', 'timer-widget', 'habits-widget', 'worldclock-widget', 'quote-widget', 'countdown-widget', 'sticky-widget', 'quicklinks-widget', 'network-widget', 'processes-widget', 'battery-widget', 'nowplaying-widget'];
+const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'chat-panel', 'settings-btn', 'open-pet-selector', 'dn-btn', 'mode-indicator', 'weather-widget', 'calendar-widget', 'todo-widget', 'pomodoro-widget', 'timer-widget', 'habits-widget', 'worldclock-widget', 'quote-widget', 'countdown-widget', 'sticky-widget', 'quicklinks-widget', 'network-widget', 'processes-widget', 'battery-widget', 'nowplaying-widget'];
 const HANDLE_DIRS = ['nw','n','ne','e','se','s','sw','w'];
+// Widgets that resize via real width/height (text reflows) instead of transform:scale
+const REFLOW_IDS  = new Set(['chat-panel', 'todo-widget', 'sticky-widget', 'habits-widget', 'quicklinks-widget', 'countdown-widget', 'worldclock-widget']);
 
 let layoutMode = false;
 let gridCanvas = null;
@@ -149,13 +151,20 @@ function _onMouseMove(e) {
   vw = Math.max(GRID, Math.round(vw / GRID) * GRID);
   vh = Math.max(GRID, Math.round(vh / GRID) * GRID);
 
-  // Apply scale transform (scales all content proportionally)
-  const sx = vw / resizeNatW;
-  const sy = vh / resizeNatH;
-  resizeEl.style.left            = vx + 'px';
-  resizeEl.style.top             = vy + 'px';
-  resizeEl.style.transformOrigin = 'top left';
-  resizeEl.style.transform       = `scaleX(${sx}) scaleY(${sy})`;
+  resizeEl.style.left = vx + 'px';
+  resizeEl.style.top  = vy + 'px';
+  if (REFLOW_IDS.has(resizeEl.id)) {
+    // Real width/height so text reflows instead of shrinking
+    resizeEl.style.width     = vw + 'px';
+    resizeEl.style.maxHeight = vh + 'px';
+    resizeEl.style.height    = vh + 'px';
+    resizeEl.style.transform = 'none';
+  } else {
+    const sx = vw / resizeNatW;
+    const sy = vh / resizeNatH;
+    resizeEl.style.transformOrigin = 'top left';
+    resizeEl.style.transform       = `scaleX(${sx}) scaleY(${sy})`;
+  }
 
   // Keep overlay aligned with new visual rect
   resizeOverlay.style.left   = vx + 'px';
@@ -184,14 +193,23 @@ function _onMouseUp() {
     let vh = parseFloat(resizeOverlay.style.height) || resizeStartVH;
     vx = Math.max(0, Math.min(window.innerWidth  - vw, vx));
     vy = Math.max(0, Math.min(window.innerHeight - vh, vy));
-    const sx = vw / resizeNatW;
-    const sy = vh / resizeNatH;
-    resizeEl.style.left  = vx + 'px';
-    resizeEl.style.top   = vy + 'px';
-    resizeEl.style.transform = `scaleX(${sx}) scaleY(${sy})`;
-    resizeOverlay.style.left   = vx + 'px';
-    resizeOverlay.style.top    = vy + 'px';
-    _saveScale(resizeEl.id, vx, vy, sx, sy);
+    resizeEl.style.left = vx + 'px';
+    resizeEl.style.top  = vy + 'px';
+    if (REFLOW_IDS.has(resizeEl.id)) {
+      resizeEl.style.width     = vw + 'px';
+      resizeEl.style.maxHeight = vh + 'px';
+      resizeEl.style.height    = vh + 'px';
+      resizeEl.style.transform = 'none';
+      // Store w/h as sx/sy (reinterpreted on restore)
+      _saveScale(resizeEl.id, vx, vy, vw, vh);
+    } else {
+      const sx = vw / resizeNatW;
+      const sy = vh / resizeNatH;
+      resizeEl.style.transform = `scaleX(${sx}) scaleY(${sy})`;
+      _saveScale(resizeEl.id, vx, vy, sx, sy);
+    }
+    resizeOverlay.style.left = vx + 'px';
+    resizeOverlay.style.top  = vy + 'px';
     resizeEl      = null;
     resizeOverlay = null;
   }
@@ -276,6 +294,7 @@ function _defaultPositions() {
     'settings-btn':      { top: null, left: null },
     'open-pet-selector': { top: null, left: null },
     'dn-btn':            { top: null, left: null },
+    'mode-indicator':    { top: null, left: null },
   };
 }
 
@@ -537,12 +556,20 @@ function _applyAllPositions() {
     Object.entries(saved).forEach(([id, pos]) => {
       const el = document.getElementById(id);
       if (!el) return;
-      el.style.left            = pos.x + 'px';
-      el.style.top             = pos.y + 'px';
-      el.style.right           = 'auto';
-      el.style.bottom          = 'auto';
-      el.style.transformOrigin = 'top left';
-      el.style.transform       = `scaleX(${pos.sx || 1}) scaleY(${pos.sy || 1})`;
+      el.style.left   = pos.x + 'px';
+      el.style.top    = pos.y + 'px';
+      el.style.right  = 'auto';
+      el.style.bottom = 'auto';
+      if (REFLOW_IDS.has(id) && pos.sx > 10) {
+        // sx/sy store actual pixel width/height for reflow widgets
+        el.style.width     = pos.sx + 'px';
+        el.style.maxHeight = pos.sy + 'px';
+        el.style.height    = pos.sy + 'px';
+        el.style.transform = 'none';
+      } else {
+        el.style.transformOrigin = 'top left';
+        el.style.transform       = `scaleX(${pos.sx || 1}) scaleY(${pos.sy || 1})`;
+      }
     });
   } catch(e) {}
 }
