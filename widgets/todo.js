@@ -19,13 +19,7 @@ function _renderTodos() {
   const list = document.getElementById('todo-list');
   if (!list) return;
   list.innerHTML = '';
-  if (_todos.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'todo-empty';
-    empty.textContent = 'Nothing here yet ✦';
-    list.appendChild(empty);
-    return;
-  }
+  if (_todos.length === 0) return;
   _todos.forEach((item, i) => {
     const row = document.createElement('div');
     row.className = 'todo-row' + (item.done ? ' done' : '');

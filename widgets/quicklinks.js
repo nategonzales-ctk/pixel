@@ -19,12 +19,7 @@ function _qlinksRender() {
   if (!list) return;
   list.innerHTML = '';
 
-  if (_qlinks.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'qlinks-empty';
-    empty.textContent = 'No links added yet';
-    list.appendChild(empty);
-  }
+  if (_qlinks.length === 0) { /* empty — just show add form */ }
 
   _qlinks.forEach((lk, i) => {
     const row = document.createElement('div');

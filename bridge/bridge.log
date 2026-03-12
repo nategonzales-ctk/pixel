@@ -217,3 +217,51 @@ Node.js v21.7.3
 
   🤖  Claude AI ready!
 
+(node:42256) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+  ✨  Pixel Bridge  ✨
+  http://localhost:7842
+  Hardware monitor: ON (refreshes every 3 s)
+
+  🤖  Claude AI ready!
+
+[location] trying https://ip-api.com/json/?fields=status,city,lat,lon
+[location] bad response from https://ip-api.com/json/?fields=status,city,lat,lon {"status":"fail"}
+[location] trying https://ipapi.co/json/
+[location] bad response from https://ipapi.co/json/ {"error":true,"reason":"RateLimited","message":"Visit https://ipapi.co/ratelimited/ "}
+[location] trying https://ipinfo.io/json
+[location] success: {"city":"Quezon City","lat":14.6488,"lon":121.0509}
+[claude] 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CYx88x4y2m5gwrTqi1ofB"}
+[claude] 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CYx8UD4eTxrDMHotd2S4Z"}
+[claude] 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CYx8V2C5GFqVLDEoi39j9"}
+[claude] 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CYx8WoqitYNDZ6u5b7hnp"}
+(node:5720) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+  ✨  Pixel Bridge  ✨
+  http://localhost:7842
+  Hardware monitor: ON (refreshes every 3 s)
+
+  🤖  Claude AI ready!
+
+[location] trying https://ip-api.com/json/?fields=status,city,lat,lon
+[location] trying https://ip-api.com/json/?fields=status,city,lat,lon
+[location] bad response from https://ip-api.com/json/?fields=status,city,lat,lon {"status":"fail"}
+[location] trying https://ipapi.co/json/
+[location] bad response from https://ip-api.com/json/?fields=status,city,lat,lon {"status":"fail"}
+[location] trying https://ipapi.co/json/
+[location] bad response from https://ipapi.co/json/ {"error":true,"reason":"RateLimited","message":"Visit https://ipapi.co/ratelimited/ "}
+[location] trying https://ipinfo.io/json
+[location] bad response from https://ipapi.co/json/ {"error":true,"reason":"RateLimited","message":"Visit https://ipapi.co/ratelimited/ "}
+[location] trying https://ipinfo.io/json
+[location] trying https://ip-api.com/json/?fields=status,city,lat,lon
+[location] bad response from https://ip-api.com/json/?fields=status,city,lat,lon {"status":"fail"}
+[location] trying https://ipapi.co/json/
+[location] success: {"city":"Quezon City","lat":14.6488,"lon":121.0509}
+[location] success: {"city":"Quezon City","lat":14.6488,"lon":121.0509}
+[location] bad response from https://ipapi.co/json/ {"error":true,"reason":"RateLimited","message":"Visit https://ipapi.co/ratelimited/ "}
+[location] trying https://ipinfo.io/json
+[location] success: {"city":"Quezon City","lat":14.6488,"lon":121.0509}
+[claude] 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CYxrMWpvmJC6vpp31NBa1"}
+[claude] 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CYxrMgwPVRAiwEY6UYMf8"}

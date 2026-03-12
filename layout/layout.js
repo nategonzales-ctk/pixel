@@ -8,7 +8,7 @@ const LAYOUT_KEY  = 'widgetPositions';
 const GRID        = 20;
 const MIN_VW      = 60;   // minimum visual width  (px)
 const MIN_VH      = 36;   // minimum visual height (px)
-const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'settings-btn', 'open-pet-selector', 'weather-widget', 'calendar-widget', 'todo-widget', 'pomodoro-widget', 'timer-widget', 'habits-widget', 'worldclock-widget', 'quote-widget', 'countdown-widget', 'sticky-widget', 'quicklinks-widget', 'network-widget', 'processes-widget', 'battery-widget', 'nowplaying-widget'];
+const WIDGET_IDS  = ['clock-widget', 'hw-panel', 'chat-bubble-btn', 'chat-panel', 'settings-btn', 'open-pet-selector', 'dn-btn', 'weather-widget', 'calendar-widget', 'todo-widget', 'pomodoro-widget', 'timer-widget', 'habits-widget', 'worldclock-widget', 'quote-widget', 'countdown-widget', 'sticky-widget', 'quicklinks-widget', 'network-widget', 'processes-widget', 'battery-widget', 'nowplaying-widget'];
 const HANDLE_DIRS = ['nw','n','ne','e','se','s','sw','w'];
 
 let layoutMode = false;
@@ -243,19 +243,187 @@ function toggleLayoutMode() {
 }
 
 // ── Reset all widget positions + sizes ────────────
+// ── Default widget positions (non-overlapping 4-column grid) ──
+// Left column x=36, col2 x=254, col3 x=464, right column anchored to right edge
+// 'r' = offset from right edge of display,  'b' = offset from bottom
+function _defaultPositions() {
+  const dw = typeof displayW !== 'undefined' ? displayW : 1920;
+  return {
+    // — Left column —
+    'clock-widget':      { top: 36,  left: 36 },
+    'todo-widget':       { top: 140, left: 36 },
+    'habits-widget':     { top: 440, left: 36 },
+    'quicklinks-widget': { top: 590, left: 36 },
+    // — Center-left column —
+    'worldclock-widget': { top: 36,  left: 254 },
+    'pomodoro-widget':   { top: 134, left: 254 },
+    'timer-widget':      { top: 310, left: 254 },
+    'countdown-widget':  { top: 446, left: 254 },
+    // — Center column —
+    'quote-widget':      { top: 36,  left: 464 },
+    'sticky-widget':     { top: 134, left: 464 },
+    'nowplaying-widget': { top: 330, left: 464 },
+    // — Right column (anchored to display width) —
+    'hw-panel':          { top: 36,  left: dw - 224 },
+    'network-widget':    { top: 164, left: dw - 224 },
+    'processes-widget':  { top: 252, left: dw - 224 },
+    'battery-widget':    { top: 390, left: dw - 112 },
+    'weather-widget':    { top: dw > 1200 ? 700 : 500, left: dw - 224 },
+    'calendar-widget':   { top: dw > 1200 ? 700 : 500, left: dw - 440 },
+    // — Buttons & Panels —
+    'chat-bubble-btn':   { top: null, left: null },
+    'chat-panel':        { top: null, left: null },
+    'settings-btn':      { top: null, left: null },
+    'open-pet-selector': { top: null, left: null },
+    'dn-btn':            { top: null, left: null },
+  };
+}
+
 function resetLayout() {
-  localStorage.removeItem(LAYOUT_KEY);
-  WIDGET_IDS.forEach(id => {
+  // ── Pause persistence so stale intervals can't re-save old data ──
+  _persistPaused = true;
+  clearTimeout(_persistTimer);
+
+  // ── Compute default positions ──
+  const defaults = _defaultPositions();
+  const saved = {};
+  Object.entries(defaults).forEach(([id, pos]) => {
+    if (pos && pos.top !== null && pos.left !== null) {
+      saved[id] = { x: pos.left, y: pos.top, sx: 1, sy: 1 };
+    }
+  });
+
+  // ── Build reset toggles (all OFF except chat + bubble) ──
+  const resetToggles = {};
+  ['clock','hw','chat','bubble','weather','calendar','todo','pomodoro',
+   'timer','habits','worldclock','quote','countdown','sticky',
+   'quicklinks','network','processes','battery','nowplaying'
+  ].forEach(k => resetToggles[k] = false);
+  resetToggles.chat = true;
+  resetToggles.bubble = true;
+
+  // ── Wipe localStorage and set clean defaults ──
+  localStorage.clear();
+  _origSetItem(LAYOUT_KEY, JSON.stringify(saved));
+  _origSetItem('widgetSettings', JSON.stringify(resetToggles));
+
+  // ── Clear widget data arrays in-place ──
+  if (typeof _todos !== 'undefined')      _todos = [];
+  if (typeof _habits !== 'undefined')     _habits = [];
+  if (typeof _wclocks !== 'undefined')    _wclocks = [];
+  if (typeof _qlinks !== 'undefined')     _qlinks = [];
+  if (typeof _countdowns !== 'undefined') _countdowns = [];
+
+  // ── Stop running timers ──
+  if (typeof _pomoTimer !== 'undefined' && _pomoTimer) { clearInterval(_pomoTimer); _pomoTimer = null; }
+  if (typeof _timerRef !== 'undefined' && _timerRef)    { clearInterval(_timerRef); _timerRef = null; }
+  if (typeof _refreshTimer !== 'undefined' && _refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
+
+  // ── Reset pomodoro state ──
+  if (typeof _pomoState !== 'undefined') { _pomoState = 'idle'; _pomoSecs = typeof POMO_WORK !== 'undefined' ? POMO_WORK : 1500; _pomoSession = 0; _pomoRunning = false; }
+
+  // ── Reset timer state ──
+  if (typeof _timerRunning !== 'undefined') { _timerRunning = false; _timerMs = 0; _timerMode = 'stopwatch'; }
+
+  // ── Reset sticky note ──
+  _stickyColor = 0;
+  const stickyTa = document.getElementById('sticky-textarea');
+  if (stickyTa) stickyTa.value = '';
+  if (typeof _stickyApplyColor === 'function') _stickyApplyColor();
+  document.querySelectorAll('.sticky-dot').forEach((d, i) => d.classList.toggle('active', i === 0));
+
+  // ── Reset now-playing ──
+  if (typeof _npLast !== 'undefined') _npLast = '';
+  if (typeof _npSetIdle === 'function') _npSetIdle('');
+
+  // ── Re-render all widget DOMs (now empty) ──
+  if (typeof _renderTodos === 'function')   _renderTodos();
+  if (typeof _habitsRender === 'function')  _habitsRender();
+  if (typeof _wclockRender === 'function')  _wclockRender();
+  if (typeof _qlinksRender === 'function')  _qlinksRender();
+  if (typeof _cdownRender === 'function')   _cdownRender();
+  if (typeof _pomoRender === 'function')    _pomoRender();
+  if (typeof _timerRender === 'function')   _timerRender();
+
+  // ── Reset widget positions on DOM ──
+  Object.entries(saved).forEach(([id, pos]) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.style.left = ''; el.style.top = '';
-    el.style.right = ''; el.style.bottom = '';
-    el.style.transform = '';       // restore CSS-defined transform
-    el.style.transformOrigin = '';
-    el.classList.remove('layout-drag-mode');
-    _removeOverlay(id);
+    el.style.left            = pos.x + 'px';
+    el.style.top             = pos.y + 'px';
+    el.style.right           = 'auto';
+    el.style.bottom          = 'auto';
+    el.style.transformOrigin = 'top left';
+    el.style.transform       = 'scaleX(1) scaleY(1)';
   });
-  if (layoutMode) toggleLayoutMode();
+
+  // ── Reset widget toggle checkboxes and hide/show ──
+  WIDGET_TOGGLES.forEach(([key]) => {
+    const tog = document.getElementById('tog-' + key);
+    if (tog) tog.checked = !!resetToggles[key];
+  });
+  WIDGET_TOGGLES.forEach(([key, elId]) => {
+    const el = document.getElementById(elId);
+    if (el) el.style.display = resetToggles[key] ? '' : 'none';
+  });
+
+  // ── Reset pet to Pixel ──
+  if (typeof currentPetType !== 'undefined') {
+    currentPetType = 'pixel';
+    const pet = typeof getActivePet === 'function' ? getActivePet() : null;
+    if (pet) {
+      const nameTag = document.getElementById('name-tag');
+      if (nameTag) nameTag.textContent = pet.nameTagText;
+      const chatInput = document.getElementById('chat-input');
+      if (chatInput) chatInput.placeholder = pet.inputPlaceholder;
+      const bubbleEmoji = document.getElementById('chat-bubble-emoji');
+      if (bubbleEmoji) bubbleEmoji.textContent = pet.avatarEmoji;
+      const headerName = document.getElementById('chat-header-name');
+      if (headerName) headerName.textContent = pet.name;
+    }
+  }
+
+  // ── Reset appearance to defaults ──
+  if (typeof applyAppearance === 'function') {
+    applyAppearance({ theme: 'midnight', font: 'Nunito', chatOpacity: 0.97 });
+  }
+
+  // ── Reset day/night to night mode ──
+  if (typeof setDayNight === 'function') {
+    _dnAuto = false;
+    setDayNight(false, false);
+  }
+
+  // ── Close any open panels ──
+  if (typeof settingsPanelOpen !== 'undefined' && settingsPanelOpen) {
+    settingsPanelOpen = false;
+    const sp = document.getElementById('settings-panel');
+    if (sp) sp.classList.remove('open');
+  }
+  if (typeof appearanceOpen !== 'undefined' && appearanceOpen && typeof closeAppearance === 'function') {
+    closeAppearance();
+  }
+
+  // ── Exit layout mode if active ──
+  if (layoutMode && typeof toggleLayoutMode === 'function') toggleLayoutMode();
+
+  // ── Push clean state to bridge, then unpause persist ──
+  const cleanState = {};
+  PERSIST_KEYS.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) cleanState[k] = v;
+  });
+  fetch(`${BRIDGE_URL}/state`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cleanState)
+  }).catch(() => {}).finally(() => {
+    _persistPaused = false;
+  });
+
+  // Show confirmation
+  if (typeof showBubble === 'function') showBubble('Factory reset complete! ✨', 3000);
+  if (typeof setMood === 'function') setMood('happy', 2000);
 }
 
 // ── Handle overlay helpers ────────────────────────
@@ -355,13 +523,23 @@ function _saveScale(id, x, y, sx, sy) {
 
 function _applyAllPositions() {
   try {
-    const saved = JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {};
+    let saved = JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {};
+    // First-time: no saved positions → apply defaults
+    if (Object.keys(saved).length === 0) {
+      const defaults = _defaultPositions();
+      Object.entries(defaults).forEach(([id, pos]) => {
+        if (pos && pos.top !== null && pos.left !== null) {
+          saved[id] = { x: pos.left, y: pos.top, sx: 1, sy: 1 };
+        }
+      });
+      localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved));
+    }
     Object.entries(saved).forEach(([id, pos]) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.style.left            = pos.x + 'px';
       el.style.top             = pos.y + 'px';
-      el.style.right           = 'auto'; // override CSS right/bottom so element doesn't stretch
+      el.style.right           = 'auto';
       el.style.bottom          = 'auto';
       el.style.transformOrigin = 'top left';
       el.style.transform       = `scaleX(${pos.sx || 1}) scaleY(${pos.sy || 1})`;

@@ -19,6 +19,16 @@ const si = require('systeminformation');
 
 const PORT = 7842;
 const HOST = '127.0.0.1';
+// Store state outside the wallpaper directory so Lively doesn't reload on writes
+const STATE_DIR = path.join(os.homedir(), '.pixel-pet');
+if (!fs.existsSync(STATE_DIR)) fs.mkdirSync(STATE_DIR, { recursive: true });
+const STATE_FILE = path.join(STATE_DIR, 'state.json');
+// Migrate old state.json from bridge/ if it exists
+const OLD_STATE = path.join(__dirname, 'state.json');
+if (fs.existsSync(OLD_STATE) && !fs.existsSync(STATE_FILE)) {
+  try { fs.renameSync(OLD_STATE, STATE_FILE); console.log('[state] migrated to', STATE_FILE); }
+  catch { try { fs.copyFileSync(OLD_STATE, STATE_FILE); fs.unlinkSync(OLD_STATE); } catch {} }
+}
 
 // ── SYSTEM PROMPT ────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are Pixel, an adorable magical desktop pet who lives in a Lively Wallpaper.
@@ -512,6 +522,33 @@ foreach ($p in $players) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ title: title || null, artist, source }));
       });
+    return;
+  }
+
+  // GET /state — load persisted widget state from disk
+  if (req.method === 'GET' && req.url === '/state') {
+    try {
+      const data = fs.readFileSync(STATE_FILE, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    } catch {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{}');
+    }
+    return;
+  }
+
+  // POST /state — save widget state to disk
+  if (req.method === 'POST' && req.url === '/state') {
+    try {
+      const body = await readBody(req);
+      fs.writeFileSync(STATE_FILE, JSON.stringify(body, null, 2), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('{"ok":true}');
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
     return;
   }
 

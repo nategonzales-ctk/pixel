@@ -42,7 +42,7 @@ body {
 /* ── CLOCK TOP-LEFT ── */
 #clock-widget {
   position: fixed;
-  top: 36px; left: 44px;
+  top: 36px; left: 36px;
   z-index: 5;
   pointer-events: none;
 }
@@ -553,8 +553,8 @@ body {
 /* ── HARDWARE PANEL ── */
 #hw-panel {
   position: fixed;
-  top: 120px;
-  left: calc(var(--primary-w) - 212px);
+  top: 36px;
+  left: calc(var(--primary-w) - 224px);
   z-index: 5;
   width: 188px;
   background: rgba(13,13,26,0.78);
@@ -781,7 +781,7 @@ body {
 /* ── WEATHER WIDGET ── */
 #weather-widget {
   position: fixed;
-  bottom: 36px; right: 36px;
+  top: 700px; left: calc(var(--primary-w) - 224px);
   z-index: 5;
   width: 176px;
   background: rgba(13,13,26,0.78);
@@ -826,7 +826,7 @@ body {
 /* ── CALENDAR WIDGET ── */
 #calendar-widget {
   position: fixed;
-  bottom: 36px; right: 228px;
+  top: 700px; left: calc(var(--primary-w) - 440px);
   z-index: 5;
   width: 176px;
   background: rgba(13,13,26,0.78);
@@ -874,7 +874,7 @@ body {
 /* ── TO-DO WIDGET ── */
 #todo-widget {
   position: fixed;
-  top: 120px; left: 44px;
+  top: 140px; left: 36px;
   z-index: 5;
   width: 200px;
   background: rgba(13,13,26,0.78);
@@ -984,7 +984,7 @@ body {
 .w-inp:focus { border-color: rgba(217,102,255,0.55); }
 
 /* ── POMODORO ── */
-#pomodoro-widget { top: 130px; left: 254px; width: 186px; }
+#pomodoro-widget { top: 134px; left: 254px; width: 186px; }
 #pomo-time {
   font-size: 36px; font-weight: 900; text-align: center;
   letter-spacing: -1px; line-height: 1; margin: 4px 0 2px;
@@ -1005,7 +1005,7 @@ body {
 #pomo-btns .w-btn { flex: 1; text-align: center; }
 
 /* ── STOPWATCH / COUNTDOWN ── */
-#timer-widget { top: 304px; left: 254px; width: 186px; }
+#timer-widget { top: 310px; left: 254px; width: 186px; }
 #timer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 #timer-display {
   font-size: 30px; font-weight: 900; text-align: center;
@@ -1017,7 +1017,7 @@ body {
 #timer-cd-row .w-inp { flex: 1; }
 
 /* ── HABITS ── */
-#habits-widget { top: 424px; left: 44px; width: 190px; }
+#habits-widget { top: 440px; left: 36px; width: 190px; }
 #habits-list { display: flex; flex-direction: column; gap: 4px; }
 .habit-row {
   display: flex; align-items: center; gap: 6px;
@@ -1033,16 +1033,44 @@ body {
 .habit-row.done .habit-check { background: rgba(217,102,255,0.28); border-color: var(--accent); }
 .habit-label { flex: 1; font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.8); }
 .habit-streak { font-size: 9px; font-weight: 800; color: rgba(255,160,50,0.9); flex-shrink: 0; }
+.habit-del {
+  flex-shrink: 0; width: 16px; height: 16px; border-radius: 4px;
+  border: none; background: rgba(255,80,80,0.15); color: rgba(255,120,120,0.7);
+  font-size: 11px; font-weight: 900; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.habit-row:hover .habit-del, .wclock-row:hover .habit-del { opacity: 1; }
+.habit-del:hover { background: rgba(255,80,80,0.35); color: #ff6666; }
+.habits-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); padding: 3px 0; }
+.habit-add-row {
+  display: flex; gap: 5px; align-items: center; margin-top: 6px;
+}
+.habit-add-row .w-inp, .habit-add-row select {
+  flex: 1; font-size: 10px; padding: 4px 7px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(217,102,255,0.18);
+  border-radius: 6px; color: rgba(238,238,255,0.8); outline: none;
+  font-family: inherit;
+}
+.habit-add-row select option { background: #1a1a2e; color: #eef; }
+.w-sm-btn {
+  width: 22px; height: 22px; border-radius: 5px; border: none;
+  background: rgba(217,102,255,0.18); color: var(--accent);
+  font-size: 13px; font-weight: 900; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.w-sm-btn:hover { background: rgba(217,102,255,0.35); }
 
 /* ── WORLD CLOCKS ── */
 #worldclock-widget { top: 36px; left: 254px; width: 190px; }
+
 #wclock-list { display: flex; flex-direction: column; gap: 5px; }
-.wclock-row { display: flex; align-items: center; justify-content: space-between; }
-.wclock-label { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.45); }
+.wclock-row { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border-radius: 7px; padding: 4px 5px; }
+.wclock-label { flex: 1; font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.45); }
 .wclock-time { font-size: 13px; font-weight: 900; color: rgba(238,238,255,0.88); letter-spacing: 0.04em; }
 
 /* ── DAILY QUOTE ── */
-#quote-widget { top: 36px; left: 464px; width: 220px; pointer-events: none; }
+#quote-widget { top: 36px; left: 464px; width: 220px; }
 #quote-text {
   font-size: 10px; font-weight: 600; line-height: 1.55;
   color: rgba(238,238,255,0.7); font-style: italic; margin-bottom: 6px;
@@ -1050,7 +1078,7 @@ body {
 #quote-author { font-size: 9px; font-weight: 900; color: rgba(217,102,255,0.7); letter-spacing: 0.08em; }
 
 /* ── COUNTDOWN ── */
-#countdown-widget { top: 438px; left: 254px; width: 188px; }
+#countdown-widget { top: 446px; left: 254px; width: 188px; }
 #cdown-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .cdown-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); text-align: center; padding: 4px 0; }
 .cdown-row { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 7px; position: relative; }
@@ -1066,7 +1094,7 @@ body {
 #cdown-form .w-inp { width: 100%; box-sizing: border-box; }
 
 /* ── STICKY NOTE ── */
-#sticky-widget { top: 130px; left: 464px; width: 200px; background: rgba(255,230,100,0.13); border-color: rgba(255,210,0,0.35); }
+#sticky-widget { top: 134px; left: 464px; width: 200px; background: rgba(255,230,100,0.13); border-color: rgba(255,210,0,0.35); }
 #sticky-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
 #sticky-dots { display: flex; gap: 5px; }
 .sticky-dot {
@@ -1083,7 +1111,7 @@ body {
 }
 
 /* ── QUICK LINKS ── */
-#quicklinks-widget { bottom: 36px; left: 44px; width: 190px; }
+#quicklinks-widget { top: 590px; left: 36px; width: 190px; }
 #qlinks-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
 .qlinks-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); padding: 3px 0; }
 .qlinks-row { display: flex; align-items: center; gap: 4px; }
@@ -1102,7 +1130,7 @@ body {
 
 /* ── NETWORK SPEED ── */
 #network-widget {
-  top: 244px; left: calc(var(--primary-w) - 212px); width: 188px;
+  top: 164px; left: calc(var(--primary-w) - 224px); width: 188px;
   opacity: 0; transform: translateY(-6px); transition: opacity 0.4s, transform 0.4s;
 }
 #network-widget.visible { opacity: 1; transform: translateY(0); }
@@ -1114,7 +1142,7 @@ body {
 
 /* ── TOP PROCESSES ── */
 #processes-widget {
-  top: 328px; left: calc(var(--primary-w) - 212px); width: 188px;
+  top: 252px; left: calc(var(--primary-w) - 224px); width: 188px;
   opacity: 0; transform: translateY(-6px); transition: opacity 0.4s, transform 0.4s;
 }
 #processes-widget.visible { opacity: 1; transform: translateY(0); }
@@ -1127,7 +1155,7 @@ body {
 
 /* ── BATTERY ── */
 #battery-widget {
-  top: 36px; left: calc(var(--primary-w) - 96px); width: 76px;
+  top: 390px; left: calc(var(--primary-w) - 112px); width: 76px;
   opacity: 0; transition: opacity 0.4s;
   padding: 8px 10px;
 }
@@ -1139,7 +1167,7 @@ body {
 
 /* ── NOW PLAYING ── */
 #nowplaying-widget {
-  bottom: 36px; left: 464px; width: 220px;
+  top: 330px; left: 464px; width: 220px;
 }
 #np-scroll { overflow: hidden; }
 #np-title {
@@ -1754,6 +1782,7 @@ body {
   </div>
 </div>
 
+<script src="persist.js"></script>
 <script src="pets/pixel.js"></script>
 <script src="pets/jellysey.js"></script>
 <script src="pets/sharkypup.js"></script>
@@ -2235,7 +2264,14 @@ function mainLoop(ts){
   }
 }
 
-window.addEventListener('load',()=>{
+window.addEventListener('load',async ()=>{
+  // Restore persisted state from bridge before any widget init
+  await _persistRestore();
+  _persistReady = true;
+  // Re-read values that were set at script parse time (before restore)
+  currentPetType = localStorage.getItem('selectedPet') || 'pixel';
+  displayW = detectDisplayWidth();
+  displayH = detectDisplayHeight();
   setDisplayWidth(displayW);
   setDisplayHeight(displayH);
   // Init pet position (bottom-right, then starts wandering after 3s)
