@@ -156,6 +156,40 @@ body {
   0%,100%{ transform:translateY(0) }
   50%{ transform:translateY(-13px) }
 }
+@keyframes petBounce {
+  0%   { transform: translateY(0) scale(1,1); }
+  15%  { transform: translateY(12px) scale(1.12,0.88); }
+  30%  { transform: translateY(-18px) scale(0.95,1.08); }
+  45%  { transform: translateY(6px) scale(1.05,0.95); }
+  60%  { transform: translateY(-8px) scale(0.98,1.03); }
+  75%  { transform: translateY(3px) scale(1.01,0.99); }
+  100% { transform: translateY(0) scale(1,1); }
+}
+#pet-wrap.bouncing {
+  animation: petBounce 0.6s cubic-bezier(.34,1.56,.64,1) !important;
+}
+/* Sleeping: gentle slow breathing */
+#pet-wrap.sleeping {
+  animation: petSleep 3s ease-in-out infinite !important;
+}
+@keyframes petSleep {
+  0%,100%{ transform: translateY(0) scale(1, 1); }
+  50%   { transform: translateY(2px) scale(1.03, 0.97); }
+}
+
+/* Dream bubbles */
+.dream-z {
+  position: fixed; pointer-events: none; z-index: 998;
+  font-weight: 700; color: rgba(200,180,255,0.9);
+  text-shadow: 0 0 8px rgba(180,120,255,0.6);
+  animation: dreamFloat 3s ease-out forwards;
+}
+@keyframes dreamFloat {
+  0%   { opacity: 0.9; transform: translate(0,0) scale(0.5) rotate(-10deg); }
+  30%  { opacity: 1;   transform: translate(12px,-30px) scale(1) rotate(5deg); }
+  60%  { opacity: 0.7; transform: translate(-8px,-60px) scale(1.1) rotate(-8deg); }
+  100% { opacity: 0;   transform: translate(15px,-100px) scale(0.6) rotate(12deg); }
+}
 
 /* Shadow under pet */
 #pet-shadow {
@@ -1063,10 +1097,30 @@ body {
   position: fixed; z-index: 5;
   background: rgba(13,13,26,0.78);
   border: 1px solid rgba(217,102,255,0.18);
-  border-radius: 14px; padding: 11px 13px 12px;
+  border-radius: 14px;
   backdrop-filter: blur(10px);
   font-family: 'Nunito', sans-serif;
+  display: flex; flex-direction: column;
+  padding: 0;
 }
+.widget-panel > .widget-title { padding: 11px 13px 0; flex-shrink: 0; }
+.widget-panel > .wp-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  scrollbar-width: none; padding: 6px 13px 12px;
+  position: relative;
+}
+.widget-panel > .wp-body::-webkit-scrollbar { display: none; }
+/* Panel scroll arrows — shown when wp-body overflows */
+.wp-arr {
+  flex-shrink: 0; width: 100%; height: 14px;
+  background: none; border: none;
+  color: rgba(217,102,255,0.4); font-size: 9px;
+  cursor: pointer; display: none;
+  align-items: center; justify-content: center;
+  transition: color 0.15s; line-height: 1;
+}
+.wp-arr.visible { display: flex; }
+.wp-arr:hover { color: rgba(217,102,255,0.9); }
 .widget-title {
   font-size: 9px; font-weight: 900;
   letter-spacing: 0.18em; text-transform: uppercase;
@@ -1110,7 +1164,7 @@ body {
 
 /* ── STOPWATCH / COUNTDOWN ── */
 #timer-widget { top: 310px; left: 254px; width: 186px; }
-#timer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+/* #timer-top removed — mode btn now in widget-title */
 #timer-display {
   font-size: 30px; font-weight: 900; text-align: center;
   letter-spacing: -1px; color: rgba(238,238,255,0.9); margin: 4px 0 8px;
@@ -1169,7 +1223,7 @@ body {
 /* ── WORLD CLOCKS ── */
 #worldclock-widget { top: 36px; left: 254px; width: 190px; }
 
-#wclock-list { display: flex; flex-direction: column; gap: 5px; max-height: 180px; overflow-y: auto; scrollbar-width: none; }
+#wclock-list { display: flex; flex-direction: column; gap: 5px; max-height: 160px; overflow-y: auto; scrollbar-width: none; }
 #wclock-list::-webkit-scrollbar { display: none; }
 .wclock-row { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border-radius: 7px; padding: 4px 5px; }
 .wclock-label { flex: 1; font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.45); }
@@ -1202,7 +1256,7 @@ body {
 
 /* ── STICKY NOTE ── */
 #sticky-widget { top: 134px; left: 464px; width: 200px; background: rgba(255,230,100,0.13); border-color: rgba(255,210,0,0.35); }
-#sticky-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+/* #sticky-header removed — dots now in widget-title */
 #sticky-dots { display: flex; gap: 5px; }
 .sticky-dot {
   width: 12px; height: 12px; border-radius: 50%; cursor: pointer;
@@ -1265,8 +1319,8 @@ body {
 #battery-widget {
   top: 390px; left: calc(var(--primary-w) - 112px); width: 76px;
   opacity: 0; transition: opacity 0.4s;
-  padding: 8px 10px;
 }
+#battery-widget > .wp-body { padding: 8px 10px; }
 #battery-widget.visible { opacity: 1; }
 #bat-icon { font-size: 13px; display: block; text-align: center; }
 #bat-bar-wrap { height: 5px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; margin: 4px 0; }
@@ -1744,144 +1798,192 @@ body {
 <!-- Pomodoro widget -->
 <div id="pomodoro-widget" class="widget-panel">
   <div class="widget-title">🍅 Pomodoro</div>
-  <div id="pomo-time">25:00</div>
-  <div id="pomo-state">Ready</div>
-  <div id="pomo-dots"></div>
-  <div id="pomo-btns">
-    <button id="pomo-btn" class="w-btn" onclick="pomoToggle()">▶ Start</button>
-    <button class="w-btn" onclick="pomoReset()">↺</button>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div id="pomo-time">25:00</div>
+    <div id="pomo-state">Ready</div>
+    <div id="pomo-dots"></div>
+    <div id="pomo-btns">
+      <button id="pomo-btn" class="w-btn" onclick="pomoToggle()">▶ Start</button>
+      <button class="w-btn" onclick="pomoReset()">↺</button>
+    </div>
   </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Stopwatch / Countdown timer widget -->
 <div id="timer-widget" class="widget-panel">
-  <div id="timer-top">
-    <div class="widget-title" style="margin:0">⏱ Timer</div>
-    <button id="timer-mode-btn" class="w-btn" onclick="timerSwitchMode()" style="font-size:9px;padding:2px 6px">⏱ SW</button>
+  <div class="widget-title" style="display:flex;align-items:center;justify-content:space-between">
+    <span>⏱ Timer</span>
+    <button id="timer-mode-btn" class="w-btn" onclick="timerSwitchMode()" style="font-size:9px;padding:2px 6px;margin:0">⏱ SW</button>
   </div>
-  <div id="timer-display">00:00</div>
-  <div id="timer-btns">
-    <button id="timer-toggle-btn" class="w-btn" onclick="timerToggle()">▶</button>
-    <button class="w-btn" onclick="timerReset()">↺</button>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div id="timer-display">00:00</div>
+    <div id="timer-btns">
+      <button id="timer-toggle-btn" class="w-btn" onclick="timerToggle()">▶</button>
+      <button class="w-btn" onclick="timerReset()">↺</button>
+    </div>
+    <div id="timer-cd-row">
+      <input id="timer-cd-input" class="w-inp" type="text" placeholder="MM:SS" maxlength="5" style="flex:1">
+    </div>
   </div>
-  <div id="timer-cd-row">
-    <input id="timer-cd-input" class="w-inp" type="text" placeholder="MM:SS" maxlength="5" style="flex:1">
-  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Habit tracker widget -->
 <div id="habits-widget" class="widget-panel">
   <div class="widget-title">✓ Habits</div>
-  <div class="scroll-wrap">
-    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
-    <div id="habits-list"></div>
-    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div class="scroll-wrap">
+      <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+      <div id="habits-list"></div>
+      <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+    </div>
   </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- World clocks widget -->
 <div id="worldclock-widget" class="widget-panel">
   <div class="widget-title">🌍 World Time</div>
-  <div class="scroll-wrap">
-    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
-    <div id="wclock-list"></div>
-    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div class="scroll-wrap">
+      <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+      <div id="wclock-list"></div>
+      <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+    </div>
   </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Daily quote widget -->
 <div id="quote-widget" class="widget-panel">
   <div class="widget-title">✦ Daily Quote</div>
-  <div id="quote-text"></div>
-  <div id="quote-author"></div>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div id="quote-text"></div>
+    <div id="quote-author"></div>
+  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Countdown to date widget -->
 <div id="countdown-widget" class="widget-panel">
   <div class="widget-title">⏳ Countdown</div>
-  <div class="scroll-wrap">
-    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
-    <div id="cdown-list"></div>
-    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div class="scroll-wrap">
+      <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+      <div id="cdown-list"></div>
+      <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+    </div>
+    <div id="cdown-form">
+      <input id="cdown-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="30">
+      <input id="cdown-date-inp" class="w-inp" type="date">
+      <button class="w-btn" onclick="cdownAdd()" style="width:100%">+ Add</button>
+    </div>
   </div>
-  <div id="cdown-form">
-    <input id="cdown-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="30">
-    <input id="cdown-date-inp" class="w-inp" type="date">
-    <button class="w-btn" onclick="cdownAdd()" style="width:100%">+ Add</button>
-  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Sticky note widget -->
 <div id="sticky-widget" class="widget-panel">
-  <div id="sticky-header">
-    <div class="widget-title" style="margin:0">📝 Note</div>
-    <div id="sticky-dots">
+  <div class="widget-title" style="display:flex;align-items:center;justify-content:space-between">
+    <span>📝 Note</span>
+    <div id="sticky-dots" style="display:flex;gap:4px">
       <div class="sticky-dot active" style="background:#ffe664" onclick="stickySetColor(0)" title="Yellow"></div>
       <div class="sticky-dot" style="background:#ff78a0" onclick="stickySetColor(1)" title="Pink"></div>
       <div class="sticky-dot" style="background:#50dcb4" onclick="stickySetColor(2)" title="Mint"></div>
       <div class="sticky-dot" style="background:#a078ff" onclick="stickySetColor(3)" title="Lavender"></div>
     </div>
   </div>
-  <textarea id="sticky-textarea" placeholder="Type a note…"></textarea>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <textarea id="sticky-textarea" placeholder="Type a note…"></textarea>
+  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Quick links widget -->
 <div id="quicklinks-widget" class="widget-panel">
   <div class="widget-title">🔗 Quick Links</div>
-  <div class="scroll-wrap">
-    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
-    <div id="qlinks-list"></div>
-    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div class="scroll-wrap">
+      <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+      <div id="qlinks-list"></div>
+      <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+    </div>
+    <div id="qlinks-form">
+      <input id="qlinks-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="24">
+      <input id="qlinks-url-inp" class="w-inp" type="text" placeholder="URL…" maxlength="200">
+      <button id="qlinks-add-btn" class="w-btn" onclick="qlinkAdd()">+ Add</button>
+    </div>
   </div>
-  <div id="qlinks-form">
-    <input id="qlinks-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="24">
-    <input id="qlinks-url-inp" class="w-inp" type="text" placeholder="URL…" maxlength="200">
-    <button id="qlinks-add-btn" class="w-btn" onclick="qlinkAdd()">+ Add</button>
-  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Network speed widget -->
 <div id="network-widget" class="widget-panel">
   <div class="widget-title">📡 Network</div>
-  <div class="net-row">
-    <span class="net-arrow">↑</span>
-    <span class="net-label">Up</span>
-    <span class="net-val" id="net-up">—</span>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div class="net-row">
+      <span class="net-arrow">↑</span>
+      <span class="net-label">Up</span>
+      <span class="net-val" id="net-up">—</span>
+    </div>
+    <div class="net-row">
+      <span class="net-arrow">↓</span>
+      <span class="net-label">Down</span>
+      <span class="net-val" id="net-down">—</span>
+    </div>
   </div>
-  <div class="net-row">
-    <span class="net-arrow">↓</span>
-    <span class="net-label">Down</span>
-    <span class="net-val" id="net-down">—</span>
-  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Top processes widget -->
 <div id="processes-widget" class="widget-panel">
   <div class="widget-title">⚙ Processes</div>
-  <div id="proc-list"></div>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div id="proc-list"></div>
+  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Battery widget -->
 <div id="battery-widget" class="widget-panel">
-  <span id="bat-icon">🔋</span>
-  <div id="bat-bar-wrap"><div id="bat-fill"></div></div>
-  <span id="bat-label">—</span>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <span id="bat-icon">🔋</span>
+    <div id="bat-bar-wrap"><div id="bat-fill"></div></div>
+    <span id="bat-label">—</span>
+  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Now Playing widget -->
 <div id="nowplaying-widget" class="widget-panel">
   <div class="widget-title">🎵 Now Playing</div>
-  <div id="np-scroll">
-    <div id="np-title">Nothing playing</div>
-    <div id="np-sub"></div>
+  <button class="wp-arr wp-arr-up" onclick="wpScroll(this,-1)">&#9650;</button>
+  <div class="wp-body">
+    <div id="np-scroll">
+      <div id="np-title">Nothing playing</div>
+      <div id="np-sub"></div>
+    </div>
+    <div id="np-bars">
+      <div class="np-bar"></div>
+      <div class="np-bar"></div>
+      <div class="np-bar"></div>
+      <div class="np-bar"></div>
+      <div class="np-bar"></div>
+    </div>
   </div>
-  <div id="np-bars">
-    <div class="np-bar"></div>
-    <div class="np-bar"></div>
-    <div class="np-bar"></div>
-    <div class="np-bar"></div>
-    <div class="np-bar"></div>
-  </div>
+  <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
 <!-- Chat bubble trigger -->
@@ -2121,6 +2223,31 @@ function _updateAllScrollArrows() {
   document.querySelectorAll('.scroll-wrap').forEach(_updateScrollArrows);
 }
 
+// ── Widget-panel body scroll arrows ──
+function wpScroll(btn, dir) {
+  const panel = btn.closest('.widget-panel');
+  if (!panel) return;
+  const body = panel.querySelector('.wp-body');
+  if (body) {
+    body.scrollBy({ top: dir * 60, behavior: 'smooth' });
+    setTimeout(() => _updateWpArrows(panel), 120);
+  }
+}
+
+function _updateWpArrows(panel) {
+  const body = panel.querySelector('.wp-body');
+  if (!body) return;
+  const up = panel.querySelector('.wp-arr-up');
+  const dn = panel.querySelector('.wp-arr-down');
+  const canScroll = body.scrollHeight > body.clientHeight + 2;
+  if (up) up.classList.toggle('visible', canScroll && body.scrollTop > 2);
+  if (dn) dn.classList.toggle('visible', canScroll && body.scrollTop + body.clientHeight < body.scrollHeight - 2);
+}
+
+function _updateAllWpArrows() {
+  document.querySelectorAll('.widget-panel').forEach(_updateWpArrows);
+}
+
 // ── Settings panel scroll arrows ──
 function settingsScroll(by) {
   const pane = document.querySelector('.stab-pane.active');
@@ -2254,6 +2381,10 @@ document.addEventListener('mouseup', () => {
   document.getElementById('pet-zone').style.cursor = '';
   if (_petHeld) {
     _petHeld = false;
+    // Bounce animation on drop
+    const pw = document.getElementById('pet-wrap');
+    pw.classList.add('bouncing');
+    pw.addEventListener('animationend', () => pw.classList.remove('bouncing'), { once: true });
     // Pet stays in place for a while before wandering again
     petTargetX = petX;
     petTargetY = petY;
@@ -2510,12 +2641,51 @@ function drawRunPuffs() {
 }
 
 // ══════════════════════════════════════════════════
+//  DREAM BUBBLES (sleeping animation)
+// ══════════════════════════════════════════════════
+let _dreamInterval = null;
+let _wasSleeping = false;
+const _dreamPool = ['Z','z','💤','✨','💭','☁️','⭐','🌙'];
+
+function _spawnDreamBubble() {
+  const zone = document.getElementById('pet-zone');
+  if (!zone) return;
+  const el = document.createElement('div');
+  el.className = 'dream-z';
+  const char = _dreamPool[Math.floor(Math.random() * _dreamPool.length)];
+  el.textContent = char;
+  el.style.fontSize = (14 + Math.random() * 14) + 'px';
+  // Position above the pet
+  const offsetX = -20 + Math.random() * 40;
+  el.style.left = (petX + PET_W / 2 + offsetX) + 'px';
+  el.style.top = (petY - 10) + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+function _updateDreamState() {
+  const pw = document.getElementById('pet-wrap');
+  if (!pw) return;
+  if (petIsAsleep && !_wasSleeping) {
+    _wasSleeping = true;
+    pw.classList.add('sleeping');
+    _dreamInterval = setInterval(_spawnDreamBubble, 800);
+  } else if (!petIsAsleep && _wasSleeping) {
+    _wasSleeping = false;
+    pw.classList.remove('sleeping');
+    clearInterval(_dreamInterval);
+    _dreamInterval = null;
+  }
+}
+
+// ══════════════════════════════════════════════════
 //  MAIN LOOP + BOOT
 // ══════════════════════════════════════════════════
 function mainLoop(ts){
   requestAnimationFrame(mainLoop);
   updatePetBehaviors(Date.now());
   updatePetMovement();
+  _updateDreamState();
   if (petIsRunning && Math.random() < 0.55) spawnRunPuff();
   drawBg(ts/1000); drawPet(ts); drawRunPuffs();
   // Animate mini-preview canvases in the selector
@@ -2569,6 +2739,7 @@ window.addEventListener('load',async ()=>{
   initNowPlaying();
   // Show/hide scroll arrows based on content overflow
   _updateAllScrollArrows();
+  _updateAllWpArrows();
   // Auto-update arrows when list content changes
   document.querySelectorAll('.scroll-wrap [id$="-list"]').forEach(list => {
     new MutationObserver(() => {
@@ -2580,6 +2751,13 @@ window.addEventListener('load',async ()=>{
       if (wrap) _updateScrollArrows(wrap);
     });
   });
+  // Auto-update wp-body arrows when content changes or on scroll
+  document.querySelectorAll('.widget-panel .wp-body').forEach(body => {
+    const panel = body.closest('.widget-panel');
+    new MutationObserver(() => _updateWpArrows(panel)).observe(body, { childList: true, subtree: true });
+    body.addEventListener('scroll', () => _updateWpArrows(panel));
+  });
+  window.addEventListener('resize', _updateAllWpArrows);
 
   // Apply saved pet state
   (function initPet(){

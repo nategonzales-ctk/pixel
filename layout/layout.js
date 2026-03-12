@@ -212,6 +212,8 @@ function _onMouseUp() {
     resizeOverlay.style.top  = vy + 'px';
     resizeEl      = null;
     resizeOverlay = null;
+    // Update widget body scroll arrows after resize
+    if (typeof _updateAllWpArrows === 'function') setTimeout(_updateAllWpArrows, 50);
   }
 }
 
