@@ -20,6 +20,9 @@
   --primary-w: 1920px;
   --primary-h: 1080px;
 }
+/* Hide everything until JS finishes init to prevent position glitch */
+body { opacity: 0; transition: opacity 0.15s ease-in; }
+body.ready { opacity: 1; }
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -2334,6 +2337,8 @@ window.addEventListener('load',async ()=>{
   setInterval(fetchHardware,5000);
   scheduleIdle();
   mainLoop(performance.now());
+  // Reveal — all positions and widgets are now set
+  document.body.classList.add('ready');
 });
 </script>
 
