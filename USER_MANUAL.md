@@ -21,7 +21,7 @@
 
 - **Node.js 18+** (for the bridge server)
 - **Lively Wallpaper** (to run as desktop wallpaper)
-- **Claude Desktop** (optional, for online AI chat mode)
+- **Anthropic API key** (optional, for online AI chat — get one at https://console.anthropic.com)
 
 ### One-Click Setup (Windows)
 
@@ -63,7 +63,7 @@ If you prefer manual setup:
 ### Connection Status
 
 - Green dot in settings = Bridge connected, Claude AI online
-- Amber dot = Bridge connected, offline AI mode
+- Amber dot = Bridge connected, no API key (offline AI mode)
 - Red dot = Bridge not running (wallpaper still works offline)
 
 ### No Bridge Mode
@@ -355,7 +355,13 @@ Each theme changes: background colors, widget surfaces, accent colors, star colo
 
 ### Online Mode (Claude AI)
 
-**Requirements:** Bridge server running + Claude Desktop installed and signed in.
+**Requirements:** Bridge server running + `ANTHROPIC_API_KEY` set in `bridge/.env`.
+
+To set up:
+1. Get an API key at https://console.anthropic.com
+2. Copy `bridge/.env.example` to `bridge/.env`
+3. Paste your key: `ANTHROPIC_API_KEY=sk-ant-your-key-here`
+4. Restart the bridge
 
 - Full Claude AI conversation
 - Pet responds in character with personality
@@ -456,7 +462,7 @@ Press **Ctrl + D** to open the debug panel (bottom-left corner). It shows:
 
 **Chat says "Offline mode":**
 - Bridge must be running (green/amber dot)
-- For Claude AI: Install Claude Desktop and sign in
+- For Claude AI: Set `ANTHROPIC_API_KEY` in `bridge/.env` (get key at console.anthropic.com)
 - Offline mode still works with pattern-matching responses
 
 **Hardware monitor shows no data:**

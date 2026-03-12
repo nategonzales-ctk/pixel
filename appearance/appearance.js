@@ -139,27 +139,65 @@ function closeAppearance() {
 }
 
 // ── Help / User Manual ──────────────────────────────
+const HELP_SECTIONS = ['start','controls','widgets','pets','behaviors','layout','themes','chat','bridge','trouble'];
 let helpOpen = false;
+
 function openHelp() {
   helpOpen = true;
   settingsPanelOpen = false;
   document.getElementById('settings-panel').classList.remove('open');
-  document.getElementById('help-overlay').classList.add('open');
+  document.getElementById('help-panel').classList.add('help-open');
+  // Default to first section
+  switchHelpSection(HELP_SECTIONS[0]);
+  setTimeout(_updateHelpArrows, 60);
 }
 function closeHelp() {
   helpOpen = false;
-  document.getElementById('help-overlay').classList.remove('open');
+  document.getElementById('help-panel').classList.remove('help-open');
 }
 function switchHelpSection(id) {
   document.querySelectorAll('.help-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.help-nav-btn').forEach(b => b.classList.remove('active'));
   const sec = document.getElementById('help-' + id);
   if (sec) sec.classList.add('active');
-  const btn = document.querySelector(`.help-nav-btn[onclick*="${id}"]`);
-  if (btn) btn.classList.add('active');
-  // Scroll panel to top when switching
-  const panel = document.getElementById('help-panel');
-  if (panel) panel.scrollTop = 0;
+  // Sync dropdown
+  const sel = document.getElementById('help-select');
+  if (sel) sel.value = id;
+  // Update prev/next arrow disabled states
+  const idx = HELP_SECTIONS.indexOf(id);
+  const prev = document.getElementById('help-prev');
+  const next = document.getElementById('help-next');
+  if (prev) prev.disabled = (idx <= 0);
+  if (next) next.disabled = (idx >= HELP_SECTIONS.length - 1);
+  // Scroll body to top when switching sections
+  const body = document.getElementById('help-body');
+  if (body) body.scrollTop = 0;
+  setTimeout(_updateHelpArrows, 60);
+}
+function helpNav(dir) {
+  const sel = document.getElementById('help-select');
+  const current = sel ? sel.value : HELP_SECTIONS[0];
+  const idx = HELP_SECTIONS.indexOf(current);
+  const next = idx + dir;
+  if (next >= 0 && next < HELP_SECTIONS.length) {
+    switchHelpSection(HELP_SECTIONS[next]);
+  }
+}
+function helpScroll(by) {
+  const body = document.getElementById('help-body');
+  if (body) body.scrollBy({ top: by, behavior: 'smooth' });
+  setTimeout(_updateHelpArrows, 200);
+}
+function _updateHelpArrows() {
+  const body = document.getElementById('help-body');
+  const up   = document.getElementById('help-scroll-up');
+  const dn   = document.getElementById('help-scroll-down');
+  if (!body || !up || !dn) return;
+  up.classList.toggle('visible', body.scrollTop > 4);
+  dn.classList.toggle('visible', body.scrollTop + body.clientHeight < body.scrollHeight - 4);
+  if (!body._helpScrollBound) {
+    body._helpScrollBound = true;
+    body.addEventListener('scroll', _updateHelpArrows);
+  }
 }
 
 function onAccentChange(val) {
