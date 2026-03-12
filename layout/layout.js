@@ -224,6 +224,9 @@ function toggleLayoutMode() {
     WIDGET_IDS.forEach(id => {
       const el = document.getElementById(id);
       if (!el || el.style.display === 'none') return;
+      // Skip elements hidden by opacity (e.g. chat-panel, settings-panel)
+      const cs = window.getComputedStyle(el);
+      if (cs.opacity === '0' || cs.visibility === 'hidden') return;
       // Add class FIRST — its transition:none !important stops any active CSS
       // transition before we read getBoundingClientRect() or change the transform.
       el.classList.add('layout-drag-mode');
@@ -374,6 +377,27 @@ function resetLayout() {
     el.style.bottom          = 'auto';
     el.style.transformOrigin = 'top left';
     el.style.transform       = 'scaleX(1) scaleY(1)';
+    // Clear reflow overrides
+    if (REFLOW_IDS.has(id)) {
+      el.style.width = '';
+      el.style.maxHeight = '';
+      el.style.height = '';
+      el.style.transform = 'none';
+    }
+  });
+  // ── Clear inline styles on CSS-positioned buttons so defaults take over ──
+  Object.entries(defaults).forEach(([id, pos]) => {
+    if (pos.top === null && pos.left === null) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.left = '';
+        el.style.top = '';
+        el.style.right = '';
+        el.style.bottom = '';
+        el.style.transform = '';
+        el.style.transformOrigin = '';
+      }
+    }
   });
 
   // ── Reset widget toggle checkboxes and hide/show ──
