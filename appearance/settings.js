@@ -103,6 +103,7 @@ function switchSettingsTab(tab) {
   if (pane) pane.classList.add('active');
   const btn = document.querySelector(`.stab[onclick*="${tab}"]`);
   if (btn) btn.classList.add('active');
+  if (typeof _updateSettingsArrows === 'function') setTimeout(_updateSettingsArrows, 50);
 }
 
 function toggleSettings() {
@@ -113,6 +114,7 @@ function toggleSettings() {
     if (wi) wi.value = displayW;
     const hi = document.getElementById('display-h-input');
     if (hi) hi.value = displayH;
+    if (typeof _updateSettingsArrows === 'function') setTimeout(_updateSettingsArrows, 50);
   }
 }
 

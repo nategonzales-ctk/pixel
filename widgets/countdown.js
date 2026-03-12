@@ -76,16 +76,50 @@ function cdownAdd() {
   const lbl  = document.getElementById('cdown-label-inp');
   const date = document.getElementById('cdown-date-inp');
   if (!lbl || !date || !lbl.value.trim() || !date.value) return;
-  _countdowns.push({ label: lbl.value.trim(), date: date.value });
+  const label = lbl.value.trim();
+  const dateVal = date.value;
+  _countdowns.push({ label, date: dateVal });
   lbl.value = ''; date.value = '';
   _cdownSave();
   _cdownRender();
+  // Sync to calendar notes
+  _cdownSyncToCalendar(label, dateVal);
 }
 
 function cdownDelete(i) {
+  const removed = _countdowns[i];
   _countdowns.splice(i, 1);
   _cdownSave();
   _cdownRender();
+  // Remove matching calendar note
+  if (removed) _cdownRemoveFromCalendar(removed.label, removed.date);
+}
+
+// ── Calendar integration ──
+function _cdownSyncToCalendar(label, dateVal) {
+  if (typeof _calNotes === 'undefined') return;
+  // dateVal is "YYYY-MM-DD" — use as key directly
+  const key = dateVal;
+  if (!_calNotes[key]) _calNotes[key] = [];
+  // Avoid duplicate
+  if (_calNotes[key].some(n => n.text === label)) return;
+  _calNotes[key].push({ text: label, fromCountdown: true });
+  _calSaveNotes();
+  if (typeof _buildCalendar === 'function' && typeof _calYear !== 'undefined') {
+    _buildCalendar(_calYear, _calMonth);
+  }
+}
+
+function _cdownRemoveFromCalendar(label, dateVal) {
+  if (typeof _calNotes === 'undefined') return;
+  const key = dateVal;
+  if (!_calNotes[key]) return;
+  _calNotes[key] = _calNotes[key].filter(n => n.text !== label);
+  if (_calNotes[key].length === 0) delete _calNotes[key];
+  _calSaveNotes();
+  if (typeof _buildCalendar === 'function' && typeof _calYear !== 'undefined') {
+    _buildCalendar(_calYear, _calMonth);
+  }
 }
 
 function initCountdown() {

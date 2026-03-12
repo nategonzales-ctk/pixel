@@ -52,12 +52,18 @@ function _wclockFmt(tz) {
   } catch { return '--:--:--'; }
 }
 
+// Only update time text — no DOM rebuild (keeps select dropdown open)
+function _wclockTick() {
+  const times = document.querySelectorAll('.wclock-time');
+  times.forEach((el, i) => {
+    if (_wclocks[i]) el.textContent = _wclockFmt(_wclocks[i].tz);
+  });
+}
+
 function _wclockRender() {
   const list = document.getElementById('wclock-list');
   if (!list) return;
   list.innerHTML = '';
-
-  if (_wclocks.length === 0) { /* empty — just show add dropdown */ }
 
   _wclocks.forEach((c, i) => {
     const row = document.createElement('div');
@@ -121,5 +127,6 @@ function _wclockRender() {
 function initWorldClock() {
   _wclockLoad();
   _wclockRender();
-  setInterval(_wclockRender, 1000);
+  // Tick updates only time text, doesn't rebuild DOM
+  setInterval(_wclockTick, 1000);
 }

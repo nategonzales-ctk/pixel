@@ -150,6 +150,7 @@ async function handleFileSearch(query) {
           lines.push(`   └ ${f.path}`);
         });
         addMessage('pet', lines.join('\n'));
+        _bubbleSkipChat = true;
         showBubble(`Found ${data.results.length} file(s)! 📂`, 3000);
         setMood('excited', 3000);
       }
@@ -185,6 +186,7 @@ async function sendMessage() {
   if (!isOnline) await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
   const res = await getAIResponse(msg);
   const short = res.text.length > 110 ? res.text.slice(0, 107) + '…' : res.text;
+  _bubbleSkipChat = true;
   showBubble(short, 6000);
   addMessage('pet', res.text);
   setMood(res.mood || 'happy', 5000);

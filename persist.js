@@ -10,7 +10,8 @@ const PERSIST_KEYS = [
   'ambiance', 'widgetPositions', 'petBehaviorConfig',
   'appearanceSettings', 'pixelSticky', 'pixelHabits',
   'pixelPomodoro', 'pixelCountdowns', 'pixelQuickLinks',
-  'pixelWorldClocks', 'weatherManualCity', 'selectedPet'
+  'pixelWorldClocks', 'weatherManualCity', 'selectedPet',
+  'pixelCalendarNotes'
 ];
 
 let _persistReady = false;

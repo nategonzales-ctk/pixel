@@ -335,6 +335,7 @@ function resetLayout() {
   if (typeof _wclocks !== 'undefined')    _wclocks = [];
   if (typeof _qlinks !== 'undefined')     _qlinks = [];
   if (typeof _countdowns !== 'undefined') _countdowns = [];
+  if (typeof _calNotes !== 'undefined')   _calNotes = {};
 
   // ── Stop running timers ──
   if (typeof _pomoTimer !== 'undefined' && _pomoTimer) { clearInterval(_pomoTimer); _pomoTimer = null; }
@@ -364,6 +365,10 @@ function resetLayout() {
   if (typeof _wclockRender === 'function')  _wclockRender();
   if (typeof _qlinksRender === 'function')  _qlinksRender();
   if (typeof _cdownRender === 'function')   _cdownRender();
+  if (typeof _buildCalendar === 'function' && typeof _calYear !== 'undefined') {
+    const now = new Date(); _calYear = now.getFullYear(); _calMonth = now.getMonth();
+    _buildCalendar(_calYear, _calMonth);
+  }
   if (typeof _pomoRender === 'function')    _pomoRender();
   if (typeof _timerRender === 'function')   _timerRender();
 

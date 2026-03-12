@@ -93,9 +93,9 @@ body {
   background: #fff;
   border-radius: 18px;
   padding: 10px 30px 10px 16px;
-  max-width: 260px;
+  max-width: 280px;
   min-width: 80px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #1a1030;
   line-height: 1.5;
@@ -150,7 +150,7 @@ body {
   filter: drop-shadow(0 0 22px var(--glow));
   animation: petFloat 3.2s ease-in-out infinite;
 }
-#pet-wrap:hover { filter: drop-shadow(0 0 40px rgba(217,102,255,0.8)); }
+#pet-wrap:hover { filter: drop-shadow(0 0 40px rgba(217,102,255,0.8)); cursor: grab; }
 #pet-canvas { width:100%; height:100%; display:block; }
 @keyframes petFloat {
   0%,100%{ transform:translateY(0) }
@@ -837,16 +837,24 @@ body {
   border-radius: 14px;
   padding: 11px 14px 12px;
   backdrop-filter: blur(10px);
-  pointer-events: none;
   font-family: 'Nunito', sans-serif;
 }
+#cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cal-nav-btn {
+  background: none; border: none; color: rgba(217,102,255,0.7);
+  font-size: 9px; cursor: pointer; padding: 2px 4px; line-height: 1;
+}
+.cal-nav-btn:hover { color: #d966ff; }
 #cal-month-year {
   font-size: 10px; font-weight: 900;
   letter-spacing: 0.14em; text-transform: uppercase;
   color: rgba(238,238,255,0.55);
-  display: block; text-align: center;
-  margin-bottom: 8px;
+  text-align: center; cursor: pointer;
 }
+#cal-month-year:hover { color: rgba(238,238,255,0.8); }
 #cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -864,6 +872,12 @@ body {
   text-align: center;
   line-height: 1.9;
   border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+}
+.cal-day:not(.cal-empty):hover {
+  background: rgba(217,102,255,0.15);
+  color: #fff;
 }
 .cal-day.cal-today {
   background: rgba(217,102,255,0.28);
@@ -872,7 +886,82 @@ body {
   border-radius: 50%;
   box-shadow: 0 0 8px rgba(217,102,255,0.5);
 }
-.cal-empty { visibility: hidden; }
+.cal-day.cal-has-note::after {
+  content: '';
+  position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%);
+  width: 3px; height: 3px; border-radius: 50%;
+  background: #d966ff;
+}
+.cal-empty { visibility: hidden; cursor: default; }
+
+/* ── Calendar popup ── */
+.cal-popup {
+  position: absolute; top: 100%; left: 0; right: 0;
+  margin-top: 4px;
+  background: rgba(13,13,26,0.92);
+  border: 1px solid rgba(217,102,255,0.25);
+  border-radius: 10px;
+  padding: 8px 10px;
+  backdrop-filter: blur(12px);
+  z-index: 20;
+  font-family: 'Nunito', sans-serif;
+}
+.cal-popup-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.cal-popup-hdr span {
+  font-size: 9px; font-weight: 800; color: rgba(238,238,255,0.7);
+  letter-spacing: 0.05em;
+}
+.cal-popup-close {
+  background: none; border: none; color: rgba(238,238,255,0.5);
+  font-size: 13px; cursor: pointer; line-height: 1; padding: 0 2px;
+}
+.cal-popup-close:hover { color: #fff; }
+.cal-popup-list { margin-bottom: 6px; }
+.cal-popup-empty {
+  font-size: 9px; color: rgba(238,238,255,0.3);
+  text-align: center; padding: 4px 0;
+}
+.cal-popup-note {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 0; border-bottom: 1px solid rgba(217,102,255,0.08);
+}
+.cal-popup-note span {
+  font-size: 9px; color: rgba(238,238,255,0.7);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}
+.cal-popup-del {
+  background: none; border: none; color: rgba(238,238,255,0.3);
+  font-size: 11px; cursor: pointer; padding: 0 2px; margin-left: 4px;
+}
+.cal-popup-del:hover { color: #ff6b6b; }
+.cal-popup-form {
+  display: flex; gap: 4px;
+}
+.cal-popup-inp {
+  flex: 1; background: rgba(238,238,255,0.06);
+  border: 1px solid rgba(217,102,255,0.15);
+  border-radius: 6px; padding: 4px 6px;
+  font-size: 9px; color: #eef; font-family: 'Nunito', sans-serif;
+  outline: none;
+}
+.cal-popup-inp:focus { border-color: rgba(217,102,255,0.4); }
+.cal-popup-add {
+  background: rgba(217,102,255,0.2); border: none;
+  border-radius: 6px; color: #d966ff;
+  font-size: 12px; width: 24px; cursor: pointer;
+  font-weight: 800;
+}
+.cal-popup-add:hover { background: rgba(217,102,255,0.35); }
+.cal-popup-hint {
+  margin-top: 5px; font-size: 8px; color: rgba(238,238,255,0.4);
+}
+.cal-popup-hint label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.cal-popup-hint input[type="checkbox"] {
+  width: 10px; height: 10px; accent-color: #d966ff;
+}
 
 /* ── TO-DO WIDGET ── */
 #todo-widget {
@@ -915,9 +1004,21 @@ body {
   padding: 2px 9px; cursor: pointer; line-height: 1;
 }
 #todo-add-btn:hover { background: rgba(217,102,255,0.3); }
-#todo-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
-#todo-list::-webkit-scrollbar { width: 3px; }
-#todo-list::-webkit-scrollbar-thumb { background: rgba(217,102,255,0.3); border-radius: 99px; }
+#todo-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; scrollbar-width: none; }
+#todo-list::-webkit-scrollbar { display: none; }
+/* ── Scroll arrows for widget lists (Lively can't scroll easily) ── */
+.scroll-wrap { display: flex; flex-direction: column; }
+.scroll-arr {
+  flex-shrink: 0; width: 100%; height: 16px;
+  background: none; border: none;
+  color: rgba(217,102,255,0.4); font-size: 10px;
+  cursor: pointer; display: none;
+  align-items: center; justify-content: center;
+  transition: color 0.15s; line-height: 1;
+}
+.scroll-arr.visible { display: flex; }
+.scroll-arr:hover { color: rgba(217,102,255,0.9); }
+.scroll-up, .scroll-down { transform: none; }
 .todo-empty {
   font-size: 10px; font-weight: 700;
   color: rgba(238,238,255,0.25);
@@ -1021,7 +1122,8 @@ body {
 
 /* ── HABITS ── */
 #habits-widget { top: 440px; left: 36px; width: 190px; }
-#habits-list { display: flex; flex-direction: column; gap: 4px; }
+#habits-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; scrollbar-width: none; }
+#habits-list::-webkit-scrollbar { display: none; }
 .habit-row {
   display: flex; align-items: center; gap: 6px;
   background: rgba(255,255,255,0.04); border-radius: 7px; padding: 4px 5px;
@@ -1067,7 +1169,8 @@ body {
 /* ── WORLD CLOCKS ── */
 #worldclock-widget { top: 36px; left: 254px; width: 190px; }
 
-#wclock-list { display: flex; flex-direction: column; gap: 5px; }
+#wclock-list { display: flex; flex-direction: column; gap: 5px; max-height: 180px; overflow-y: auto; scrollbar-width: none; }
+#wclock-list::-webkit-scrollbar { display: none; }
 .wclock-row { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border-radius: 7px; padding: 4px 5px; }
 .wclock-label { flex: 1; font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.45); }
 .wclock-time { font-size: 13px; font-weight: 900; color: rgba(238,238,255,0.88); letter-spacing: 0.04em; }
@@ -1082,7 +1185,8 @@ body {
 
 /* ── COUNTDOWN ── */
 #countdown-widget { top: 446px; left: 254px; width: 188px; }
-#cdown-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+#cdown-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; max-height: 180px; overflow-y: auto; scrollbar-width: none; }
+#cdown-list::-webkit-scrollbar { display: none; }
 .cdown-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); text-align: center; padding: 4px 0; }
 .cdown-row { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 7px; position: relative; }
 .cdown-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(238,238,255,0.4); margin-bottom: 2px; }
@@ -1115,7 +1219,8 @@ body {
 
 /* ── QUICK LINKS ── */
 #quicklinks-widget { top: 590px; left: 36px; width: 190px; }
-#qlinks-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+#qlinks-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; max-height: 180px; overflow-y: auto; scrollbar-width: none; }
+#qlinks-list::-webkit-scrollbar { display: none; }
 .qlinks-empty { font-size: 10px; font-weight: 700; color: rgba(238,238,255,0.25); padding: 3px 0; }
 .qlinks-row { display: flex; align-items: center; gap: 4px; }
 .qlinks-link {
@@ -1195,9 +1300,17 @@ body {
 @keyframes npBounce { from { height: 3px; } to { height: 12px; } }
 
 /* ── SETTINGS PANE SCROLL (many widgets) ── */
-.stab-pane.active { max-height: 340px; overflow-y: auto; }
-.stab-pane.active::-webkit-scrollbar { width: 3px; }
-.stab-pane.active::-webkit-scrollbar-thumb { background: rgba(217,102,255,0.3); border-radius: 99px; }
+.stab-pane.active { max-height: 340px; overflow-y: auto; scrollbar-width: none; }
+.stab-pane.active::-webkit-scrollbar { display: none; }
+.settings-scroll-arr {
+  width: 100%; height: 16px; border: none;
+  background: none; color: rgba(217,102,255,0.4);
+  font-size: 10px; cursor: pointer; display: none;
+  align-items: center; justify-content: center;
+  transition: color 0.15s; line-height: 1;
+}
+.settings-scroll-arr.visible { display: flex; }
+.settings-scroll-arr:hover { color: rgba(217,102,255,0.9); }
 
 /* ── LAYOUT DRAG MODE ── */
 .layout-drag-mode {
@@ -1433,6 +1546,7 @@ body {
     <button class="stab" onclick="switchSettingsTab('pet')">🐾</button>
   </div>
 
+  <button class="settings-scroll-arr" id="settings-scroll-up" onclick="settingsScroll(-80)">&#9650;</button>
   <!-- Widgets tab -->
   <div class="stab-pane active" id="stab-widgets">
     <div class="settings-row">
@@ -1586,6 +1700,7 @@ body {
     <button class="s-act-btn" onclick="resetLayout()">↺ Reset Layout</button>
     <button class="s-act-btn primary" onclick="openAppearance()">🎨 Appearance</button>
   </div>
+  <button class="settings-scroll-arr" id="settings-scroll-down" onclick="settingsScroll(80)">&#9660;</button>
 </div>
 
 <!-- Weather + Location widget -->
@@ -1604,7 +1719,11 @@ body {
 
 <!-- Calendar widget -->
 <div id="calendar-widget">
-  <span id="cal-month-year">Loading…</span>
+  <div id="cal-nav">
+    <button class="cal-nav-btn" onclick="calPrev()">◀</button>
+    <span id="cal-month-year" onclick="calToday()">Loading…</span>
+    <button class="cal-nav-btn" onclick="calNext()">▶</button>
+  </div>
   <div id="cal-grid"></div>
 </div>
 
@@ -1615,7 +1734,11 @@ body {
     <input id="todo-input" type="text" placeholder="Add a task…" maxlength="80">
     <button id="todo-add-btn" onclick="todoAdd()" title="Add">+</button>
   </div>
-  <div id="todo-list"></div>
+  <div class="scroll-wrap">
+    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+    <div id="todo-list"></div>
+    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  </div>
 </div>
 
 <!-- Pomodoro widget -->
@@ -1649,13 +1772,21 @@ body {
 <!-- Habit tracker widget -->
 <div id="habits-widget" class="widget-panel">
   <div class="widget-title">✓ Habits</div>
-  <div id="habits-list"></div>
+  <div class="scroll-wrap">
+    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+    <div id="habits-list"></div>
+    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  </div>
 </div>
 
 <!-- World clocks widget -->
 <div id="worldclock-widget" class="widget-panel">
   <div class="widget-title">🌍 World Time</div>
-  <div id="wclock-list"></div>
+  <div class="scroll-wrap">
+    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+    <div id="wclock-list"></div>
+    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  </div>
 </div>
 
 <!-- Daily quote widget -->
@@ -1668,7 +1799,11 @@ body {
 <!-- Countdown to date widget -->
 <div id="countdown-widget" class="widget-panel">
   <div class="widget-title">⏳ Countdown</div>
-  <div id="cdown-list"></div>
+  <div class="scroll-wrap">
+    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+    <div id="cdown-list"></div>
+    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  </div>
   <div id="cdown-form">
     <input id="cdown-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="30">
     <input id="cdown-date-inp" class="w-inp" type="date">
@@ -1693,7 +1828,11 @@ body {
 <!-- Quick links widget -->
 <div id="quicklinks-widget" class="widget-panel">
   <div class="widget-title">🔗 Quick Links</div>
-  <div id="qlinks-list"></div>
+  <div class="scroll-wrap">
+    <button class="scroll-arr scroll-up" onclick="scrollList(this,-1)">&#9650;</button>
+    <div id="qlinks-list"></div>
+    <button class="scroll-arr scroll-down" onclick="scrollList(this,1)">&#9660;</button>
+  </div>
   <div id="qlinks-form">
     <input id="qlinks-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="24">
     <input id="qlinks-url-inp" class="w-inp" type="text" placeholder="URL…" maxlength="200">
@@ -1959,6 +2098,52 @@ function selectPetFromCard(petId) {
 }
 
 // ══════════════════════════════════════════════════
+// ── Scroll arrows for widget lists (Lively swallows mousewheel) ──
+function scrollList(btn, dir) {
+  const wrap = btn.closest('.scroll-wrap');
+  if (!wrap) return;
+  const list = wrap.querySelector('[id$="-list"]');
+  if (list) {
+    list.scrollBy({ top: dir * 60, behavior: 'smooth' });
+    setTimeout(() => _updateScrollArrows(wrap), 120);
+  }
+}
+function _updateScrollArrows(wrap) {
+  const list = wrap.querySelector('[id$="-list"]');
+  if (!list) return;
+  const up = wrap.querySelector('.scroll-up');
+  const dn = wrap.querySelector('.scroll-down');
+  const canScroll = list.scrollHeight > list.clientHeight + 2;
+  if (up) up.classList.toggle('visible', canScroll && list.scrollTop > 2);
+  if (dn) dn.classList.toggle('visible', canScroll && list.scrollTop + list.clientHeight < list.scrollHeight - 2);
+}
+function _updateAllScrollArrows() {
+  document.querySelectorAll('.scroll-wrap').forEach(_updateScrollArrows);
+}
+
+// ── Settings panel scroll arrows ──
+function settingsScroll(by) {
+  const pane = document.querySelector('.stab-pane.active');
+  if (pane) {
+    pane.scrollBy({ top: by, behavior: 'smooth' });
+    setTimeout(_updateSettingsArrows, 120);
+  }
+}
+function _updateSettingsArrows() {
+  const pane = document.querySelector('.stab-pane.active');
+  const up = document.getElementById('settings-scroll-up');
+  const dn = document.getElementById('settings-scroll-down');
+  if (!pane || !up || !dn) return;
+  const canScroll = pane.scrollHeight > pane.clientHeight + 2;
+  up.classList.toggle('visible', canScroll && pane.scrollTop > 2);
+  dn.classList.toggle('visible', canScroll && pane.scrollTop + pane.clientHeight < pane.scrollHeight - 2);
+  // Attach scroll listener if not already
+  if (!pane._settingsScrollBound) {
+    pane._settingsScrollBound = true;
+    pane.addEventListener('scroll', _updateSettingsArrows);
+  }
+}
+
 //  MOOD
 // ══════════════════════════════════════════════════
 const MOOD_EMOJIS={happy:'✨',thinking:'💭',surprised:'😲',sad:'💙',excited:'🎉',love:'💜',sleepy:'😴',angry:'😠',scared:'😱',silly:'😜',cry:'😢'};
@@ -1980,11 +2165,18 @@ function showTyping(){
   document.getElementById('bubble-text').innerHTML='<div class="dot-wrap"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   bubbleEl.classList.add('visible'); clearTimeout(bubTimer);
 }
-function showBubble(text,dur=4500){
+let _bubbleSkipChat = false;
+let _bubblePriority = false; // when true, only priority showBubble calls go through
+function showBubble(text,dur=6500,priority=false){
+  // Block non-priority bubbles while pet is running (prevents idle msgs from overriding arrival)
+  if (_bubblePriority && !priority) return;
   isTyping=false;
   document.getElementById('bubble-text').textContent=text;
   bubbleEl.classList.add('visible'); clearTimeout(bubTimer);
   bubTimer=setTimeout(()=>bubbleEl.classList.remove('visible'),dur);
+  // Log pet messages to chat box so user can read them later
+  if (!_bubbleSkipChat && typeof addMessage === 'function') addMessage('pet', text);
+  _bubbleSkipChat = false;
 }
 
 // ══════════════════════════════════════════════════
@@ -2002,12 +2194,79 @@ function spawnSparkles(cx,cy){
     document.body.appendChild(el); setTimeout(()=>el.remove(),900);
   }
 }
+// ── Pet click (sparkles) — only fires if not a drag ──
+let _petWasDragged = false;
 document.getElementById('pet-wrap').addEventListener('click',e=>{
+  if (_petWasDragged) { _petWasDragged = false; return; }
   spawnSparkles(e.clientX,e.clientY);
   const pet=getActivePet();
   const r=pet?pet.clickResponses:['Hehe~ 🥰','That tickles! 😄','Yay! 🎉'];
   showBubble(r[0|Math.random()*r.length],3500);
   setMood('excited',2200);
+});
+
+// ── Drag pet to place it ──
+let _petDragging = false;
+let _petDragStartX = 0, _petDragStartY = 0;
+let _petDragOffX = 0, _petDragOffY = 0;
+let _petHeld = false; // true after hold threshold
+
+document.getElementById('pet-wrap').addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  _petDragging = true;
+  _petHeld = false;
+  _petWasDragged = false;
+  _petDragStartX = e.clientX;
+  _petDragStartY = e.clientY;
+  _petDragOffX = e.clientX - petX;
+  _petDragOffY = e.clientY - petY;
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', e => {
+  if (!_petDragging) return;
+  const dx = e.clientX - _petDragStartX;
+  const dy = e.clientY - _petDragStartY;
+  // Start dragging after 8px movement threshold
+  if (!_petHeld && Math.sqrt(dx * dx + dy * dy) > 8) {
+    _petHeld = true;
+    _petWasDragged = true;
+    behaviorMood = 'excited';
+    petIsRunning = false;
+    _followActive = false;
+    document.getElementById('pet-zone').style.cursor = 'grabbing';
+  }
+  if (_petHeld) {
+    const w = Math.min(window.innerWidth, displayW);
+    const h = Math.min(window.innerHeight, displayH);
+    petX = Math.max(10, Math.min(e.clientX - _petDragOffX, w - PET_W - 10));
+    petY = Math.max(10, Math.min(e.clientY - _petDragOffY, h - PET_H - 10));
+    petTargetX = petX;
+    petTargetY = petY;
+    document.getElementById('pet-zone').style.transform =
+      `translate(${Math.round(petX)}px,${Math.round(petY)}px)`;
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (!_petDragging) return;
+  _petDragging = false;
+  document.getElementById('pet-zone').style.cursor = '';
+  if (_petHeld) {
+    _petHeld = false;
+    // Pet stays in place for a while before wandering again
+    petTargetX = petX;
+    petTargetY = petY;
+    nextWanderTime = Date.now() + 10000;
+    behaviorMood = null;
+    const msgs = [
+      'Okay I\'ll stay here! 🥰', 'This spot is nice! ✨',
+      'Comfy! 💜', 'Right here? Got it! 🐾',
+      'I like it here! 😊', 'Staying put~ 🌟',
+    ];
+    showBubble(msgs[Math.floor(Math.random() * msgs.length)], 5000);
+    setMood('happy', 4000);
+  }
 });
 
 // Brain (responses/data) moved to widgets/brain.js
@@ -2160,8 +2419,12 @@ function pickRunTarget() {
 }
 
 function updatePetMovement() {
-  // While running, pick a new target as soon as pet gets close to current one
-  if (petIsRunning) {
+  // Skip movement while user is dragging the pet
+  if (_petHeld) return;
+  // Follow-click waypoint system takes priority
+  if (typeof _followActive !== 'undefined' && _followActive) {
+    _updateFollowWaypoints();
+  } else if (petIsRunning) {
     const dx = petTargetX - petX, dy = petTargetY - petY;
     if (Math.sqrt(dx * dx + dy * dy) < 60) pickRunTarget();
   } else if (Date.now() >= nextWanderTime) {
@@ -2179,7 +2442,7 @@ function updatePetMovement() {
     tx = mouseX - Math.cos(angle) * 110 - PET_W / 2;
     ty = mouseY - Math.sin(angle) * 110 - (PET_H / 2 - 40);
   }
-  const speed = petIsRunning ? 0.22 : (petMouseNear ? 0.05 : 0.012);
+  const speed = petIsRunning ? 0.08 : (petMouseNear ? 0.05 : 0.012);
   petX += (tx - petX) * speed;
   petY += (ty - petY) * speed;
   petX = Math.max(10, Math.min(Math.min(window.innerWidth, displayW) - PET_W - 10, petX));
@@ -2304,6 +2567,19 @@ window.addEventListener('load',async ()=>{
   initProcesses();
   initBattery();
   initNowPlaying();
+  // Show/hide scroll arrows based on content overflow
+  _updateAllScrollArrows();
+  // Auto-update arrows when list content changes
+  document.querySelectorAll('.scroll-wrap [id$="-list"]').forEach(list => {
+    new MutationObserver(() => {
+      const wrap = list.closest('.scroll-wrap');
+      if (wrap) _updateScrollArrows(wrap);
+    }).observe(list, { childList: true, subtree: true });
+    list.addEventListener('scroll', () => {
+      const wrap = list.closest('.scroll-wrap');
+      if (wrap) _updateScrollArrows(wrap);
+    });
+  });
 
   // Apply saved pet state
   (function initPet(){
