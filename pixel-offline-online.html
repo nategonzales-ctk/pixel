@@ -1345,6 +1345,92 @@ body {
 #qlinks-form .w-inp { width: 100%; box-sizing: border-box; }
 #qlinks-add-btn { width: 100%; }
 
+/* ── APP LAUNCHER — floating desktop objects ── */
+.app-object {
+  position: absolute; z-index: 90;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 10px 12px 6px;
+  cursor: grab; user-select: none;
+  transition: transform 0.12s, filter 0.12s;
+}
+.app-object:hover {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 12px rgba(217,102,255,0.5));
+}
+.app-object:active, .app-obj-dragging {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+.app-obj-icon {
+  font-size: 42px; line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
+.app-obj-label {
+  font-size: 10px; font-weight: 700; text-align: center;
+  color: rgba(255,255,255,0.9); max-width: 72px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);
+}
+.app-obj-del {
+  position: absolute; top: -2px; right: -2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255,75,75,0.85); border: none;
+  color: #fff; font-size: 10px; font-weight: 900;
+  cursor: pointer; display: none; align-items: center; justify-content: center;
+  line-height: 1; padding: 0;
+}
+.app-object:hover .app-obj-del { display: flex; }
+.app-obj-nocfg {
+  position: absolute; top: 4px; left: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,200,50,0.9);
+  box-shadow: 0 0 4px rgba(255,200,50,0.6);
+}
+/* Presets row */
+.apps-presets-row {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;
+}
+.apps-preset-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(217,102,255,0.15);
+  font-size: 18px; cursor: pointer; transition: background 0.15s;
+}
+.apps-preset-btn:hover {
+  background: rgba(217,102,255,0.2);
+  box-shadow: 0 0 8px rgba(217,102,255,0.3);
+}
+/* Config overlay */
+#apps-config-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+}
+.apps-config-box {
+  background: rgba(20,10,30,0.95); border: 1px solid rgba(217,102,255,0.3);
+  border-radius: 14px; padding: 16px 20px; min-width: 260px;
+  box-shadow: 0 0 30px rgba(217,102,255,0.15);
+}
+.apps-config-title {
+  font-size: 13px; font-weight: 700; color: rgba(217,102,255,0.9);
+  margin-bottom: 10px; text-align: center;
+}
+.apps-config-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.apps-config-row label {
+  font-size: 10px; color: rgba(238,238,255,0.6); width: 52px; text-align: right;
+}
+.apps-config-row .w-inp { flex: 1; }
+.apps-browse-btn {
+  min-width: 32px; padding: 4px 6px; font-size: 14px;
+  background: rgba(100,100,255,0.25); border: 1px solid rgba(100,100,255,0.3);
+  border-radius: 6px; cursor: pointer; color: #fff;
+  transition: background 0.15s;
+}
+.apps-browse-btn:hover { background: rgba(100,100,255,0.45); }
+#apps-form { display: none; flex-direction: column; gap: 4px; margin-top: 4px; }
+#apps-form .w-inp { width: 100%; box-sizing: border-box; }
+
 /* ── NETWORK SPEED ── */
 #network-widget {
   top: 164px; left: calc(var(--primary-w) - 224px); width: 188px;
@@ -1915,6 +2001,10 @@ body {
       <label class="tog"><input type="checkbox" id="tog-quicklinks" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
     </div>
     <div class="settings-row">
+      <span class="settings-label">App Shortcuts</span>
+      <button class="s-act-btn" onclick="_appShowAddForm()" style="padding:3px 10px;font-size:10px;">+ Add App</button>
+    </div>
+    <div class="settings-row">
       <span class="settings-label">Network Speed</span>
       <label class="tog"><input type="checkbox" id="tog-network" onchange="applySettings()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
     </div>
@@ -2006,10 +2096,8 @@ body {
       <span class="settings-label">Bridge</span>
       <span id="bridge-status-dot" style="font-size:12px;opacity:.7;">● Checking…</span>
     </div>
-    <div style="display:flex;gap:6px;">
-      <button class="s-act-btn" id="bridge-restart-btn" onclick="bridgeRestart()" style="flex:1;">⟳ Restart</button>
-      <button class="s-act-btn" id="bridge-stop-btn" onclick="bridgeStop()" style="flex:1;">■ Stop</button>
-    </div>
+    <button class="s-act-btn" id="bridge-restart-btn" onclick="bridgeRestart()" style="width:100%;">⟳ Restart Bridge</button>
+    <div style="font-size:9px;color:rgba(238,238,255,0.4);margin-top:2px;">If bridge is down, double-click start-bridge-hidden.vbs</div>
     <div class="settings-sep"></div>
     <button class="s-act-btn primary" id="layout-edit-btn" onclick="toggleLayoutMode()">⊞ Edit Layout</button>
     <button class="s-act-btn" onclick="resetLayout()">↺ Reset Layout</button>
@@ -2187,6 +2275,27 @@ body {
   <button class="wp-arr wp-arr-down" onclick="wpScroll(this,1)">&#9660;</button>
 </div>
 
+<!-- App Launcher add form (hidden, toggled from settings) -->
+<div id="apps-form" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:9998;
+  background:rgba(20,10,30,0.95); border:1px solid rgba(217,102,255,0.3); border-radius:14px;
+  padding:14px 18px; min-width:260px; flex-direction:column; gap:6px;
+  box-shadow:0 0 30px rgba(217,102,255,0.15); backdrop-filter:blur(8px);">
+  <div style="font-size:12px;font-weight:700;color:rgba(217,102,255,0.9);text-align:center;margin-bottom:4px;">Add App Shortcut</div>
+  <div id="apps-presets" class="apps-presets-row"></div>
+  <div style="display:flex;gap:4px">
+    <input id="apps-icon-inp" class="w-inp" type="text" placeholder="Icon" maxlength="4" style="width:50px">
+    <input id="apps-label-inp" class="w-inp" type="text" placeholder="Label…" maxlength="24" style="flex:1">
+  </div>
+  <div style="display:flex;gap:4px">
+    <input id="apps-path-inp" class="w-inp" type="text" placeholder="C:\...\app.exe" maxlength="260" style="flex:1">
+    <button class="w-btn apps-browse-btn" onclick="_appBrowse('apps-path-inp')" title="Browse...">📂</button>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button class="w-btn" onclick="appAdd()" style="flex:1">+ Add</button>
+    <button class="w-btn" onclick="document.getElementById('apps-form').style.display='none'" style="opacity:0.6">Cancel</button>
+  </div>
+</div>
+
 <!-- Network speed widget -->
 <div id="network-widget" class="widget-panel">
   <div class="widget-title">📡 Network</div>
@@ -2337,6 +2446,7 @@ body {
 <script src="widgets/countdown.js"></script>
 <script src="widgets/sticky.js"></script>
 <script src="widgets/quicklinks.js"></script>
+<script src="widgets/applauncher.js"></script>
 <script src="widgets/network.js"></script>
 <script src="widgets/processes.js"></script>
 <script src="widgets/battery.js"></script>
@@ -2833,9 +2943,9 @@ function updateBridgeStatusDot() {
 }
 
 async function bridgeStop() {
+  showBubble('Stopping bridge... You will need to run start-bridge-hidden.vbs to start it again!', 5000);
   try {
     await fetch(`${BRIDGE_URL}/shutdown`, { method: 'POST' });
-    showBubble('Bridge stopped! 🔌', 3000);
   } catch {}
   isBridgeUp = false;
   isOnline = false;
@@ -2847,14 +2957,19 @@ async function bridgeRestart() {
   const btn = document.getElementById('bridge-restart-btn');
   if (btn) btn.textContent = '⟳ Restarting…';
   // Tell bridge to spawn a new process and exit
-  try { await fetch(`${BRIDGE_URL}/restart`, { method: 'POST' }); } catch {}
-  // Wait for new process to come up
-  let retries = 8;
+  try { await fetch(`${BRIDGE_URL}/restart`, { method: 'POST' }); } catch {
+    // Bridge wasn't reachable — it's probably not running
+    if (btn) btn.textContent = '⟳ Restart';
+    showBubble('Bridge is not running. Double-click start-bridge-hidden.vbs to start!', 5000);
+    return;
+  }
+  // Wait for new process to come up (VBS runs npm install, can take a while)
+  let retries = 15;
   while (retries-- > 0) {
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     try {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 1500);
+      const t = setTimeout(() => ctrl.abort(), 2000);
       const res = await fetch(`${BRIDGE_URL}/health`, { signal: ctrl.signal });
       clearTimeout(t);
       const data = await res.json();
@@ -2875,7 +2990,7 @@ async function bridgeRestart() {
   isOnline = false;
   updateModeIndicator();
   updateBridgeStatusDot();
-  showBubble('Bridge didn\'t restart. Run start-bridge.bat manually! 🔧', 5000);
+  showBubble('Bridge didn\'t restart. Double-click start-bridge-hidden.vbs to start!', 5000);
 }
 
 async function probeConnection(){
@@ -3231,6 +3346,7 @@ window.addEventListener('load',async ()=>{
   initCountdown();
   initSticky();
   initQuickLinks();
+  initAppLauncher();
   initNetwork();
   initProcesses();
   initBattery();

@@ -11,7 +11,9 @@ const PERSIST_KEYS = [
   'appearanceSettings', 'pixelSticky', 'pixelHabits',
   'pixelPomodoro', 'pixelCountdowns', 'pixelQuickLinks',
   'pixelWorldClocks', 'weatherManualCity', 'selectedPet',
-  'pixelCalendarNotes'
+  'pixelCalendarNotes',
+  'pixelApps',
+  'pixelAppsPos'
 ];
 
 let _persistReady = false;

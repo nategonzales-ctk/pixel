@@ -672,16 +672,141 @@ foreach ($p in $players) {
     res.end('{"ok":true}');
     setTimeout(() => {
       if (_awProc) { _awProc.kill(); _awProc = null; }
+      // Write a temp .bat that waits then starts node (hidden via wscript)
       const { spawn } = require('child_process');
-      const child = spawn(process.execPath, [__filename], {
-        cwd: __dirname,
-        detached: true,
-        stdio: 'ignore',
-        env: process.env,
+      const logFile = path.join(os.homedir(), '.pixel-pet', 'bridge.log');
+      const batFile = path.join(os.tmpdir(), 'pixel_restart.bat');
+      const batCode = `@echo off\r\ntimeout /t 2 /nobreak >nul\r\ncd /d "${__dirname}"\r\nnode server.js >> "${logFile}" 2>&1\r\n`;
+      fs.writeFileSync(batFile, batCode, 'utf8');
+      const child = spawn('cmd.exe', ['/c', 'start', '', '/min', batFile], {
+        detached: true, stdio: 'ignore',
       });
       child.unref();
+      console.log('[bridge] restart bat spawned, exiting...');
       process.exit(0);
-    }, 500);
+    }, 300);
+    return;
+  }
+
+  // GET /browse — open native file picker dialog and return selected path
+  // Compiles a tiny WinForms .exe (once) so no console window ever flashes.
+  // The .exe shows OpenFileDialog and prints the chosen path to stdout.
+  if (req.method === 'GET' && req.url === '/browse') {
+    const browseExe = path.join(os.tmpdir(), 'pixel_browse.exe');
+
+    // Build helper exe if it doesn't exist yet
+    if (!fs.existsSync(browseExe)) {
+      const csCode = `
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+class P {
+  [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr hWnd);
+  [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
+  [DllImport("user32.dll")] static extern IntPtr GetActiveWindow();
+  [STAThread]
+  static void Main(string[] args) {
+    Application.EnableVisualStyles();
+    // Create a hidden topmost owner form to force dialog to front
+    var owner = new Form { Width = 0, Height = 0, ShowInTaskbar = false,
+      StartPosition = FormStartPosition.Manual, Location = new System.Drawing.Point(-9999,-9999),
+      TopMost = true };
+    owner.Show();
+    owner.Hide();
+    owner.TopMost = true;
+    var dlg = new OpenFileDialog();
+    dlg.Title = "Select Application";
+    dlg.Filter = "Applications (*.exe;*.lnk;*.bat;*.cmd;*.url)|*.exe;*.lnk;*.bat;*.cmd;*.url|All files (*.*)|*.*";
+    dlg.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+    string result = "";
+    if (dlg.ShowDialog(owner) == DialogResult.OK) result = dlg.FileName;
+    if (args.Length > 0) File.WriteAllText(args[0], result);
+    owner.Close();
+  }
+}`;
+      const csFile = path.join(os.tmpdir(), 'pixel_browse.cs');
+      fs.writeFileSync(csFile, csCode, 'utf8');
+      // Compile with .NET Framework csc (always present on Windows)
+      const csc = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe';
+      const { execFileSync } = require('child_process');
+      try {
+        execFileSync(csc, [
+          '/nologo', '/target:winexe', '/reference:System.Windows.Forms.dll', '/reference:System.Drawing.dll',
+          `/out:${browseExe}`, csFile
+        ], { timeout: 15000, windowsHide: true });
+      } catch (err) {
+        console.error('[browse] compile failed:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'failed to compile file picker helper' }));
+        try { fs.unlinkSync(csFile); } catch {}
+        return;
+      }
+      try { fs.unlinkSync(csFile); } catch {}
+    }
+
+    // Run the helper — pass a temp file path as arg for the result
+    const resultFile = path.join(os.tmpdir(), 'pixel_browse_result.txt');
+    try { fs.unlinkSync(resultFile); } catch {}
+    const { spawn } = require('child_process');
+    const proc = spawn(browseExe, [resultFile], { stdio: 'ignore' });
+    proc.on('close', () => {
+      let selected = null;
+      try { selected = fs.readFileSync(resultFile, 'utf8').trim() || null; } catch {}
+      try { fs.unlinkSync(resultFile); } catch {}
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ path: selected }));
+    });
+    proc.on('error', () => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'failed to open file picker' }));
+    });
+    return;
+  }
+
+  // POST /launch — open an app/shortcut on the desktop
+  if (req.method === 'POST' && req.url === '/launch') {
+    let payload;
+    try { payload = await readBody(req); } catch {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'bad_request' })); return;
+    }
+    const appPath = payload && payload.path;
+    if (!appPath || typeof appPath !== 'string') {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'path required' })); return;
+    }
+    const ext = path.extname(appPath).toLowerCase();
+    const ALLOWED = new Set(['.exe', '.lnk', '.bat', '.cmd', '.url']);
+    if (!ALLOWED.has(ext)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'extension_not_allowed', ext })); return;
+    }
+    if (!fs.existsSync(appPath)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'file_not_found' })); return;
+    }
+    try {
+      const { spawn } = require('child_process');
+      let child;
+      if (ext === '.lnk' || ext === '.url') {
+        child = spawn('cmd', ['/c', 'start', '', appPath], {
+          detached: true, stdio: 'ignore', windowsHide: true
+        });
+      } else {
+        child = spawn(appPath, [], {
+          detached: true, stdio: 'ignore', windowsHide: false
+        });
+      }
+      child.unref();
+      console.log('[launch]', appPath, '(PID:', child.pid + ')');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, pid: child.pid }));
+    } catch (err) {
+      console.error('[launch]', err.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
     return;
   }
 
