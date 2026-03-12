@@ -262,6 +262,70 @@ async function searchFiles(query, maxResults = 20) {
   return results;
 }
 
+// ── ACTIVE WINDOW (single persistent PowerShell process) ──
+// One PowerShell process stays alive, loops internally every 3s,
+// compiles Add-Type once. ~0 CPU/RAM overhead vs spawning every 3s.
+let _awCache = { process: null, title: null };
+let _awProc = null;
+
+const _awLoopScript = `
+$ErrorActionPreference = 'SilentlyContinue'
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public class FGWin {
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+}
+"@
+while ($true) {
+  $hwnd = [FGWin]::GetForegroundWindow()
+  $sb = New-Object System.Text.StringBuilder 256
+  [void][FGWin]::GetWindowText($hwnd, $sb, 256)
+  $title = $sb.ToString()
+  $pid = 0
+  [void][FGWin]::GetWindowThreadProcessId($hwnd, [ref]$pid)
+  $proc = Get-Process -Id $pid -EA SilentlyContinue
+  $name = if ($proc) { $proc.ProcessName } else { '' }
+  [Console]::WriteLine("AW|$name|$title")
+  Start-Sleep -Seconds 3
+}
+`;
+
+function _awStart() {
+  if (_awProc) return;
+  const { spawn } = require('child_process');
+  const encoded = Buffer.from(_awLoopScript, 'utf16le').toString('base64');
+  _awProc = spawn('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded], {
+    stdio: ['ignore', 'pipe', 'ignore'],
+    windowsHide: true,
+  });
+  let buf = '';
+  _awProc.stdout.on('data', chunk => {
+    buf += chunk.toString();
+    let nl;
+    while ((nl = buf.indexOf('\n')) !== -1) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line.startsWith('AW|')) continue;
+      const parts = line.split('|');
+      _awCache = {
+        process: parts[1] || null,
+        title: parts.slice(2).join('|') || null,  // title may contain |
+      };
+    }
+  });
+  _awProc.on('exit', () => {
+    _awProc = null;
+    // Restart after a brief delay if it dies unexpectedly
+    setTimeout(_awStart, 5000);
+  });
+  console.log('[appwatch] persistent PowerShell started (PID:', _awProc.pid + ')');
+}
+_awStart();
+
 // ── HTTP SERVER ───────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -502,7 +566,7 @@ foreach ($p in $players) {
     // Encode as UTF-16LE base64 (required by PowerShell -EncodedCommand)
     const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
     execFile('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
-      { timeout: 6000 },
+      { timeout: 6000, windowsHide: true },
       (_err, stdout) => {
         const line = (stdout || '').trim();
         if (!line) {
@@ -525,41 +589,10 @@ foreach ($p in $players) {
     return;
   }
 
-  // GET /activewindow — current foreground window title + process name
+  // GET /activewindow — return cached foreground window (polled server-side every 3s)
   if (req.method === 'GET' && req.url === '/activewindow') {
-    const psScript = `
-$ErrorActionPreference = 'SilentlyContinue'
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-public class FGWin {
-  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-  [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
-  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
-}
-"@
-$hwnd = [FGWin]::GetForegroundWindow()
-$sb = New-Object System.Text.StringBuilder 256
-[void][FGWin]::GetWindowText($hwnd, $sb, 256)
-$title = $sb.ToString()
-$pid = 0
-[void][FGWin]::GetWindowThreadProcessId($hwnd, [ref]$pid)
-$proc = Get-Process -Id $pid -EA SilentlyContinue
-$name = if ($proc) { $proc.ProcessName } else { '' }
-Write-Output "$name|$title"
-`;
-    const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
-    execFile('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
-      { timeout: 4000 },
-      (_err, stdout) => {
-        const line = (stdout || '').trim();
-        const sep = line.indexOf('|');
-        const process = sep > 0 ? line.slice(0, sep) : '';
-        const title = sep > 0 ? line.slice(sep + 1) : line;
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ process: process || null, title: title || null }));
-      });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(_awCache));
     return;
   }
 
@@ -595,7 +628,10 @@ Write-Output "$name|$title"
     console.log('[bridge] shutdown requested');
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{"ok":true}');
-    setTimeout(() => process.exit(0), 300);
+    setTimeout(() => {
+      if (_awProc) { _awProc.kill(); _awProc = null; }
+      process.exit(0);
+    }, 300);
     return;
   }
 
@@ -605,6 +641,7 @@ Write-Output "$name|$title"
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{"ok":true}');
     setTimeout(() => {
+      if (_awProc) { _awProc.kill(); _awProc = null; }
       const { spawn } = require('child_process');
       const child = spawn(process.execPath, [__filename], {
         cwd: __dirname,

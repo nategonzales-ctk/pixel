@@ -55,6 +55,11 @@ function qlinkAdd() {
   lbl.value = ''; url.value = '';
   _qlinksSave();
   _qlinksRender();
+  if (typeof showBubble === 'function') {
+    const msgs = ['Link saved! 🔗', 'Bookmarked! ✨', 'Quick access added! 📌', 'Nice link! 🌐'];
+    showBubble(msgs[Math.floor(Math.random() * msgs.length)], 3000);
+    setMood('happy', 2500);
+  }
 }
 
 function qlinkDelete(i) {

@@ -47,6 +47,12 @@ function stickySetColor(i) {
   document.querySelectorAll('.sticky-dot').forEach((d, idx) => {
     d.classList.toggle('active', idx === i);
   });
+  if (typeof showBubble === 'function') {
+    const c = STICKY_COLORS[i];
+    const msgs = [`Ooh, ${c ? c.name : 'new color'}! 🎨`, 'Pretty! ✨', 'Color changed! 🌈'];
+    showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500);
+    setMood('happy', 2000);
+  }
 }
 
 function initSticky() {

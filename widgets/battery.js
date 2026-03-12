@@ -2,6 +2,10 @@
 //  BATTERY WIDGET
 //  Uses bridge GET /battery, falls back to navigator.getBattery()
 // ══════════════════════════════════════════════════
+let _batLowAlerted = false;
+let _batWarnAlerted = false;
+let _batChargeAlerted = false;
+
 function _batteryRender(pct, charging, minutesLeft) {
   const panel = document.getElementById('battery-widget');
   const fill  = document.getElementById('bat-fill');
@@ -28,6 +32,26 @@ function _batteryRender(pct, charging, minutesLeft) {
   }
 
   if (icon) icon.textContent = charging ? '⚡' : (p < 15 ? '🪫' : '🔋');
+
+  // Pet reactions to battery state changes
+  if (typeof showBubble === 'function') {
+    if (p <= 10 && !_batLowAlerted) {
+      _batLowAlerted = true;
+      showBubble('Battery super low! Plug in! 🪫😰', 5000);
+      setMood('scared', 4000);
+    } else if (p <= 20 && !_batWarnAlerted) {
+      _batWarnAlerted = true;
+      showBubble('Battery getting low! 🔋', 4000);
+      setMood('surprised', 3000);
+    } else if (charging && !_batChargeAlerted) {
+      _batChargeAlerted = true;
+      showBubble('Charging! ⚡✨', 3000);
+      setMood('happy', 2500);
+    } else if (!charging && _batChargeAlerted) {
+      _batChargeAlerted = false;
+    }
+    if (p > 25) { _batLowAlerted = false; _batWarnAlerted = false; }
+  }
 }
 
 async function _fetchBattery() {

@@ -137,6 +137,11 @@ async function setWeatherCity(name) {
   const inp = document.getElementById('weather-city-input');
   if (inp) inp.value = label;
   await _startWithCoords(loc.lat, loc.lon, label);
+  if (typeof showBubble === 'function') {
+    const msgs = [`Found ${label}! 📍`, `Weather for ${loc.name}! ☀️`, `Got it! Checking ${loc.name}! 🌤️`];
+    showBubble(msgs[Math.floor(Math.random() * msgs.length)], 3500);
+    setMood('happy', 3000);
+  }
 }
 
 // Remove manual city — auto-detect on next call

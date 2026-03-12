@@ -115,9 +115,15 @@ function _wclockRender() {
       const tz = sel.value;
       if (!tz) return;
       const match = WCLOCK_OPTIONS.find(o => o.tz === tz);
-      _wclocks.push({ label: match ? match.label : tz, tz });
+      const label = match ? match.label : tz;
+      _wclocks.push({ label, tz });
       _wclockSave();
       _wclockRender();
+      if (typeof showBubble === 'function') {
+        const msgs = [`Added ${label}! 🌍`, `Now tracking ${label}! ⏰`, `${label} clock added! 🕐`];
+        showBubble(msgs[Math.floor(Math.random() * msgs.length)], 3000);
+        setMood('happy', 2500);
+      }
     };
     addRow.appendChild(sel);
     list.appendChild(addRow);
