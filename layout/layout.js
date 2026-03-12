@@ -437,6 +437,9 @@ function resetLayout() {
     setDayNight(false, false);
   }
 
+  // ── Re-detect and apply display size (localStorage was cleared) ──
+  if (typeof resetDisplaySize === 'function') resetDisplaySize();
+
   // ── Close any open panels ──
   if (typeof settingsPanelOpen !== 'undefined' && settingsPanelOpen) {
     settingsPanelOpen = false;

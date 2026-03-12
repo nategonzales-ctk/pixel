@@ -6,18 +6,18 @@
 let settingsPanelOpen = false;
 const SETTINGS_KEY = 'widgetSettings';
 
-// ── Display size (span / multi-monitor support) ──
-// Auto-detect single-monitor width even in span mode.
+// ── Display size ──
+// Use the actual wallpaper canvas size (window.innerWidth/Height in Lively).
+// User can override via settings if needed.
 function detectDisplayWidth() {
   const saved = parseInt(localStorage.getItem('displayW'));
-  const heuristic = Math.min(window.innerWidth, Math.round(window.screen.height * 16 / 9));
-  if (saved && saved < window.innerWidth) return saved;
-  return heuristic || 1920;
+  if (saved && saved > 0) return saved;
+  return window.innerWidth || 1920;
 }
 function detectDisplayHeight() {
   const saved = parseInt(localStorage.getItem('displayH'));
-  if (saved) return saved;
-  return Math.min(window.innerHeight, window.screen.height) || 1080;
+  if (saved && saved > 0) return saved;
+  return window.innerHeight || 1080;
 }
 let displayW = detectDisplayWidth();
 let displayH = detectDisplayHeight();
