@@ -91,54 +91,12 @@ function _appsRender() {
     // ── Right-click to configure ──
     obj.oncontextmenu = e => { e.preventDefault(); _appConfig(i); };
 
-    // ── Drag to move ──
-    _makeAppDraggable(obj, i);
+    // ── Long-press to wobble + drag/resize (same as other widgets) ──
+    if (typeof registerWidgetWobble === 'function') {
+      registerWidgetWobble(obj);
+    }
   });
 }
-
-// ── Dragging ──
-let _appDragEl = null, _appDragI = -1, _appDragOX = 0, _appDragOY = 0;
-let _appDragMoved = false;
-
-function _makeAppDraggable(el, idx) {
-  el.addEventListener('mousedown', e => {
-    if (e.button !== 0) return;  // left click only
-    if (e.target.classList.contains('app-obj-del')) return;
-    e.preventDefault();
-    _appDragEl = el;
-    _appDragI = idx;
-    _appDragMoved = false;
-    const rect = el.getBoundingClientRect();
-    _appDragOX = e.clientX - rect.left;
-    _appDragOY = e.clientY - rect.top;
-    el.style.zIndex = '500';
-    el.classList.add('app-obj-dragging');
-  });
-}
-
-document.addEventListener('mousemove', e => {
-  if (!_appDragEl) return;
-  _appDragMoved = true;
-  const x = e.clientX - _appDragOX;
-  const y = e.clientY - _appDragOY;
-  _appDragEl.style.left = x + 'px';
-  _appDragEl.style.top = y + 'px';
-});
-
-document.addEventListener('mouseup', () => {
-  if (!_appDragEl) return;
-  _appDragEl.style.zIndex = '';
-  _appDragEl.classList.remove('app-obj-dragging');
-  if (_appDragMoved) {
-    _appsPos[_appDragI] = {
-      x: parseInt(_appDragEl.style.left),
-      y: parseInt(_appDragEl.style.top),
-    };
-    _appsPosSave();
-  }
-  _appDragEl = null;
-  _appDragI = -1;
-});
 
 // ── Add form (in settings panel) ──
 function _appShowAddForm() {

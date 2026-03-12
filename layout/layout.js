@@ -185,6 +185,12 @@ function initLayout() {
       e.stopPropagation();
       const wid = el.id;
       _wobbleDismiss();
+      // App objects: delete the shortcut
+      if (wid.startsWith('app-obj-') && typeof appDelete === 'function') {
+        const idx = parseInt(wid.replace('app-obj-', ''));
+        if (!isNaN(idx)) appDelete(idx);
+        return;
+      }
       // Find matching toggle and hide widget
       if (typeof WIDGET_TOGGLES !== 'undefined') {
         const match = WIDGET_TOGGLES.find(([, elId]) => elId === wid);
@@ -320,6 +326,26 @@ function initLayout() {
 
   document.addEventListener('mousemove', _onMouseMove);
   document.addEventListener('mouseup',   _onMouseUp);
+
+  // ── Expose wobble registration for dynamic elements (e.g. app objects) ──
+  window.registerWidgetWobble = function(el) {
+    el.addEventListener('mousedown', e => {
+      if (layoutMode) return;
+      if (e.target.closest('input,textarea,select,button,a,.tog,.app-obj-del,.layout-resize-handle')) return;
+      if (_longPressFired && _longPressEl === el) {
+        const r = el.getBoundingClientRect();
+        dragEl = el;
+        dragOffX = e.clientX - r.left;
+        dragOffY = e.clientY - r.top;
+        return;
+      }
+      _longPressEl = el;
+      _longPressFired = false;
+      _longPressStartX = e.clientX;
+      _longPressStartY = e.clientY;
+      _longPressTimer = setTimeout(() => _wobbleActivate(el), 500);
+    });
+  };
 
   _applyAllPositions();
 }
@@ -765,6 +791,11 @@ function _savePos(id, x, y) {
     const existing = saved[id] || {};
     saved[id] = { x, y, sx: existing.sx || 1, sy: existing.sy || 1 };
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved));
+    // Sync app object positions to applauncher's own storage
+    if (id.startsWith('app-obj-') && typeof _appsPos !== 'undefined') {
+      const idx = parseInt(id.replace('app-obj-', ''));
+      if (!isNaN(idx)) { _appsPos[idx] = { x, y }; _appsPosSave(); }
+    }
   } catch(e) {}
 }
 
@@ -773,6 +804,11 @@ function _saveScale(id, x, y, sx, sy) {
     const saved = JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {};
     saved[id] = { x, y, sx, sy };
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved));
+    // Sync app object positions to applauncher's own storage
+    if (id.startsWith('app-obj-') && typeof _appsPos !== 'undefined') {
+      const idx = parseInt(id.replace('app-obj-', ''));
+      if (!isNaN(idx)) { _appsPos[idx] = { x, y }; _appsPosSave(); }
+    }
   } catch(e) {}
 }
 
