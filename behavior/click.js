@@ -57,7 +57,8 @@ function initBehaviorClickListener() {
         e.target.closest('#mode-indicator') ||
         e.target.closest('#appearance-panel') ||
         e.target.closest('#pet-selector') ||
-        e.target.closest('#open-pet-selector')) return;
+        e.target.closest('#open-pet-selector') ||
+        e.target.closest('.buddy-zone')) return;
 
     _screenClicks++;
     clearTimeout(_screenClickTimer);

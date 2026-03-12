@@ -6,6 +6,8 @@ window.BEHAVIOR_REGISTRY.push({
   id: 'sleep',
   update: function(now) {
     if (!bhvCfg.sleepOn || petIsHiding) return;
+    // Don't sleep when friends are visiting
+    if (typeof _playdateActive !== 'undefined' && _playdateActive) return;
     const idleSec = (now - lastMouseMove) / 1000;
     if (!petIsAsleep && idleSec >= bhvCfg.sleepDelay) {
       petIsAsleep = true;

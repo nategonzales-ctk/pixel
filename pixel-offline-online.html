@@ -191,6 +191,42 @@ body {
   100% { opacity: 0;   transform: translate(15px,-100px) scale(0.6) rotate(12deg); }
 }
 
+/* ── Buddy pets (playdate) ── */
+.buddy-zone {
+  position: fixed; left: 0; top: 0; z-index: 29;
+  width: 200px; display: flex; flex-direction: column; align-items: center;
+  pointer-events: none; will-change: transform;
+  transition: opacity 0.6s ease;
+}
+.buddy-zone.buddy-entering { animation: buddyEnter 0.8s ease-out; }
+.buddy-zone.buddy-leaving  { animation: buddyLeave 1.2s ease-in forwards; }
+@keyframes buddyEnter {
+  0%   { opacity: 0; transform: scale(0.3); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes buddyLeave {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+.buddy-wrap {
+  width: 160px; height: 160px;
+  filter: drop-shadow(0 0 18px rgba(100,200,255,0.5));
+  animation: petFloat 3.2s ease-in-out infinite;
+}
+.buddy-canvas { width: 100%; height: 100%; display: block; }
+.buddy-shadow {
+  width: 80px; height: 12px;
+  background: radial-gradient(ellipse, rgba(100,200,255,0.25) 0%, transparent 70%);
+  margin-top: -5px;
+  animation: shadowP 3.2s ease-in-out infinite;
+}
+.buddy-name {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-align: center; margin-top: 2px;
+  opacity: 0.85;
+}
+
 /* Shadow under pet */
 #pet-shadow {
   width: 100px; height: 16px;
@@ -1750,6 +1786,15 @@ body {
       <input id="bhv-hide-dur" type="number" min="2" max="60" step="1" value="8" class="s-num-input" onchange="saveBehaviorConfig()">
     </div>
     <div class="settings-sep"></div>
+    <div class="settings-row">
+      <span class="settings-label">Play with friends</span>
+      <label class="tog"><input type="checkbox" id="bhv-playdate-on" checked onchange="saveBehaviorConfig()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">Visit every (min)</span>
+      <input id="bhv-playdate-interval" type="number" min="1" max="120" step="1" value="10" class="s-num-input" onchange="saveBehaviorConfig()">
+    </div>
+    <div class="settings-sep"></div>
     <button class="s-act-btn primary" id="layout-edit-btn" onclick="toggleLayoutMode()">⊞ Edit Layout</button>
     <button class="s-act-btn" onclick="resetLayout()">↺ Reset Layout</button>
     <button class="s-act-btn primary" onclick="openAppearance()">🎨 Appearance</button>
@@ -2056,6 +2101,7 @@ body {
 <script src="behavior/sleep.js"></script>
 <script src="behavior/click.js"></script>
 <script src="behavior/hide.js"></script>
+<script src="behavior/playdate.js"></script>
 <script src="behavior/index.js"></script>
 <!-- Widgets (add new widget: create widgets/yourwidget.js) -->
 <script src="widgets/brain.js"></script>
@@ -2638,6 +2684,8 @@ function drawRunPuffs() {
       pCtx.strokeStyle = `rgba(220,220,255,${la})`; pCtx.lineWidth = 1.5 + Math.random(); pCtx.stroke();
     }
   }
+  // Draw playdate ball on the same canvas
+  if (typeof _drawPlayBall === 'function') _drawPlayBall();
 }
 
 // ══════════════════════════════════════════════════
@@ -2688,6 +2736,7 @@ function mainLoop(ts){
   _updateDreamState();
   if (petIsRunning && Math.random() < 0.55) spawnRunPuff();
   drawBg(ts/1000); drawPet(ts); drawRunPuffs();
+  if (typeof _buddyDraw === 'function') _buddyDraw(ts);
   // Animate mini-preview canvases in the selector
   if(selectorOpen){
     const s=120/160;
