@@ -10,14 +10,10 @@ const SETTINGS_KEY = 'widgetSettings';
 // Use the actual wallpaper canvas size (window.innerWidth/Height in Lively).
 // User can override via settings if needed.
 function detectDisplayWidth() {
-  const saved = parseInt(localStorage.getItem('displayW'));
-  if (saved && saved > 0) return saved;
-  return window.innerWidth || 1920;
+  return window.innerWidth || screen.width || 1920;
 }
 function detectDisplayHeight() {
-  const saved = parseInt(localStorage.getItem('displayH'));
-  if (saved && saved > 0) return saved;
-  return window.innerHeight || 1080;
+  return window.innerHeight || screen.height || 1080;
 }
 let displayW = detectDisplayWidth();
 let displayH = detectDisplayHeight();

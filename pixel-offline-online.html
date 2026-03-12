@@ -17,8 +17,8 @@
   --text-dim: rgba(238,238,255,0.42);
   --glow: rgba(217,102,255,0.4);
   --chat-panel-bg: rgba(13,13,26,0.97);
-  --primary-w: 1920px;
-  --primary-h: 1080px;
+  --primary-w: 100vw;
+  --primary-h: 100vh;
 }
 /* Hide everything until JS finishes init to prevent position glitch */
 body { opacity: 0; transition: opacity 0.15s ease-in; }
@@ -1627,6 +1627,11 @@ body {
 
 <button id="dn-btn" onclick="setDayNight(_dayNightTarget<0.5)" title="Toggle Day / Night">🌙</button>
 <button id="settings-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+<!-- Debug overlay (toggle: Ctrl+D) -->
+<div id="debug-panel" style="display:none;position:fixed;top:8px;left:8px;z-index:9999;background:rgba(0,0,0,0.88);color:#0f0;font:11px/1.5 monospace;padding:10px 14px;border-radius:8px;border:1px solid #333;max-width:420px;max-height:80vh;overflow-y:auto;pointer-events:auto;">
+  <div style="color:#ff0;margin-bottom:4px;font-weight:bold;">DEBUG PANEL (Ctrl+D to close)</div>
+  <div id="debug-log" style="white-space:pre-wrap;"></div>
+</div>
 <div id="settings-panel">
   <!-- Tab bar -->
   <div id="stab-bar">
@@ -2149,6 +2154,10 @@ const bgCanvas = document.getElementById('bg-canvas');
 const bgCtx = bgCanvas.getContext('2d');
 function resizeBg(){ bgCanvas.width=window.innerWidth; bgCanvas.height=window.innerHeight; }
 resizeBg(); window.addEventListener('resize', resizeBg);
+window.addEventListener('resize', () => {
+  document.documentElement.style.setProperty('--primary-w', window.innerWidth + 'px');
+  document.documentElement.style.setProperty('--primary-h', window.innerHeight + 'px');
+});
 
 const STARS = Array.from({length:180}, ()=>({
   x:Math.random(), y:Math.random(),
@@ -2798,6 +2807,69 @@ function _updateDreamState() {
     clearInterval(_dreamInterval);
     _dreamInterval = null;
   }
+}
+
+// ══════════════════════════════════════════════════
+//  DEBUG PANEL (Ctrl+D to toggle)
+// ══════════════════════════════════════════════════
+let _debugOpen = false;
+let _debugTimer = null;
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+    e.preventDefault();
+    _debugOpen = !_debugOpen;
+    document.getElementById('debug-panel').style.display = _debugOpen ? 'block' : 'none';
+    if (_debugOpen && !_debugTimer) {
+      _debugTimer = setInterval(_updateDebug, 1000);
+      _updateDebug();
+    } else if (!_debugOpen && _debugTimer) {
+      clearInterval(_debugTimer);
+      _debugTimer = null;
+    }
+  }
+});
+function _updateDebug() {
+  const el = document.getElementById('debug-log');
+  if (!el) return;
+  const lines = [];
+  lines.push(`<span style="color:#0ff">── Bridge ──</span>`);
+  lines.push(`isBridgeUp: ${isBridgeUp}  |  isOnline: ${isOnline}`);
+  lines.push(`BRIDGE_URL: ${BRIDGE_URL}`);
+  lines.push('');
+  lines.push(`<span style="color:#0ff">── App Watch ──</span>`);
+  lines.push(`appWatchOn: ${bhvCfg.appWatchOn}`);
+  lines.push(`polling: ${!!_awPollTimer}  |  cooldown: ${_awCooldown > Date.now() ? Math.round((_awCooldown - Date.now())/1000) + 's' : 'ready'}`);
+  lines.push(`lastProcess: ${_awLastProcess || '(none)'}`);
+  lines.push(`lastTitle: ${(_awLastTitle || '(none)').slice(0, 50)}`);
+  lines.push('');
+  lines.push(`<span style="color:#0ff">── Pet State ──</span>`);
+  lines.push(`asleep: ${petIsAsleep}  |  hiding: ${petIsHiding}  |  running: ${petIsRunning}`);
+  lines.push(`mood: ${behaviorMood || currentMood || '?'}  |  speedMult: ${petSpeedMult}`);
+  lines.push(`pos: ${Math.round(petX)},${Math.round(petY)}  |  display: ${displayW}x${displayH}`);
+  if (typeof _playdateActive !== 'undefined') {
+    lines.push('');
+    lines.push(`<span style="color:#0ff">── Playdate ──</span>`);
+    lines.push(`active: ${_playdateActive}  |  style: ${typeof _playdateStyle !== 'undefined' ? _playdateStyle : '?'}`);
+    lines.push(`next: ${typeof _nextPlaydate !== 'undefined' ? Math.round((_nextPlaydate - Date.now())/1000) + 's' : '?'}`);
+  }
+  lines.push('');
+  lines.push(`<span style="color:#0ff">── Behaviors ──</span>`);
+  lines.push(`registered: ${(window.BEHAVIOR_REGISTRY||[]).map(b=>b.id).join(', ')}`);
+  // Live fetch test
+  lines.push('');
+  lines.push(`<span style="color:#0ff">── Last /activewindow ──</span>`);
+  lines.push(`<span id="debug-aw-live">fetching...</span>`);
+  fetch(`${BRIDGE_URL}/activewindow`, { signal: AbortSignal.timeout(2000) })
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('debug-aw-live');
+      if (el) el.innerHTML = `process: ${d.process || '?'}\ntitle: ${(d.title || '?').slice(0, 60)}`;
+    })
+    .catch(e => {
+      const el = document.getElementById('debug-aw-live');
+      if (el) el.innerHTML = `<span style="color:#f55">ERROR: ${e.message}</span>`;
+    });
+  el.innerHTML = lines.join('\n');
 }
 
 // ══════════════════════════════════════════════════

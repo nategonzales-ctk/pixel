@@ -92,6 +92,14 @@ const _TITLE_PATTERNS = [
   { pattern: /gmail/i,         icon: '📧', mood: 'happy',    msgs: ['Gmail! Got mail? 📧', 'Checking emails! 💌'] },
   { pattern: /amazon/i,        icon: '🛒', mood: 'excited',  msgs: ['Amazon! Shopping! 🛒', 'What are we buying? 💰'] },
   { pattern: /spotify/i,       icon: '🎵', mood: 'happy',    msgs: ['Spotify in the browser! 🎵', 'Music time! 🎶'] },
+  // Explorer window titles
+  { pattern: /recycle bin/i,   icon: '🗑️', mood: 'surprised',msgs: ['Recycle Bin! Cleaning up? 🗑️', 'Taking out the trash! 🧹', 'What did you delete? 👀'] },
+  { pattern: /downloads/i,     icon: '📥', mood: 'happy',    msgs: ['Downloads! Got something new? 📥', 'Checking downloads! 📦'] },
+  { pattern: /desktop/i,       icon: '🖥️', mood: 'happy',    msgs: ['Browsing the desktop! 🖥️', 'That\'s my home! 🏠'] },
+  { pattern: /documents/i,     icon: '📄', mood: 'thinking', msgs: ['Documents folder! 📄', 'Looking for something? 🔍'] },
+  { pattern: /pictures|photos/i,icon:'📸', mood: 'happy',    msgs: ['Pictures! Ooh, show me! 📸', 'Photo time! 🖼️'] },
+  { pattern: /videos|movies/i, icon: '🎬', mood: 'happy',    msgs: ['Videos folder! Movie time? 🎬', 'What are we watching? 🍿'] },
+  { pattern: /music/i,         icon: '🎵', mood: 'happy',    msgs: ['Music folder! 🎵', 'What tunes do you have? 🎶'] },
 ];
 
 function _awGetReaction(processName, title) {
@@ -121,8 +129,8 @@ async function _awPoll() {
     const proc = data.process || '';
     const title = data.title || '';
 
-    // Skip if same app as before
-    if (proc === _awLastProcess) return;
+    // Skip if same app and same title as before
+    if (proc === _awLastProcess && title === _awLastTitle) return;
     _awLastProcess = proc;
     _awLastTitle = title;
 
