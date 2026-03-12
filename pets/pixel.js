@@ -67,6 +67,13 @@
         ctx.beginPath(); ctx.moveTo(ex-8,ey); ctx.lineTo(ex+8,ey);
         ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.stroke();
         if(mood==='sleepy'){ctx.font='bold 10px serif';ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText('z',ex+10,ey-6);}
+      } else if(mood==='love'){
+        // Squinty happy eyes — curved happy lines
+        ctx.beginPath(); ctx.arc(ex,ey+2,8,Math.PI+0.3,-0.3);
+        ctx.strokeStyle=m.pupil; ctx.lineWidth=3; ctx.lineCap='round'; ctx.stroke();
+        // Tiny sparkle above each eye
+        ctx.beginPath(); ctx.arc(ex+4,ey-5,2,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
       } else {
         const ew = mood==='scared'?13:10, eh = mood==='scared'?14:11;
         ctx.beginPath(); ctx.ellipse(ex,ey,ew,eh,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
@@ -76,18 +83,35 @@
       }
     });
     // Cheeks
-    if(['happy','excited','love'].includes(mood)){
+    if(['happy','excited'].includes(mood)){
       [54,106].forEach(cx => {
         const cg = ctx.createRadialGradient(cx,66+b,0,cx,66+b,12);
         cg.addColorStop(0,'rgba(255,100,160,0.42)'); cg.addColorStop(1,'transparent');
         ctx.beginPath(); ctx.arc(cx,66+b,12,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
       });
     }
-    // Love hearts
+    // Love — max cute mode
     if(mood==='love'){
-      ctx.font='12px serif'; ctx.fillStyle='rgba(255,100,140,0.85)';
-      ctx.fillText('♥',60+Math.sin(t*.003)*3,38+b);
-      ctx.fillText('♥',96+Math.cos(t*.004)*2,34+b);
+      // Big rosy cheeks
+      [54,106].forEach(cx => {
+        const cg = ctx.createRadialGradient(cx,66+b,0,cx,66+b,15);
+        cg.addColorStop(0,'rgba(255,80,140,0.6)'); cg.addColorStop(1,'transparent');
+        ctx.beginPath(); ctx.arc(cx,66+b,15,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+      });
+      // Floating hearts
+      ctx.font='13px serif'; ctx.fillStyle='rgba(255,80,140,0.9)';
+      ctx.fillText('♥',55+Math.sin(t*.003)*5,36+b);
+      ctx.fillText('♥',100+Math.cos(t*.004)*4,30+b);
+      ctx.font='9px serif'; ctx.fillStyle='rgba(255,120,180,0.7)';
+      ctx.fillText('♥',45+Math.sin(t*.005+1)*3,44+b);
+      ctx.fillText('♥',110+Math.cos(t*.006+2)*3,40+b);
+      // Sparkle twinkles
+      [0,1,2,3].forEach(i => {
+        const sx=50+i*24+Math.sin(t*.004+i)*4, sy=32+Math.cos(t*.005+i*1.5)*6+b;
+        const sa=0.4+0.4*Math.sin(t*.006+i*2);
+        ctx.beginPath(); ctx.arc(sx,sy,2,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,255,255,${sa})`; ctx.fill();
+      });
     }
     // Angry brows
     if(mood==='angry'){

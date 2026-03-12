@@ -16,7 +16,7 @@
     surprised:{ body:'#3a2060', fur:'#4e3290', pupil:'#00ff88', mouth:'open',    glow:'#8b5cf6' },
     sad:      { body:'#181030', fur:'#241a50', pupil:'#9966ff', mouth:'frown',   glow:'#3730a3' },
     excited:  { body:'#2e1860', fur:'#4a2890', pupil:'#00ffcc', mouth:'open',    glow:'#7c3aed' },
-    love:     { body:'#2a1a4e', fur:'#3d2870', pupil:'#ff66aa', mouth:'smile',   glow:'#c026d3' },
+    love:     { body:'#cc4488', fur:'#e0608a', pupil:'#880022', mouth:'smile',   glow:'#ff4081' },
     sleepy:   { body:'#1a1238', fur:'#281c5a', pupil:'#6644aa', mouth:'flat',    glow:'#4c1d95' },
     angry:    { body:'#5a0c20', fur:'#8a1432', pupil:'#ff2244', mouth:'grimace', glow:'#cc1040', brow:'#ff4466' },
     scared:   { body:'#1e1848', fur:'#2e2668', pupil:'#aa88ff', mouth:'open',   glow:'#4a3a80' },
@@ -101,6 +101,12 @@
         ctx.beginPath(); ctx.moveTo(ex-8, ey); ctx.lineTo(ex+8, ey);
         ctx.strokeStyle = m.pupil + 'aa'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke();
         if (mood === 'sleepy') { ctx.font='bold 10px serif'; ctx.fillStyle=m.pupil+'88'; ctx.fillText('z', ex+10, ey-6); }
+      } else if (mood === 'love') {
+        // Soft round eyes for love mood
+        const ew = 10, eh = 10;
+        ctx.beginPath(); ctx.ellipse(ex, ey, ew, eh, 0, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(ex+1, ey+1, 6, 6, 0, 0, Math.PI*2); ctx.fillStyle = m.pupil; ctx.fill();
+        ctx.beginPath(); ctx.arc(ex-2, ey-3, 2.5, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
       } else {
         // Slit pupil (panther-like) — scared: wide glow, tiny slit
         const eyeR = mood==='scared'?12:10;
@@ -136,7 +142,7 @@
     });
 
     // Cheeks
-    if (['happy','excited','love'].includes(mood)) {
+    if (['happy','excited'].includes(mood)) {
       [56, 104].forEach(cx => {
         const cg = ctx.createRadialGradient(cx, 65+b, 0, cx, 65+b, 11);
         cg.addColorStop(0, 'rgba(140,80,255,0.35)'); cg.addColorStop(1, 'transparent');
@@ -193,11 +199,25 @@
       ctx.restore();
     }
 
-    // Love hearts
+    // Love — max cute
     if (mood === 'love') {
-      ctx.font = '12px serif'; ctx.fillStyle = 'rgba(200,80,255,0.9)';
-      ctx.fillText('♥', 60+Math.sin(t*0.003)*3, 36+b);
-      ctx.fillText('♥', 96+Math.cos(t*0.004)*2, 32+b);
+      [56, 104].forEach(cx => {
+        const cg = ctx.createRadialGradient(cx, 65+b, 0, cx, 65+b, 14);
+        cg.addColorStop(0, 'rgba(255,80,160,0.6)'); cg.addColorStop(1, 'transparent');
+        ctx.beginPath(); ctx.arc(cx, 65+b, 14, 0, Math.PI*2); ctx.fillStyle = cg; ctx.fill();
+      });
+      ctx.font='13px serif'; ctx.fillStyle='rgba(255,80,160,0.9)';
+      ctx.fillText('♥',55+Math.sin(t*.003)*5,34+b);
+      ctx.fillText('♥',100+Math.cos(t*.004)*4,28+b);
+      ctx.font='9px serif'; ctx.fillStyle='rgba(255,120,200,0.7)';
+      ctx.fillText('♥',44+Math.sin(t*.005+1)*3,42+b);
+      ctx.fillText('♥',112+Math.cos(t*.006+2)*3,38+b);
+      [0,1,2,3].forEach(i => {
+        const sx=48+i*24+Math.sin(t*.004+i)*4, sy=26+Math.cos(t*.005+i*1.5)*6+b;
+        const sa=0.4+0.4*Math.sin(t*.006+i*2);
+        ctx.beginPath(); ctx.arc(sx,sy,2,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,255,255,${sa})`; ctx.fill();
+      });
     }
     // Thinking dots
     if (mood === 'thinking') {

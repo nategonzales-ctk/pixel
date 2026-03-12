@@ -60,12 +60,40 @@ function readBody(req) {
 
 // ── ANTHROPIC CLIENT (lazy) ───────────────────────────────────
 let anthropic;
+let claudeValidated = false;  // true only after a real API call succeeds
 function getClient() {
   if (!anthropic) {
     if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not set');
     anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
   return anthropic;
+}
+
+async function validateApiKey() {
+  if (!process.env.ANTHROPIC_API_KEY) return;
+  try {
+    const client = getClient();
+    await client.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 10,
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+    claudeValidated = true;
+    console.log('  🤖  Claude AI ready! (API key validated)');
+  } catch (err) {
+    claudeValidated = false;
+    if (err.status === 401) {
+      console.warn('  ⚠️  ANTHROPIC_API_KEY is invalid — Claude AI disabled.');
+    } else if (err.status === 403 || err.message?.includes('billing') || err.message?.includes('payment')) {
+      console.warn('  ⚠️  API key has no active subscription — Claude AI disabled.');
+      console.warn(`     ${err.message}`);
+    } else {
+      console.warn(`  ⚠️  Could not validate API key: ${err.message}`);
+      // Could be a temporary network issue — don't permanently disable
+      // but don't mark as validated either
+    }
+    console.warn('  Chat will use offline mode. Set a valid key in bridge/.env');
+  }
 }
 
 // ── HARDWARE MONITOR ─────────────────────────────────────────
@@ -336,7 +364,7 @@ const server = http.createServer(async (req, res) => {
   // GET /health
   if (req.method === 'GET' && req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', claude: !!process.env.ANTHROPIC_API_KEY, version: '1.0.0' }));
+    res.end(JSON.stringify({ status: 'ok', claude: claudeValidated, version: '1.0.0' }));
     return;
   }
 
@@ -468,10 +496,12 @@ const server = http.createServer(async (req, res) => {
         messages,
       });
       const { text, mood } = parseMood(response.content[0].text);
+      claudeValidated = true; // confirmed working
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ text, mood, source: 'claude' }));
     } catch (err) {
       console.error('[claude]', err.message);
+      if (err.status === 401 || err.status === 403) claudeValidated = false;
       const status = (err.status === 401 || err.message.includes('API_KEY')) ? 503 : 500;
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'claude_unavailable', message: err.message }));
@@ -669,7 +699,8 @@ server.listen(PORT, HOST, () => {
     console.warn('  Hardware panel in wallpaper will still work!');
     console.warn('  Set the key in bridge/.env to enable Claude AI.');
   } else {
-    console.log('  🤖  Claude AI ready!');
+    console.log('  🔑  API key found, validating...');
+    validateApiKey();
   }
   console.log('');
 });

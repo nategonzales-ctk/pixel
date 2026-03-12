@@ -67,6 +67,11 @@
         ctx.beginPath(); ctx.moveTo(ex-6,ey); ctx.lineTo(ex+6,ey);
         ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.stroke();
         if(mood==='sleepy'){ctx.font='bold 9px serif';ctx.fillStyle='rgba(255,255,255,0.55)';ctx.fillText('z',ex+8,ey-5);}
+      } else if(mood==='love'){
+        ctx.beginPath(); ctx.arc(ex,ey+2,7,Math.PI+0.3,-0.3);
+        ctx.strokeStyle=m.pupil; ctx.lineWidth=2.8; ctx.lineCap='round'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(ex+3,ey-4,1.8,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
       } else {
         const ew=mood==='scared'?9.5:7.5, eh=mood==='scared'?10.5:8.5;
         ctx.beginPath(); ctx.ellipse(ex,ey,ew,eh,0,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
@@ -76,17 +81,32 @@
       }
     });
     // Cheeks
-    if(['happy','excited','love'].includes(mood)){
+    if(['happy','excited'].includes(mood)){
       [60,100].forEach(cx => {
         const cg = ctx.createRadialGradient(cx,72+b,0,cx,72+b,11);
         cg.addColorStop(0,'rgba(255,150,200,0.42)'); cg.addColorStop(1,'transparent');
         ctx.beginPath(); ctx.arc(cx,72+b,11,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
       });
     }
-    // Love hearts
+    // Love — max cute
     if(mood==='love'){
-      ctx.font='11px serif'; ctx.fillStyle='rgba(255,100,180,0.85)';
-      ctx.fillText('♥',59+Math.sin(t*.003)*3,44+b); ctx.fillText('♥',93+Math.cos(t*.004)*2,40+b);
+      [60,100].forEach(cx => {
+        const cg = ctx.createRadialGradient(cx,72+b,0,cx,72+b,14);
+        cg.addColorStop(0,'rgba(255,80,150,0.6)'); cg.addColorStop(1,'transparent');
+        ctx.beginPath(); ctx.arc(cx,72+b,14,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+      });
+      ctx.font='12px serif'; ctx.fillStyle='rgba(255,80,150,0.9)';
+      ctx.fillText('♥',54+Math.sin(t*.003)*4,42+b);
+      ctx.fillText('♥',98+Math.cos(t*.004)*3,38+b);
+      ctx.font='8px serif'; ctx.fillStyle='rgba(255,120,180,0.7)';
+      ctx.fillText('♥',44+Math.sin(t*.005+1)*3,50+b);
+      ctx.fillText('♥',108+Math.cos(t*.006+2)*3,46+b);
+      [0,1,2,3].forEach(i => {
+        const sx=50+i*22+Math.sin(t*.004+i)*3, sy=36+Math.cos(t*.005+i*1.5)*5+b;
+        const sa=0.4+0.4*Math.sin(t*.006+i*2);
+        ctx.beginPath(); ctx.arc(sx,sy,1.8,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,255,255,${sa})`; ctx.fill();
+      });
     }
     // Angry brows
     if(mood==='angry'){
