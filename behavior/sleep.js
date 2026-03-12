@@ -8,6 +8,8 @@ window.BEHAVIOR_REGISTRY.push({
     if (!bhvCfg.sleepOn || petIsHiding) return;
     // Don't sleep when friends are visiting
     if (typeof _playdateActive !== 'undefined' && _playdateActive) return;
+    // Don't sleep when chat is open
+    if (typeof chatOpen !== 'undefined' && chatOpen) return;
     const idleSec = (now - lastMouseMove) / 1000;
     if (!petIsAsleep && idleSec >= bhvCfg.sleepDelay) {
       petIsAsleep = true;

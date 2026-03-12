@@ -34,6 +34,7 @@ const PLAY_DURATION = 20000;
 // ── Mouse intercept state ──
 let _mouseInterceptState = 'none'; // none | scatter | gather | freeze
 let _mouseInterceptTimer = 0;
+let _mouseInterceptCooldown = 0; // prevent re-triggering too soon
 let _lastMouseSpeed = 0;
 let _prevMouseX = 0, _prevMouseY = 0;
 let _mouseNearPlaydate = false;
@@ -485,6 +486,8 @@ function _updateMouseIntercept(now, w, h) {
   if (_mouseInterceptState !== 'none' && now >= _mouseInterceptTimer) {
     _mouseInterceptState = 'none';
     _freezeTriggered = false;
+    _mouseInterceptCooldown = now + 5000; // don't re-trigger for 5s
+    _mouseNearPlaydate = false; // reset so next approach needs a fresh enter
     behaviorMood = 'excited';
     petSpeedMult = 2;
     // Extend play time a bit to compensate for interruption
@@ -492,7 +495,10 @@ function _updateMouseIntercept(now, w, h) {
     return;
   }
 
-  // Detect new intercepts
+  // Don't trigger new intercepts during cooldown
+  if (now < _mouseInterceptCooldown) return;
+
+  // Detect new intercepts — only on fresh mouse entry (transition from not-near to near)
   if (nearPets && !wasNear) {
     if (_lastMouseSpeed > 25) {
       // Fast mouse = scatter!
@@ -514,7 +520,8 @@ function _updateMouseIntercept(now, w, h) {
 // ── Click during playdate = freeze ──
 document.addEventListener('click', () => {
   if (!_playdateActive || _playdatePhase !== 'playing') return;
-  if (_mouseInterceptState === 'freeze') return;
+  if (_mouseInterceptState !== 'none') return;
+  if (Date.now() < _mouseInterceptCooldown) return;
   if (!_isMouseNearPets()) return;
   _mouseInterceptState = 'freeze';
   _mouseInterceptTimer = Date.now() + 2000;
