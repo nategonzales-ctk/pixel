@@ -113,6 +113,10 @@ function habitToggle(i) {
   if (_habits[i].done && _habits.every(h => h.done)) {
     showBubble('All habits done today! You\'re amazing! 🌟', 5000);
     setMood('excited', 4000);
+  } else if (_habits[i].done) {
+    const msgs = ['Nice! Keep it up! ✅', 'Good habit! 💪', 'Way to go! ⭐', 'Checked! 🌟'];
+    showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500);
+    setMood('happy', 2500);
   }
 }
 

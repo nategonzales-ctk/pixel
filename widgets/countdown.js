@@ -72,6 +72,13 @@ function _cdownTick() {
   });
 }
 
+const _CDOWN_ADD_MSGS = [
+  'Countdown started! Can\'t wait! ⏳',
+  'Counting the days! 🗓️✨',
+  'Exciting! Something to look forward to! 🎉',
+  'Ooh, a special date! 💜',
+];
+
 function cdownAdd() {
   const lbl  = document.getElementById('cdown-label-inp');
   const date = document.getElementById('cdown-date-inp');
@@ -84,6 +91,10 @@ function cdownAdd() {
   _cdownRender();
   // Sync to calendar notes
   _cdownSyncToCalendar(label, dateVal);
+  if (typeof showBubble === 'function') {
+    showBubble(_CDOWN_ADD_MSGS[Math.floor(Math.random() * _CDOWN_ADD_MSGS.length)], 3500);
+    setMood('excited', 3000);
+  }
 }
 
 function cdownDelete(i) {

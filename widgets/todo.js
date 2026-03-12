@@ -47,6 +47,19 @@ function _renderTodos() {
   });
 }
 
+const _TODO_ADD_MSGS = [
+  'Added to the list! Let\'s get it done! ✅',
+  'Got it! I believe in you! 💪',
+  'New task! You\'re so organized! 📋',
+  'I\'ll cheer you on! ✨',
+];
+const _TODO_DONE_MSGS = [
+  'Yay! Task complete! 🎉',
+  'Great job! One down! ✅',
+  'You did it! So proud! 💜',
+  'Checked off! Keep going! 🌟',
+];
+
 function todoAdd() {
   const inp = document.getElementById('todo-input');
   if (!inp) return;
@@ -56,10 +69,22 @@ function todoAdd() {
   inp.value = '';
   _saveTodos();
   _renderTodos();
+  if (typeof showBubble === 'function') {
+    showBubble(_TODO_ADD_MSGS[Math.floor(Math.random() * _TODO_ADD_MSGS.length)], 3500);
+    setMood('happy', 3000);
+  }
 }
 
 function todoToggle(i) {
-  if (_todos[i]) { _todos[i].done = !_todos[i].done; _saveTodos(); _renderTodos(); }
+  if (_todos[i]) {
+    _todos[i].done = !_todos[i].done;
+    _saveTodos();
+    _renderTodos();
+    if (_todos[i].done && typeof showBubble === 'function') {
+      showBubble(_TODO_DONE_MSGS[Math.floor(Math.random() * _TODO_DONE_MSGS.length)], 3500);
+      setMood('excited', 3000);
+    }
+  }
 }
 
 function todoDelete(i) {

@@ -1795,6 +1795,20 @@ body {
       <input id="bhv-playdate-interval" type="number" min="1" max="120" step="1" value="10" class="s-num-input" onchange="saveBehaviorConfig()">
     </div>
     <div class="settings-sep"></div>
+    <div class="settings-row">
+      <span class="settings-label">React to apps</span>
+      <label class="tog"><input type="checkbox" id="bhv-appwatch-on" checked onchange="saveBehaviorConfig()"><span class="tog-track"></span><span class="tog-thumb"></span></label>
+    </div>
+    <div class="settings-sep"></div>
+    <div class="settings-row" style="justify-content:space-between;align-items:center;">
+      <span class="settings-label">Bridge</span>
+      <span id="bridge-status-dot" style="font-size:12px;opacity:.7;">● Checking…</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="s-act-btn" id="bridge-restart-btn" onclick="bridgeRestart()" style="flex:1;">⟳ Restart</button>
+      <button class="s-act-btn" id="bridge-stop-btn" onclick="bridgeStop()" style="flex:1;">■ Stop</button>
+    </div>
+    <div class="settings-sep"></div>
     <button class="s-act-btn primary" id="layout-edit-btn" onclick="toggleLayoutMode()">⊞ Edit Layout</button>
     <button class="s-act-btn" onclick="resetLayout()">↺ Reset Layout</button>
     <button class="s-act-btn primary" onclick="openAppearance()">🎨 Appearance</button>
@@ -2102,6 +2116,7 @@ body {
 <script src="behavior/click.js"></script>
 <script src="behavior/hide.js"></script>
 <script src="behavior/playdate.js"></script>
+<script src="behavior/appwatch.js"></script>
 <script src="behavior/index.js"></script>
 <!-- Widgets (add new widget: create widgets/yourwidget.js) -->
 <script src="widgets/brain.js"></script>
@@ -2491,6 +2506,64 @@ function updateModeIndicator(){
   if (hs) hs.textContent = '● ' + (isOnline ? 'Claude AI' : 'Offline');
 }
 
+function updateBridgeStatusDot() {
+  const dot = document.getElementById('bridge-status-dot');
+  if (!dot) return;
+  if (isBridgeUp) {
+    dot.textContent = '● Running';
+    dot.style.color = '#69ff47';
+  } else {
+    dot.textContent = '● Stopped';
+    dot.style.color = '#ff5555';
+  }
+}
+
+async function bridgeStop() {
+  try {
+    await fetch(`${BRIDGE_URL}/shutdown`, { method: 'POST' });
+    showBubble('Bridge stopped! 🔌', 3000);
+  } catch {}
+  isBridgeUp = false;
+  isOnline = false;
+  updateModeIndicator();
+  updateBridgeStatusDot();
+}
+
+async function bridgeRestart() {
+  const btn = document.getElementById('bridge-restart-btn');
+  if (btn) btn.textContent = '⟳ Restarting…';
+  // Tell bridge to spawn a new process and exit
+  try { await fetch(`${BRIDGE_URL}/restart`, { method: 'POST' }); } catch {}
+  // Wait for new process to come up
+  let retries = 8;
+  while (retries-- > 0) {
+    await new Promise(r => setTimeout(r, 1500));
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 1500);
+      const res = await fetch(`${BRIDGE_URL}/health`, { signal: ctrl.signal });
+      clearTimeout(t);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        isBridgeUp = true;
+        isOnline = data.claude === true;
+        updateModeIndicator();
+        updateBridgeStatusDot();
+        if (btn) btn.textContent = '⟳ Restart';
+        showBubble('Bridge restarted! ✨', 3000);
+        return;
+      }
+    } catch {}
+  }
+  // If bridge didn't come back
+  if (btn) btn.textContent = '⟳ Restart';
+  isBridgeUp = false;
+  isOnline = false;
+  updateModeIndicator();
+  updateBridgeStatusDot();
+  showBubble('Bridge didn\'t restart. Run start-bridge.bat manually! 🔧', 5000);
+}
+
 async function probeConnection(){
   try{
     const ctrl=new AbortController();
@@ -2505,6 +2578,7 @@ async function probeConnection(){
     if(was&&!isOnline) showBubble('Switched to offline mode 🌙',3000);
   } catch{isOnline=false;isBridgeUp=false;}
   updateModeIndicator();
+  updateBridgeStatusDot();
 }
 
 function getTimeOfDay(){

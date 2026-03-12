@@ -525,6 +525,44 @@ foreach ($p in $players) {
     return;
   }
 
+  // GET /activewindow — current foreground window title + process name
+  if (req.method === 'GET' && req.url === '/activewindow') {
+    const psScript = `
+$ErrorActionPreference = 'SilentlyContinue'
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public class FGWin {
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+}
+"@
+$hwnd = [FGWin]::GetForegroundWindow()
+$sb = New-Object System.Text.StringBuilder 256
+[void][FGWin]::GetWindowText($hwnd, $sb, 256)
+$title = $sb.ToString()
+$pid = 0
+[void][FGWin]::GetWindowThreadProcessId($hwnd, [ref]$pid)
+$proc = Get-Process -Id $pid -EA SilentlyContinue
+$name = if ($proc) { $proc.ProcessName } else { '' }
+Write-Output "$name|$title"
+`;
+    const encoded = Buffer.from(psScript, 'utf16le').toString('base64');
+    execFile('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
+      { timeout: 4000 },
+      (_err, stdout) => {
+        const line = (stdout || '').trim();
+        const sep = line.indexOf('|');
+        const process = sep > 0 ? line.slice(0, sep) : '';
+        const title = sep > 0 ? line.slice(sep + 1) : line;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ process: process || null, title: title || null }));
+      });
+    return;
+  }
+
   // GET /state — load persisted widget state from disk
   if (req.method === 'GET' && req.url === '/state') {
     try {
@@ -549,6 +587,34 @@ foreach ($p in $players) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
+    return;
+  }
+
+  // POST /shutdown — gracefully stop the bridge server
+  if (req.method === 'POST' && req.url === '/shutdown') {
+    console.log('[bridge] shutdown requested');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{"ok":true}');
+    setTimeout(() => process.exit(0), 300);
+    return;
+  }
+
+  // POST /restart — spawn a new bridge process, then exit this one
+  if (req.method === 'POST' && req.url === '/restart') {
+    console.log('[bridge] restart requested');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{"ok":true}');
+    setTimeout(() => {
+      const { spawn } = require('child_process');
+      const child = spawn(process.execPath, [__filename], {
+        cwd: __dirname,
+        detached: true,
+        stdio: 'ignore',
+        env: process.env,
+      });
+      child.unref();
+      process.exit(0);
+    }, 500);
     return;
   }
 

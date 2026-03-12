@@ -163,6 +163,13 @@ function _calClosePopup() {
   if (p) p.remove();
 }
 
+const _CAL_ADD_MSGS = [
+  'Event added! I\'ll remember! 📅',
+  'Noted! Sounds exciting! ✨',
+  'Marked on the calendar! 🗓️',
+  'Ooh, what\'s happening? 👀',
+];
+
 function _calAddNote(key, inp, year, month, day) {
   const text = inp.value.trim();
   if (!text) return;
@@ -183,6 +190,10 @@ function _calAddNote(key, inp, year, month, day) {
 
   _calClosePopup();
   _buildCalendar(_calYear, _calMonth);
+  if (typeof showBubble === 'function') {
+    showBubble(_CAL_ADD_MSGS[Math.floor(Math.random() * _CAL_ADD_MSGS.length)], 3500);
+    setMood('happy', 3000);
+  }
 }
 
 function _calDeleteNote(key, index) {
