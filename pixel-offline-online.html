@@ -1335,8 +1335,8 @@ body {
 .net-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .net-row:last-child { margin-bottom: 0; }
 .net-arrow { font-size: 13px; width: 16px; flex-shrink: 0; }
-.net-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(238,238,255,0.35); width: 22px; }
-.net-val { font-size: 11px; font-weight: 800; color: rgba(238,238,255,0.8); }
+.net-label { font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(238,238,255,0.35); width: 36px; flex-shrink: 0; }
+.net-val { font-size: 11px; font-weight: 800; color: rgba(238,238,255,0.8); white-space: nowrap; }
 
 /* ── TOP PROCESSES ── */
 #processes-widget {
@@ -1408,6 +1408,21 @@ body {
   user-select: none;
   pointer-events: auto !important;
   transition: none !important; /* stop CSS transitions so overlay captures correct position */
+}
+/* ── WIDGET WOBBLE (long-press active) ── */
+@keyframes widget-wobble-outline {
+  0%, 100% { outline-offset: 3px; }
+  50%      { outline-offset: 5px; }
+}
+.widget-wobble {
+  animation: widget-wobble-outline 1.2s ease-in-out infinite;
+  outline: 2px dashed rgba(217,102,255,0.55);
+  outline-offset: 3px;
+  box-shadow: 0 0 20px rgba(217,102,255,0.25);
+  z-index: 900 !important;
+}
+.widget-wobble .layout-resize-handle {
+  pointer-events: auto;
 }
 
 /* ── LAYOUT HANDLE OVERLAY ── */

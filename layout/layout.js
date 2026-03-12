@@ -118,11 +118,108 @@ function initLayout() {
     }, true);
   });
 
-  // ── Long-press to drag (without entering layout mode) ──
+  // ── Long-press to wobble + drag/resize (without entering layout mode) ──
   let _longPressTimer = null;
   let _longPressEl = null;
   let _longPressFired = false;
   let _longPressStartX = 0, _longPressStartY = 0;
+  let _wobbleOverlay = null;   // resize handles overlay for wobble mode
+  let _wobbleCloseBtn = null;  // × dismiss button
+  let _wobbleRemoveBtn = null; // 🗑 remove/hide button
+
+  function _wobbleActivate(el) {
+    // Dismiss any previous wobble first
+    if (_longPressFired && _longPressEl) _wobbleDismiss();
+    _longPressFired = true;
+    _longPressEl = el;
+    el.classList.add('layout-drag-mode', 'widget-wobble');
+    const r = el.getBoundingClientRect();
+    dragEl = el;
+    dragOffX = _longPressStartX - r.left;
+    dragOffY = _longPressStartY - r.top;
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    el.style.cursor = 'grabbing';
+
+    // Create resize handles overlay
+    _wobbleOverlay = document.createElement('div');
+    _wobbleOverlay.className = 'layout-handle-overlay';
+    _wobbleOverlay.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;z-index:1001;pointer-events:none;box-sizing:border-box;`;
+    HANDLE_DIRS.forEach(dir => {
+      const handle = document.createElement('div');
+      handle.className = 'layout-resize-handle';
+      handle.dataset.dir = dir;
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault(); e.stopPropagation();
+        dragEl = null; // stop drag, start resize
+        resizeEl      = el;
+        resizeDir     = dir;
+        resizeStartX  = e.clientX;
+        resizeStartY  = e.clientY;
+        resizeNatW    = el.offsetWidth  || 1;
+        resizeNatH    = el.offsetHeight || 1;
+        const vr = el.getBoundingClientRect();
+        resizeStartVX = vr.left;
+        resizeStartVY = vr.top;
+        resizeStartVW = vr.width;
+        resizeStartVH = vr.height;
+        resizeOverlay = _wobbleOverlay;
+      });
+      _wobbleOverlay.appendChild(handle);
+    });
+
+    // Create × close button (top-right of overlay)
+    _wobbleCloseBtn = document.createElement('button');
+    _wobbleCloseBtn.textContent = '✓';
+    _wobbleCloseBtn.title = 'Done editing';
+    _wobbleCloseBtn.style.cssText = 'position:absolute;top:-14px;right:-14px;width:28px;height:28px;border-radius:50%;background:var(--accent);border:2px solid #fff;color:#fff;font-size:14px;font-weight:900;cursor:pointer;pointer-events:auto;z-index:1002;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.4);padding:0;line-height:1;';
+    _wobbleCloseBtn.onclick = e => { e.stopPropagation(); _wobbleDismiss(); };
+    _wobbleOverlay.appendChild(_wobbleCloseBtn);
+
+    // Create 🗑 remove button (top-left of overlay)
+    _wobbleRemoveBtn = document.createElement('button');
+    _wobbleRemoveBtn.textContent = '✕';
+    _wobbleRemoveBtn.title = 'Hide widget';
+    _wobbleRemoveBtn.style.cssText = 'position:absolute;top:-14px;left:-14px;width:28px;height:28px;border-radius:50%;background:#ff4466;border:2px solid #fff;color:#fff;font-size:14px;font-weight:900;cursor:pointer;pointer-events:auto;z-index:1002;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.4);padding:0;line-height:1;';
+    _wobbleRemoveBtn.onclick = e => {
+      e.stopPropagation();
+      const wid = el.id;
+      _wobbleDismiss();
+      // Find matching toggle and hide widget
+      if (typeof WIDGET_TOGGLES !== 'undefined') {
+        const match = WIDGET_TOGGLES.find(([, elId]) => elId === wid);
+        if (match) {
+          const tog = document.getElementById('tog-' + match[0]);
+          if (tog) { tog.checked = false; }
+          el.style.display = 'none';
+          if (typeof applySettings === 'function') applySettings();
+          if (typeof showBubble === 'function') showBubble('Widget hidden! Re-enable in Settings 📦', 3000);
+        }
+      }
+    };
+    _wobbleOverlay.appendChild(_wobbleRemoveBtn);
+
+    document.body.appendChild(_wobbleOverlay);
+    _overlayMap[el.id] = _wobbleOverlay;
+  }
+
+  function _wobbleDismiss() {
+    if (_longPressEl) {
+      _longPressEl.classList.remove('layout-drag-mode', 'widget-wobble');
+      _longPressEl.style.cursor = '';
+    }
+    if (_wobbleOverlay) {
+      _removeOverlay(_longPressEl ? _longPressEl.id : '');
+      _wobbleOverlay = null;
+    }
+    _wobbleCloseBtn = null;
+    _wobbleRemoveBtn = null;
+    dragEl = null;
+    resizeEl = null;
+    resizeOverlay = null;
+    _longPressFired = false;
+    _longPressEl = null;
+  }
 
   WIDGET_IDS.forEach(id => {
     const el = document.getElementById(id);
@@ -130,22 +227,22 @@ function initLayout() {
     el.addEventListener('mousedown', e => {
       if (layoutMode) return; // layout mode has its own drag
       // Ignore clicks on interactive elements
-      if (e.target.closest('input,textarea,select,button,a,.tog,.cal-nav-btn,.habit-del,.todo-del,.todo-check,.qlinks-del,.sticky-dot')) return;
+      if (e.target.closest('input,textarea,select,button,a,.tog,.cal-nav-btn,.habit-del,.todo-del,.todo-check,.qlinks-del,.sticky-dot,.layout-resize-handle')) return;
+
+      // If already wobbling this widget, start dragging it
+      if (_longPressFired && _longPressEl === el) {
+        const r = el.getBoundingClientRect();
+        dragEl = el;
+        dragOffX = e.clientX - r.left;
+        dragOffY = e.clientY - r.top;
+        return;
+      }
+
       _longPressEl = el;
       _longPressFired = false;
       _longPressStartX = e.clientX;
       _longPressStartY = e.clientY;
-      _longPressTimer = setTimeout(() => {
-        _longPressFired = true;
-        el.classList.add('layout-drag-mode');
-        const r = el.getBoundingClientRect();
-        dragEl = el;
-        dragOffX = _longPressStartX - r.left;
-        dragOffY = _longPressStartY - r.top;
-        el.style.right = 'auto';
-        el.style.bottom = 'auto';
-        el.style.cursor = 'grabbing';
-      }, 500);
+      _longPressTimer = setTimeout(() => _wobbleActivate(el), 500);
     });
   });
 
@@ -155,17 +252,70 @@ function initLayout() {
       const dist = Math.abs(e.clientX - _longPressStartX) + Math.abs(e.clientY - _longPressStartY);
       if (dist > 8) { clearTimeout(_longPressTimer); _longPressTimer = null; }
     }
+    // Sync wobble overlay during drag
+    if (_longPressFired && dragEl && _wobbleOverlay) {
+      _syncOverlay(dragEl);
+    }
+    // Sync wobble overlay during resize
+    if (_longPressFired && resizeEl && _wobbleOverlay) {
+      // overlay is already synced by resize logic
+    }
   });
 
-  // Cancel long-press on mouseup if it didn't fire
+  // On mouseup: stop drag but keep wobble active (user can drag again or click ✓)
   document.addEventListener('mouseup', () => {
     if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; }
-    if (_longPressFired && _longPressEl) {
-      _longPressEl.classList.remove('layout-drag-mode');
-      _longPressEl.style.cursor = '';
-      _longPressFired = false;
-      _longPressEl = null;
+    // If wobble is active but we were dragging, finalize position but stay in wobble
+    if (_longPressFired && dragEl && _longPressEl) {
+      let x = Math.round(parseFloat(dragEl.style.left) / GRID) * GRID;
+      let y = Math.round(parseFloat(dragEl.style.top)  / GRID) * GRID;
+      const vr = dragEl.getBoundingClientRect();
+      x = Math.max(0, Math.min(window.innerWidth  - vr.width,  x));
+      y = Math.max(0, Math.min(window.innerHeight - vr.height, y));
+      dragEl.style.left = x + 'px';
+      dragEl.style.top  = y + 'px';
+      _savePos(dragEl.id, x, y);
+      dragEl = null;
+      // Re-sync overlay
+      if (_wobbleOverlay && _longPressEl) _syncOverlay(_longPressEl);
     }
+    // If wobble is active and we were resizing, finalize size but stay in wobble
+    if (_longPressFired && resizeEl && _wobbleOverlay) {
+      let vx = parseFloat(_wobbleOverlay.style.left)   || 0;
+      let vy = parseFloat(_wobbleOverlay.style.top)    || 0;
+      let vw = parseFloat(_wobbleOverlay.style.width)  || resizeStartVW;
+      let vh = parseFloat(_wobbleOverlay.style.height) || resizeStartVH;
+      vx = Math.max(0, Math.min(window.innerWidth  - vw, vx));
+      vy = Math.max(0, Math.min(window.innerHeight - vh, vy));
+      resizeEl.style.left = vx + 'px';
+      resizeEl.style.top  = vy + 'px';
+      if (REFLOW_IDS.has(resizeEl.id)) {
+        resizeEl.style.width     = vw + 'px';
+        resizeEl.style.maxHeight = vh + 'px';
+        resizeEl.style.height    = vh + 'px';
+        resizeEl.style.transform = 'none';
+        _saveScale(resizeEl.id, vx, vy, vw, vh);
+      } else {
+        const sx = vw / (resizeNatW || 1);
+        const sy = vh / (resizeNatH || 1);
+        resizeEl.style.transform = `scaleX(${sx}) scaleY(${sy})`;
+        _saveScale(resizeEl.id, vx, vy, sx, sy);
+      }
+      _wobbleOverlay.style.left = vx + 'px';
+      _wobbleOverlay.style.top  = vy + 'px';
+      resizeEl = null;
+      resizeOverlay = null;
+      if (typeof _updateAllWpArrows === 'function') setTimeout(_updateAllWpArrows, 50);
+    }
+  });
+
+  // Click anywhere outside wobbling widget to dismiss
+  document.addEventListener('mousedown', e => {
+    if (!_longPressFired || !_longPressEl) return;
+    // If click is inside the wobbling widget or its overlay, keep wobble
+    if (_longPressEl.contains(e.target)) return;
+    if (_wobbleOverlay && _wobbleOverlay.contains(e.target)) return;
+    _wobbleDismiss();
   });
 
   document.addEventListener('mousemove', _onMouseMove);
@@ -224,6 +374,8 @@ function _onMouseMove(e) {
 }
 
 function _onMouseUp() {
+  // Skip if wobble mode is handling this
+  if (_longPressFired) return;
   if (dragEl) {
     let x = Math.round(parseFloat(dragEl.style.left) / GRID) * GRID;
     let y = Math.round(parseFloat(dragEl.style.top)  / GRID) * GRID;
