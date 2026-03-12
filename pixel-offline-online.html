@@ -659,7 +659,7 @@ body {
   transform: translateY(-6px);
   transition: opacity 0.4s, transform 0.4s;
 }
-#hw-panel.visible { opacity: 1; transform: translateY(0); }
+#hw-panel.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .hw-title {
   font-size: 9px; font-weight: 900;
   letter-spacing: 0.18em;
@@ -886,7 +886,7 @@ body {
   transition: opacity 0.4s, transform 0.4s;
   font-family: 'Nunito', sans-serif;
 }
-#weather-widget.visible { opacity: 1; transform: translateY(0); }
+#weather-widget.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 #weather-location {
   font-size: 9px; font-weight: 900;
   letter-spacing: 0.18em; text-transform: uppercase;
@@ -2942,16 +2942,6 @@ function updateBridgeStatusDot() {
   }
 }
 
-async function bridgeStop() {
-  showBubble('Stopping bridge... You will need to run start-bridge-hidden.vbs to start it again!', 5000);
-  try {
-    await fetch(`${BRIDGE_URL}/shutdown`, { method: 'POST' });
-  } catch {}
-  isBridgeUp = false;
-  isOnline = false;
-  updateModeIndicator();
-  updateBridgeStatusDot();
-}
 
 async function bridgeRestart() {
   const btn = document.getElementById('bridge-restart-btn');
@@ -3561,7 +3551,6 @@ window.addEventListener('load',async ()=>{
       <table class="help-table">
         <tr><th>Button</th><th>Action</th></tr>
         <tr><td>⟳ Restart</td><td>Restarts the bridge server process</td></tr>
-        <tr><td>■ Stop</td><td>Shuts down the bridge server</td></tr>
       </table>
       <div class="help-tip">Bridge controls are in Settings → 🐾 Pet tab at the bottom.</div>
     </div>
@@ -3826,8 +3815,7 @@ window.addEventListener('load',async ()=>{
       <div class="help-text">
         In Settings → 🐾 Pet tab:<br>
         <strong>Status dot:</strong> Shows connection state<br>
-        <strong>⟳ Restart:</strong> Restarts the bridge process<br>
-        <strong>■ Stop:</strong> Shuts down the bridge
+        <strong>⟳ Restart:</strong> Restarts the bridge process
       </div>
 
       <div class="help-sub">State Persistence</div>

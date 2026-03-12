@@ -159,7 +159,6 @@ The bridge searches Desktop, Documents, Downloads, Pictures, Videos, Music, and 
 | Button | Action |
 |--------|--------|
 | **Restart Bridge** | Stops and restarts the bridge server process |
-| **Stop Bridge** | Shuts down the bridge server |
 | **Status Dot** | Green = online + Claude, Amber = online + offline AI, Red = disconnected |
 
 ### Widget-Specific Controls
@@ -240,6 +239,15 @@ The bridge searches Desktop, Documents, Downloads, Pictures, Videos, Music, and 
 **Processes:**
 - Top 5 processes by CPU usage
 - Updates in real-time
+
+**App Launcher:**
+- Floating app shortcut icons on the desktop (not inside a widget card)
+- Each shortcut has an emoji icon + label
+- Double-click an icon to launch the configured application
+- Click + in Settings to add a new app shortcut (emoji, label, path to .exe/.lnk/.bat)
+- Supports: `.exe`, `.lnk`, `.bat`, `.cmd`, `.url` file types
+- Bridge server required for launching applications
+- Shortcuts persist across sessions
 
 ---
 
@@ -422,7 +430,8 @@ Or use `start-bridge.bat` (Windows) / `start-bridge.sh` (Mac/Linux).
 In the Settings panel:
 - **Status dot** shows connection state
 - **Restart** button restarts the bridge process
-- **Stop** button shuts down the bridge
+
+> **Note:** If the bridge is not running, you cannot start it from the UI. Double-click `start-bridge-hidden.vbs` (or `start-bridge.bat`) to start it manually.
 
 ---
 
@@ -494,6 +503,23 @@ Press **Ctrl + D** to open the debug panel (bottom-left corner). It shows:
 - Update to latest bridge/server.js (uses persistent PowerShell process)
 - Old versions spawned new PowerShell every 3 seconds
 - Restart bridge after updating
+
+**Bridge restart from UI not working:**
+- The UI restart button sends a restart command to the running bridge
+- If the bridge is already stopped, the UI cannot start it
+- Solution: Double-click `start-bridge-hidden.vbs` to start the bridge manually
+- After starting manually, the UI restart button will work again
+
+**Chat says "Claude AI" but responses fail:**
+- Your API key may be valid but have no credits/balance
+- Check your account at https://console.anthropic.com → Billing
+- The status dot shows green (key exists) but Claude responses will fail without credits
+- Add credits to your Anthropic account, then restart the bridge
+
+**App launcher not launching apps:**
+- Bridge server must be running (green status dot)
+- Check that the application path is correct and the file exists
+- Only `.exe`, `.lnk`, `.bat`, `.cmd`, `.url` files are supported
 
 **Widget won't move:**
 - Long-press (hold 500ms) on the widget background, then drag
