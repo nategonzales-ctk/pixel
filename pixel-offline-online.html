@@ -177,6 +177,25 @@ body {
   50%   { transform: translateY(2px) scale(1.03, 0.97); }
 }
 
+/* Rubbing / petting */
+#pet-wrap.rubbing {
+  animation: petRub 0.3s ease-in-out infinite alternate !important;
+}
+@keyframes petRub {
+  0%   { transform: translateY(-2px) rotate(-4deg) scale(1.03, 0.97); }
+  100% { transform: translateY(-2px) rotate(4deg) scale(0.97, 1.03); }
+}
+.purr-particle {
+  position: fixed; pointer-events: none; z-index: 998;
+  font-size: 13px; opacity: 0.85;
+  animation: purrFloat 1.2s ease-out forwards;
+}
+@keyframes purrFloat {
+  0%   { opacity: 0.9; transform: translate(0, 0) scale(1); }
+  50%  { opacity: 0.7; }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0.4); }
+}
+
 /* Dream bubbles */
 .dream-z {
   position: fixed; pointer-events: none; z-index: 998;
@@ -2647,6 +2666,114 @@ document.addEventListener('mouseup', () => {
     setMood('happy', 4000);
   }
 });
+
+// ── Pet rubbing / petting ──
+let _rubTrail = [];        // recent mouse positions on pet
+let _rubDirChanges = 0;    // direction reversals count
+let _rubLastDx = 0;        // last horizontal direction
+let _rubActive = false;    // currently rubbing?
+let _rubTimeout = null;    // decay timer
+let _rubPurrTimer = null;  // purr particle spawner
+
+function _detectRub(e) {
+  if (_petHeld) return; // don't trigger during drag
+  const pw = document.getElementById('pet-wrap');
+  const rect = pw.getBoundingClientRect();
+  // Check if mouse is over the pet
+  const mx = e.clientX, my = e.clientY;
+  if (mx < rect.left - 10 || mx > rect.right + 10 ||
+      my < rect.top - 10 || my > rect.bottom + 10) {
+    _rubEndCheck();
+    return;
+  }
+  const now = Date.now();
+  _rubTrail.push({ x: mx, y: my, t: now });
+  // Keep only last 500ms of trail
+  while (_rubTrail.length > 1 && now - _rubTrail[0].t > 500) _rubTrail.shift();
+  if (_rubTrail.length < 3) return;
+  // Check horizontal direction change
+  const prev = _rubTrail[_rubTrail.length - 2];
+  const dx = mx - prev.x;
+  if (Math.abs(dx) > 3) {
+    const dir = dx > 0 ? 1 : -1;
+    if (_rubLastDx !== 0 && dir !== _rubLastDx) {
+      _rubDirChanges++;
+    }
+    _rubLastDx = dir;
+  }
+  // Need 3+ direction changes in the trail window = rubbing!
+  if (_rubDirChanges >= 3 && !_rubActive) {
+    _startRub();
+  }
+  // Reset decay timer
+  clearTimeout(_rubTimeout);
+  _rubTimeout = setTimeout(_stopRub, 600);
+}
+
+function _startRub() {
+  _rubActive = true;
+  const pw = document.getElementById('pet-wrap');
+  pw.classList.add('rubbing');
+  setMood('love', 0); // no auto-reset
+  behaviorMood = 'love';
+  // Spawn purr particles periodically
+  _rubPurrTimer = setInterval(() => {
+    if (!_rubActive) return;
+    _spawnPurr();
+  }, 300);
+  _spawnPurr(); // immediate first one
+  // Show purr message (only occasionally)
+  const msgs = [
+    '*purrrrr~* 💜', '*closes eyes happily* 😊',
+    '*leans into your hand* 🥰', '*soft purring* ✨',
+    'Mmmm that feels nice~ 💕', '*happy rumble* 🐾',
+    '*nuzzles* Don\'t stop~ 💜', '*purr purr purr* 😻',
+  ];
+  showBubble(msgs[Math.floor(Math.random() * msgs.length)], 3000);
+}
+
+function _stopRub() {
+  if (!_rubActive) return;
+  _rubActive = false;
+  _rubDirChanges = 0;
+  _rubTrail = [];
+  _rubLastDx = 0;
+  const pw = document.getElementById('pet-wrap');
+  pw.classList.remove('rubbing');
+  clearInterval(_rubPurrTimer);
+  behaviorMood = null;
+  setMood('happy', 3000);
+}
+
+function _rubEndCheck() {
+  _rubDirChanges = Math.max(0, _rubDirChanges - 1);
+  if (_rubActive && _rubDirChanges < 2) {
+    clearTimeout(_rubTimeout);
+    _rubTimeout = setTimeout(_stopRub, 400);
+  }
+}
+
+function _spawnPurr() {
+  const zone = document.getElementById('pet-zone');
+  const rect = zone.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height * 0.3;
+  const pool = ['💜', '~', '♪', '✨', '💕', '♡', '∿'];
+  for (let i = 0; i < 3; i++) {
+    const el = document.createElement('div');
+    el.className = 'purr-particle';
+    el.textContent = pool[Math.floor(Math.random() * pool.length)];
+    const ox = (Math.random() - 0.5) * 60;
+    el.style.left = (cx + ox) + 'px';
+    el.style.top = cy + 'px';
+    el.style.setProperty('--px', (Math.random() - 0.5) * 40 + 'px');
+    el.style.setProperty('--py', -(20 + Math.random() * 40) + 'px');
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
+}
+
+document.addEventListener('mousemove', _detectRub);
 
 // Brain (responses/data) moved to widgets/brain.js
 // Chat system moved to widgets/chat.js
