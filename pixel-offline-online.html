@@ -1549,6 +1549,104 @@ body {
   transition: background 0.2s, border-color 0.2s;
 }
 .ap-open-btn:hover { background: rgba(217,102,255,0.2); border-color: var(--accent); }
+
+/* ── HELP / USER MANUAL OVERLAY ── */
+#help-overlay {
+  position: fixed; inset: 0; z-index: 220;
+  background: rgba(5,5,14,0.92); backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.28s;
+}
+#help-overlay.open { opacity: 1; pointer-events: auto; }
+#help-panel {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid rgba(217,102,255,0.28);
+  border-radius: 26px;
+  padding: 34px 32px 26px;
+  max-width: 620px; width: 94vw;
+  max-height: 88vh; overflow-y: auto;
+  box-shadow: 0 0 80px rgba(217,102,255,0.14);
+  transform: scale(0.93);
+  transition: transform 0.28s cubic-bezier(.34,1.56,.64,1);
+  scrollbar-width: thin; scrollbar-color: rgba(217,102,255,0.3) transparent;
+}
+#help-overlay.open #help-panel { transform: scale(1); }
+#help-panel::-webkit-scrollbar { width: 6px; }
+#help-panel::-webkit-scrollbar-track { background: transparent; }
+#help-panel::-webkit-scrollbar-thumb { background: rgba(217,102,255,0.3); border-radius: 3px; }
+.help-title {
+  font-size: 18px; font-weight: 900;
+  color: var(--text); margin-bottom: 18px;
+  text-align: center; letter-spacing: 0.04em;
+}
+.help-nav {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-bottom: 18px; justify-content: center;
+}
+.help-nav-btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: 9px; font-weight: 800;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(217,102,255,0.25);
+  background: none; color: var(--text-dim);
+  cursor: pointer; transition: all 0.15s;
+}
+.help-nav-btn:hover { color: var(--text); border-color: var(--accent); }
+.help-nav-btn.active { background: rgba(217,102,255,0.14); border-color: var(--accent); color: var(--accent); }
+.help-section { display: none; }
+.help-section.active { display: block; }
+.help-section-title {
+  font-size: 10px; font-weight: 900;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(217,102,255,0.15);
+}
+.help-sub {
+  font-size: 10px; font-weight: 900;
+  color: var(--text); margin: 12px 0 6px;
+  letter-spacing: 0.04em;
+}
+.help-text {
+  font-size: 11px; font-weight: 600;
+  color: rgba(238,238,255,0.72);
+  line-height: 1.6; margin-bottom: 8px;
+}
+.help-table {
+  width: 100%; border-collapse: collapse;
+  margin-bottom: 12px;
+}
+.help-table th {
+  font-size: 9px; font-weight: 900;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(217,102,255,0.2);
+}
+.help-table td {
+  font-size: 10.5px; font-weight: 600;
+  color: rgba(238,238,255,0.72);
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.help-table tr:last-child td { border-bottom: none; }
+.help-kbd {
+  display: inline-block;
+  background: rgba(217,102,255,0.12);
+  border: 1px solid rgba(217,102,255,0.3);
+  border-radius: 4px; padding: 1px 6px;
+  font-size: 9.5px; font-weight: 900;
+  color: var(--accent); font-family: monospace;
+}
+.help-tip {
+  background: rgba(217,102,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px; margin: 10px 0;
+  font-size: 10.5px; font-weight: 700;
+  color: rgba(238,238,255,0.7);
+}
 #bg-scene-grid {
   display: flex; flex-wrap: wrap; gap: 8px;
 }
@@ -1628,7 +1726,7 @@ body {
 <button id="dn-btn" onclick="setDayNight(_dayNightTarget<0.5)" title="Toggle Day / Night">🌙</button>
 <button id="settings-btn" onclick="toggleSettings()" title="Settings">⚙</button>
 <!-- Debug overlay (toggle: Ctrl+D) -->
-<div id="debug-panel" style="display:none;position:fixed;top:8px;left:8px;z-index:9999;background:rgba(0,0,0,0.88);color:#0f0;font:11px/1.5 monospace;padding:10px 14px;border-radius:8px;border:1px solid #333;max-width:420px;max-height:80vh;overflow-y:auto;pointer-events:auto;">
+<div id="debug-panel" style="display:none;position:fixed;bottom:8px;left:8px;z-index:9999;background:rgba(0,0,0,0.88);color:#0f0;font:11px/1.5 monospace;padding:10px 14px;border-radius:8px;border:1px solid #333;max-width:420px;max-height:calc(100vh - 16px);overflow-y:auto;pointer-events:auto;">
   <div style="color:#ff0;margin-bottom:4px;font-weight:bold;">DEBUG PANEL (Ctrl+D to close)</div>
   <div id="debug-log" style="white-space:pre-wrap;"></div>
 </div>
@@ -1639,6 +1737,7 @@ body {
     <button class="stab" onclick="switchSettingsTab('ambiance')">🌙</button>
     <button class="stab" onclick="switchSettingsTab('display')">🖥️</button>
     <button class="stab" onclick="switchSettingsTab('pet')">🐾</button>
+    <button class="stab" onclick="openHelp()">❓</button>
   </div>
 
   <button class="settings-scroll-arr" id="settings-scroll-up" onclick="settingsScroll(-80)">&#9650;</button>
@@ -2625,8 +2724,6 @@ function dismissBubble() {
   bubbleEl.classList.remove('visible');
 }
 
-// Pet auto behaviors moved to behavior/behavior.js
-
 // ══════════════════════════════════════════════════
 //  PET FREE MOVEMENT
 // ══════════════════════════════════════════════════
@@ -3038,5 +3135,415 @@ window.addEventListener('load',async ()=>{
     </div>
   </div>
 </div>
+
+<!-- ═══ USER MANUAL OVERLAY ═══ -->
+<div id="help-overlay" onclick="if(event.target===this)closeHelp()">
+  <div id="help-panel">
+    <button class="selector-close" onclick="closeHelp()">✕</button>
+    <div class="help-title">📖 User Manual</div>
+
+    <div class="help-nav" id="help-nav">
+      <button class="help-nav-btn active" onclick="switchHelpSection('start')">Getting Started</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('controls')">Controls</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('widgets')">Widgets</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('pets')">Pets &amp; Moods</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('behaviors')">Behaviors</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('layout')">Layout</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('themes')">Themes</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('chat')">Chat &amp; AI</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('bridge')">Bridge</button>
+      <button class="help-nav-btn" onclick="switchHelpSection('trouble')">Troubleshoot</button>
+    </div>
+
+    <!-- ── GETTING STARTED ── -->
+    <div class="help-section active" id="help-start">
+      <div class="help-section-title">Getting Started</div>
+      <div class="help-sub">Prerequisites</div>
+      <div class="help-text">
+        <strong>Node.js 18+</strong> — Required for the bridge server<br>
+        <strong>Lively Wallpaper</strong> — Runs the pet as your desktop wallpaper<br>
+        <strong>Claude Desktop</strong> — Optional, enables online AI chat
+      </div>
+      <div class="help-sub">One-Click Setup (Windows)</div>
+      <div class="help-text">
+        1. Double-click <strong>SETUP.bat</strong> — it does everything automatically:<br>
+        &nbsp;&nbsp;&nbsp;✓ Checks Node.js is installed<br>
+        &nbsp;&nbsp;&nbsp;✓ Installs bridge dependencies<br>
+        &nbsp;&nbsp;&nbsp;✓ Adds bridge to Windows startup<br>
+        &nbsp;&nbsp;&nbsp;✓ Starts the bridge server<br>
+        2. Open <strong>Lively Wallpaper</strong> → click <strong>+</strong> → select <strong>pixel-offline-online.html</strong><br>
+        Done! Your pet lives on your desktop and the bridge auto-starts on every login.
+      </div>
+      <div class="help-sub">Manual Setup</div>
+      <div class="help-text">
+        1. <span class="help-kbd">cd bridge && npm install</span><br>
+        2. <span class="help-kbd">node bridge/server.js</span> or double-click <strong>start-bridge.bat</strong><br>
+        3. Add <strong>pixel-offline-online.html</strong> in Lively Wallpaper
+      </div>
+      <div class="help-sub">Connection Status</div>
+      <table class="help-table">
+        <tr><th>Dot</th><th>Meaning</th></tr>
+        <tr><td>🟢 Green</td><td>Bridge running + Claude AI online</td></tr>
+        <tr><td>🟡 Amber</td><td>Bridge running + offline AI mode</td></tr>
+        <tr><td>🔴 Red</td><td>Bridge not running (works offline)</td></tr>
+      </table>
+      <div class="help-tip">The wallpaper works 100% without the bridge — you still get all widgets (except system monitors), offline AI chat, pet behaviors, themes, and layout customization.</div>
+    </div>
+
+    <!-- ── CONTROLS ── -->
+    <div class="help-section" id="help-controls">
+      <div class="help-section-title">Controls &amp; Commands</div>
+      <div class="help-sub">Keyboard Shortcuts</div>
+      <table class="help-table">
+        <tr><th>Shortcut</th><th>Action</th></tr>
+        <tr><td><span class="help-kbd">Ctrl</span> + <span class="help-kbd">,</span></td><td>Toggle Settings panel</td></tr>
+        <tr><td><span class="help-kbd">Ctrl</span> + <span class="help-kbd">D</span></td><td>Toggle Debug panel</td></tr>
+        <tr><td><span class="help-kbd">Escape</span></td><td>Close any open panel</td></tr>
+      </table>
+      <div class="help-sub">Mouse — Pet Interactions</div>
+      <table class="help-table">
+        <tr><th>Action</th><th>What Happens</th></tr>
+        <tr><td>Click pet (1x)</td><td>Opens/closes chat panel</td></tr>
+        <tr><td>Click pet (3x fast)</td><td>Pet gets angry, bolts to opposite side</td></tr>
+        <tr><td>Click pet (5x fast)</td><td>Pet gets excited, zigzag run</td></tr>
+        <tr><td>Click screen (3x in 1.5s)</td><td>Pet runs to your click location</td></tr>
+      </table>
+      <div class="help-sub">Mouse — Widget Controls</div>
+      <table class="help-table">
+        <tr><th>Action</th><th>What Happens</th></tr>
+        <tr><td>Long-press widget (500ms)</td><td>Drag widget to any position</td></tr>
+        <tr><td>Click widget buttons</td><td>Pet reacts with contextual messages</td></tr>
+        <tr><td>Drag in chat panel</td><td>Scroll through chat history</td></tr>
+      </table>
+      <div class="help-sub">Chat Quick Actions</div>
+      <div class="help-text">
+        Click the pill buttons below chat input for quick commands:<br>
+        <strong>"Hello!"</strong> — Greeting &nbsp;|&nbsp;
+        <strong>"Tell me a joke"</strong> — Random joke &nbsp;|&nbsp;
+        <strong>"Show my PC stats"</strong> — Hardware info &nbsp;|&nbsp;
+        <strong>"What time is it?"</strong> — Current time
+      </div>
+      <div class="help-sub">Chat File Search</div>
+      <div class="help-text">
+        Type natural language queries to search files on your PC:<br>
+        <em>"find my resume"</em> &nbsp;|&nbsp; <em>"where are my vacation photos"</em> &nbsp;|&nbsp; <em>"search for report"</em><br>
+        Searches Desktop, Documents, Downloads, Pictures, Videos, Music. Returns up to 20 results.
+      </div>
+      <div class="help-sub">Bridge Controls</div>
+      <table class="help-table">
+        <tr><th>Button</th><th>Action</th></tr>
+        <tr><td>⟳ Restart</td><td>Restarts the bridge server process</td></tr>
+        <tr><td>■ Stop</td><td>Shuts down the bridge server</td></tr>
+      </table>
+      <div class="help-tip">Bridge controls are in Settings → 🐾 Pet tab at the bottom.</div>
+    </div>
+
+    <!-- ── WIDGETS ── -->
+    <div class="help-section" id="help-widgets">
+      <div class="help-section-title">Widgets</div>
+      <div class="help-text">All widgets can be toggled on/off in Settings → 📦 Widgets tab. Move any widget by long-pressing (500ms) and dragging.</div>
+
+      <div class="help-sub">Information Widgets</div>
+      <table class="help-table">
+        <tr><th>Widget</th><th>Description</th></tr>
+        <tr><td>🕐 Clock</td><td>Live time + date with day/night indicator</td></tr>
+        <tr><td>🌤️ Weather</td><td>Temperature, conditions, humidity, wind. Auto-detects location or set city manually</td></tr>
+        <tr><td>📅 Calendar</td><td>Monthly view with navigation, click dates to add notes</td></tr>
+        <tr><td>🌍 World Clock</td><td>Add up to 5 timezone clocks, updates every second</td></tr>
+        <tr><td>💬 Daily Quote</td><td>Random motivational/funny quotes, click to refresh</td></tr>
+      </table>
+
+      <div class="help-sub">Productivity Widgets</div>
+      <table class="help-table">
+        <tr><th>Widget</th><th>Description</th></tr>
+        <tr><td>✦ To-Do</td><td>Add tasks, check to complete, click × to delete</td></tr>
+        <tr><td>🍅 Pomodoro</td><td>25min focus → 5min break → repeat 4x → 15min long break</td></tr>
+        <tr><td>⏱️ Timer</td><td>Countdown timer or stopwatch with start/pause/reset</td></tr>
+        <tr><td>✔️ Habits</td><td>Daily habit checklist, auto-resets daily</td></tr>
+        <tr><td>📝 Sticky Note</td><td>Freeform text pad, 4 color options (yellow, pink, mint, lavender)</td></tr>
+        <tr><td>⏳ Countdown</td><td>Create countdowns to specific dates</td></tr>
+        <tr><td>🔗 Quick Links</td><td>Custom bookmark buttons, click to open URLs</td></tr>
+      </table>
+
+      <div class="help-sub">System Monitoring (Bridge Required)</div>
+      <table class="help-table">
+        <tr><th>Widget</th><th>Description</th></tr>
+        <tr><td>💻 Hardware</td><td>CPU, RAM, GPU, Disk usage with color bars. Alerts at high usage</td></tr>
+        <tr><td>📶 Network</td><td>Real-time upload/download speeds per interface</td></tr>
+        <tr><td>📊 Processes</td><td>Top 5 processes by CPU usage</td></tr>
+        <tr><td>🔋 Battery</td><td>Battery %, charging status, time remaining</td></tr>
+        <tr><td>🎵 Now Playing</td><td>Current music/video (Spotify, VLC, browsers, etc.)</td></tr>
+      </table>
+
+      <div class="help-sub">Chat Widget</div>
+      <div class="help-text">
+        Click the pet to open chat. Type messages to talk to your pet. Online mode uses Claude AI; offline mode uses built-in pattern matching with 200+ responses including jokes, facts, riddles, and motivational quotes.
+      </div>
+    </div>
+
+    <!-- ── PETS & MOODS ── -->
+    <div class="help-section" id="help-pets">
+      <div class="help-section-title">Pets &amp; Moods</div>
+      <div class="help-sub">Available Pets</div>
+      <table class="help-table">
+        <tr><th>Pet</th><th>Description</th></tr>
+        <tr><td>Pixel</td><td>Fluffy magical cat (default) — purple/magenta gradient</td></tr>
+        <tr><td>Jellysey</td><td>Bioluminescent jellyfish — translucent with flowing tentacles</td></tr>
+        <tr><td>Sharkypup</td><td>Shark-puppy hybrid — dorsal fin meets floppy ears</td></tr>
+        <tr><td>Thanther</td><td>Shadow panther — dark fur with rosette spots</td></tr>
+        <tr><td>Fordolphin</td><td>Cheerful dolphin — ocean-colored with snout</td></tr>
+        <tr><td>Vonlion</td><td>Majestic golden lion — full mane, commanding</td></tr>
+      </table>
+      <div class="help-tip">Change pet: Settings → 🐾 Pet tab, or click the "✦ Change Pet" button.</div>
+
+      <div class="help-sub">Mood States (11)</div>
+      <table class="help-table">
+        <tr><th>Mood</th><th>Expression</th><th>Trigger</th></tr>
+        <tr><td>Happy</td><td>Smile, purple glow</td><td>Default, positive interactions</td></tr>
+        <tr><td>Thinking</td><td>Half-closed eyes, blue glow</td><td>Processing chat</td></tr>
+        <tr><td>Surprised</td><td>Wide eyes, yellow glow</td><td>Unexpected events</td></tr>
+        <tr><td>Sad</td><td>Drooping eyes, dark glow</td><td>Sad topics in chat</td></tr>
+        <tr><td>Excited</td><td>Sparkling eyes, magenta glow</td><td>Rapid clicks, games</td></tr>
+        <tr><td>Love</td><td>Heart eyes, pink glow</td><td>Compliments, affection</td></tr>
+        <tr><td>Sleepy</td><td>Nearly closed, dim glow, Zzz</td><td>Idle timeout</td></tr>
+        <tr><td>Angry</td><td>Angry brows, red glow</td><td>Too many rapid clicks</td></tr>
+        <tr><td>Scared</td><td>Wide eyes, pale glow</td><td>Low battery, fast mouse</td></tr>
+        <tr><td>Silly</td><td>Crossed eyes, silly mouth</td><td>Fun interactions</td></tr>
+        <tr><td>Cry</td><td>Tears falling, sad glow</td><td>Very sad topics</td></tr>
+      </table>
+    </div>
+
+    <!-- ── BEHAVIORS ── -->
+    <div class="help-section" id="help-behaviors">
+      <div class="help-section-title">Pet Behaviors</div>
+      <div class="help-text">All behaviors can be toggled on/off in Settings → 🐾 Pet tab.</div>
+
+      <div class="help-sub">Sleep</div>
+      <div class="help-text">Pet falls asleep after your mouse is idle (default: 30 seconds). Shows "Zzz 💤" bubble and breathing animation. Wakes on any mouse movement. Adjustable delay in settings.</div>
+
+      <div class="help-sub">Click Reactions</div>
+      <div class="help-text">
+        <strong>1 click:</strong> Random happy message<br>
+        <strong>3 rapid clicks:</strong> Gets angry, runs to opposite side<br>
+        <strong>5 rapid clicks:</strong> Excited zigzag run<br>
+        <strong>3 screen clicks (1.5s):</strong> Runs to your click spot with zigzag path
+      </div>
+
+      <div class="help-sub">Hide (Peek-a-boo)</div>
+      <div class="help-text">Pet disappears periodically (default: every 5 min for 8 sec), then reappears at a random spot with a peek-a-boo message. Interval and duration adjustable.</div>
+
+      <div class="help-sub">Playdate</div>
+      <div class="help-text">
+        1–5 random buddy pets visit for ~20 seconds. Three play styles:<br>
+        <strong>Chase:</strong> Pets take turns chasing each other<br>
+        <strong>Ball:</strong> Volleyball with hit detection<br>
+        <strong>Dance:</strong> Circular formation with rotating positions<br><br>
+        Mouse interactions during playdates:<br>
+        • Fast mouse → pets scatter in fear<br>
+        • Slow approach → pets gather curiously<br>
+        • Click → pets freeze with surprise
+      </div>
+
+      <div class="help-sub">App Watch (Bridge Required)</div>
+      <div class="help-text">
+        Monitors your active window and reacts contextually. Detects 20+ app categories:<br>
+        <strong>Browsers, code editors, terminals</strong> → Encouragement<br>
+        <strong>Games</strong> → Excited "let me play too!"<br>
+        <strong>Music/video players</strong> → Watching together<br>
+        <strong>AI tools (ChatGPT, Copilot)</strong> → Jealous reactions<br>
+        <strong>Productivity, email, shopping</strong> → Contextual comments<br>
+        15-second cooldown between reactions.
+      </div>
+
+      <div class="help-sub">Wander</div>
+      <div class="help-text">Pet randomly moves to different spots on screen with smooth easing and a bounce on arrival.</div>
+    </div>
+
+    <!-- ── LAYOUT ── -->
+    <div class="help-section" id="help-layout">
+      <div class="help-section-title">Layout &amp; Positioning</div>
+
+      <div class="help-sub">Quick Move (Long-Press)</div>
+      <div class="help-text">
+        Hold any widget for <strong>500ms</strong> to grab it, then drag anywhere on screen. Release to drop. Works without entering layout edit mode. Does not activate on buttons, inputs, textareas, or links.
+      </div>
+
+      <div class="help-sub">Layout Edit Mode</div>
+      <div class="help-text">
+        1. Open Settings (<span class="help-kbd">Ctrl</span> + <span class="help-kbd">,</span>)<br>
+        2. Go to 🐾 Pet tab → click <strong>⊞ Edit Layout</strong><br>
+        3. A 20px grid overlay appears<br>
+        4. <strong>Drag</strong> any widget to reposition (snaps to grid)<br>
+        5. Use <strong>8 resize handles</strong> (corners + edges) to resize<br>
+        6. Click <strong>Done</strong> to save and exit
+      </div>
+
+      <div class="help-sub">Widget Sizing</div>
+      <div class="help-text">
+        <strong>Scale widgets</strong> (most) — Resizing scales content proportionally<br>
+        <strong>Reflow widgets</strong> (Chat, To-Do, Sticky, Habits, Quick Links, Countdown, World Clock) — Resizing changes actual width/height, text reflows
+      </div>
+
+      <div class="help-sub">Display Settings</div>
+      <div class="help-text">
+        If widgets appear off-screen, go to Settings → 🖥️ Display tab:<br>
+        • Set width/height manually (800–7680 × 400–4320)<br>
+        • Click <strong>↺ Reset to detected</strong> to auto-detect your screen
+      </div>
+
+      <div class="help-sub">Reset Layout</div>
+      <div class="help-text">Settings → 🐾 Pet tab → <strong>↺ Reset Layout</strong> restores all widgets to default positions and clears all saved data (todos, habits, notes, etc.).</div>
+
+      <div class="help-tip">All widget positions auto-save and persist across sessions.</div>
+    </div>
+
+    <!-- ── THEMES ── -->
+    <div class="help-section" id="help-themes">
+      <div class="help-section-title">Themes &amp; Appearance</div>
+      <div class="help-text">Open: Settings → 🐾 Pet tab → <strong>🎨 Appearance</strong></div>
+
+      <div class="help-sub">Themes</div>
+      <table class="help-table">
+        <tr><th>Theme</th><th>Colors</th><th>Mood</th></tr>
+        <tr><td>Midnight</td><td>Purple / cyan neon</td><td>Dark space (default)</td></tr>
+        <tr><td>Ocean</td><td>Blue gradients</td><td>Underwater calm</td></tr>
+        <tr><td>Forest</td><td>Green tones</td><td>Natural, earthy</td></tr>
+        <tr><td>Sunset</td><td>Orange / red warmth</td><td>Golden hour</td></tr>
+        <tr><td>Mono</td><td>Grayscale</td><td>Minimalist</td></tr>
+        <tr><td>Cherry</td><td>Pink / red</td><td>Romantic</td></tr>
+      </table>
+
+      <div class="help-sub">Appearance Options</div>
+      <table class="help-table">
+        <tr><th>Option</th><th>Description</th></tr>
+        <tr><td>Background</td><td>Select background scene style</td></tr>
+        <tr><td>Theme</td><td>6 color themes</td></tr>
+        <tr><td>Accent Color</td><td>Custom color picker to override theme accent</td></tr>
+        <tr><td>Font</td><td>Nunito, Orbitron, Poppins, Inter, Comic Neue</td></tr>
+        <tr><td>Chat Opacity</td><td>Chat panel background transparency (0.5–1.0)</td></tr>
+      </table>
+
+      <div class="help-sub">Day / Night Mode</div>
+      <div class="help-text">
+        Toggle in Settings → 🌙 Ambiance tab:<br>
+        <strong>Manual:</strong> Toggle day mode on/off<br>
+        <strong>Auto:</strong> Automatically switches based on time (6am–6pm = day)
+      </div>
+
+      <div class="help-sub">Background Effects</div>
+      <div class="help-text">
+        <strong>Starfield:</strong> 200+ parallax stars in theme-matched colors<br>
+        <strong>Nebula:</strong> Animated 3-color radial gradients with pulsing<br>
+        <strong>Shooting Stars:</strong> 3–5 visible with trails<br>
+        <strong>Day/Night:</strong> Smooth 1-second crossfade transition
+      </div>
+    </div>
+
+    <!-- ── CHAT & AI ── -->
+    <div class="help-section" id="help-chat">
+      <div class="help-section-title">Chat &amp; AI Features</div>
+
+      <div class="help-sub">Online Mode (Claude AI)</div>
+      <div class="help-text">
+        Requires bridge server running + Claude Desktop installed and signed in.<br>
+        Full Claude AI conversation with personality. Pet responds in character, automatically detects mood from responses, and can comment on your PC hardware stats.
+      </div>
+
+      <div class="help-sub">Offline Mode (Built-in AI)</div>
+      <div class="help-text">
+        Always available, no requirements. 200+ built-in responses including:<br>
+        Jokes, facts, motivational quotes, riddles, compliments, time-aware greetings, and contextual responses. Your pet's personality shines through even offline.
+      </div>
+
+      <div class="help-sub">Chat Features</div>
+      <div class="help-text">
+        <strong>Quick pills:</strong> Preset message buttons below chat input<br>
+        <strong>File search:</strong> Natural language queries to find files on your PC<br>
+        <strong>Unread dot:</strong> Red indicator when pet sends message while chat is closed<br>
+        <strong>Scroll:</strong> Drag to scroll through chat history
+      </div>
+      <div class="help-tip">Click the pet to open/close the chat panel.</div>
+    </div>
+
+    <!-- ── BRIDGE ── -->
+    <div class="help-section" id="help-bridge">
+      <div class="help-section-title">Bridge Server</div>
+      <div class="help-text">The bridge runs at <strong>localhost:7842</strong> and connects your wallpaper to system features.</div>
+
+      <div class="help-sub">Starting the Bridge</div>
+      <div class="help-text">
+        <strong>Windows:</strong> Double-click <span class="help-kbd">start-bridge.bat</span><br>
+        <strong>Manual:</strong> <span class="help-kbd">cd bridge && node server.js</span>
+      </div>
+
+      <div class="help-sub">What the Bridge Provides</div>
+      <table class="help-table">
+        <tr><th>Feature</th><th>Endpoint</th></tr>
+        <tr><td>Claude AI Chat</td><td>/chat</td></tr>
+        <tr><td>Hardware Monitoring</td><td>/hardware</td></tr>
+        <tr><td>Weather + Location</td><td>/weather, /location</td></tr>
+        <tr><td>Network Speeds</td><td>/network</td></tr>
+        <tr><td>Battery Status</td><td>/battery</td></tr>
+        <tr><td>Top Processes</td><td>/processes</td></tr>
+        <tr><td>Now Playing</td><td>/nowplaying</td></tr>
+        <tr><td>Active Window</td><td>/activewindow</td></tr>
+        <tr><td>File Search</td><td>/files</td></tr>
+        <tr><td>City Geocoding</td><td>/geocode</td></tr>
+        <tr><td>State Persistence</td><td>/state</td></tr>
+        <tr><td>Health Check</td><td>/health</td></tr>
+        <tr><td>Shutdown / Restart</td><td>/shutdown, /restart</td></tr>
+      </table>
+
+      <div class="help-sub">Bridge Controls</div>
+      <div class="help-text">
+        In Settings → 🐾 Pet tab:<br>
+        <strong>Status dot:</strong> Shows connection state<br>
+        <strong>⟳ Restart:</strong> Restarts the bridge process<br>
+        <strong>■ Stop:</strong> Shuts down the bridge
+      </div>
+
+      <div class="help-sub">State Persistence</div>
+      <div class="help-text">
+        Widget data is saved in two places:<br>
+        1. <strong>Browser localStorage</strong> — immediate, works offline<br>
+        2. <strong>Bridge state file</strong> (~/.pixel-pet/state.json) — persists across wallpaper reloads
+      </div>
+    </div>
+
+    <!-- ── TROUBLESHOOT ── -->
+    <div class="help-section" id="help-trouble">
+      <div class="help-section-title">Troubleshooting</div>
+
+      <div class="help-sub">Debug Panel</div>
+      <div class="help-text">
+        Press <span class="help-kbd">Ctrl</span> + <span class="help-kbd">D</span> to toggle the debug panel (bottom-left). Shows bridge status, app watch state, pet state, playdate info, registered behaviors, and live active window data.
+      </div>
+
+      <div class="help-sub">Common Issues</div>
+      <table class="help-table">
+        <tr><th>Problem</th><th>Solution</th></tr>
+        <tr><td>Pet not visible</td><td>Check Lively Wallpaper is running. Click desktop. Check display width/height in Settings</td></tr>
+        <tr><td>Settings button missing</td><td>Press <span class="help-kbd">Ctrl</span>+<span class="help-kbd">,</span> to open directly. Go to Display tab → Auto-Detect</td></tr>
+        <tr><td>Widgets not showing</td><td>Settings → 📦 Widgets tab — toggle them on</td></tr>
+        <tr><td>Bridge not connecting</td><td>Install Node.js, run <span class="help-kbd">npm install</span> in bridge folder, start with <span class="help-kbd">node server.js</span></td></tr>
+        <tr><td>Chat says "Offline"</td><td>Start bridge + install Claude Desktop. Offline mode still works</td></tr>
+        <tr><td>Hardware shows no data</td><td>Bridge must be running. First reading takes 3–5 seconds</td></tr>
+        <tr><td>Weather shows "--°C"</td><td>Allow location access, or set city manually in Settings</td></tr>
+        <tr><td>App watch not reacting</td><td>Bridge required (Windows only). Check debug panel (Ctrl+D)</td></tr>
+        <tr><td>Pet stuck / not moving</td><td>Click the pet. Triple-click desktop to call it to you</td></tr>
+        <tr><td>PowerShell popup flash</td><td>Update to latest bridge/server.js and restart bridge</td></tr>
+        <tr><td>High RAM usage</td><td>Update to latest bridge (uses persistent process). Restart bridge</td></tr>
+        <tr><td>Widget won't move</td><td>Long-press 500ms on widget background (not on buttons/inputs)</td></tr>
+      </table>
+
+      <div class="help-sub">Factory Reset</div>
+      <div class="help-text">Settings → 🐾 Pet tab → <strong>↺ Reset Layout</strong> clears all positions, widget data, resets pet to Pixel, and theme to Midnight.</div>
+
+      <div class="help-tip">For more details, see the USER_MANUAL.md file included with this project.</div>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>

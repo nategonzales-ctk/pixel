@@ -118,6 +118,56 @@ function initLayout() {
     }, true);
   });
 
+  // ── Long-press to drag (without entering layout mode) ──
+  let _longPressTimer = null;
+  let _longPressEl = null;
+  let _longPressFired = false;
+  let _longPressStartX = 0, _longPressStartY = 0;
+
+  WIDGET_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('mousedown', e => {
+      if (layoutMode) return; // layout mode has its own drag
+      // Ignore clicks on interactive elements
+      if (e.target.closest('input,textarea,select,button,a,.tog,.cal-nav-btn,.habit-del,.todo-del,.todo-check,.qlinks-del,.sticky-dot')) return;
+      _longPressEl = el;
+      _longPressFired = false;
+      _longPressStartX = e.clientX;
+      _longPressStartY = e.clientY;
+      _longPressTimer = setTimeout(() => {
+        _longPressFired = true;
+        el.classList.add('layout-drag-mode');
+        const r = el.getBoundingClientRect();
+        dragEl = el;
+        dragOffX = _longPressStartX - r.left;
+        dragOffY = _longPressStartY - r.top;
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+        el.style.cursor = 'grabbing';
+      }, 500);
+    });
+  });
+
+  // Cancel long-press if mouse moves too much before it fires
+  document.addEventListener('mousemove', e => {
+    if (_longPressTimer && !_longPressFired) {
+      const dist = Math.abs(e.clientX - _longPressStartX) + Math.abs(e.clientY - _longPressStartY);
+      if (dist > 8) { clearTimeout(_longPressTimer); _longPressTimer = null; }
+    }
+  });
+
+  // Cancel long-press on mouseup if it didn't fire
+  document.addEventListener('mouseup', () => {
+    if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; }
+    if (_longPressFired && _longPressEl) {
+      _longPressEl.classList.remove('layout-drag-mode');
+      _longPressEl.style.cursor = '';
+      _longPressFired = false;
+      _longPressEl = null;
+    }
+  });
+
   document.addEventListener('mousemove', _onMouseMove);
   document.addEventListener('mouseup',   _onMouseUp);
 

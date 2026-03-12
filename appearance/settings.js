@@ -179,7 +179,8 @@ function initDayNight() {
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === ',') { e.preventDefault(); toggleSettings(); }
   if (e.key === 'Escape') {
-    if (appearanceOpen) closeAppearance();
+    if (helpOpen) closeHelp();
+    else if (appearanceOpen) closeAppearance();
     else if (selectorOpen) closePetSelector();
     else if (settingsPanelOpen) { settingsPanelOpen = false; document.getElementById('settings-panel').classList.remove('open'); }
   }

@@ -138,6 +138,30 @@ function closeAppearance() {
   document.getElementById('appearance-overlay').classList.remove('open');
 }
 
+// ── Help / User Manual ──────────────────────────────
+let helpOpen = false;
+function openHelp() {
+  helpOpen = true;
+  settingsPanelOpen = false;
+  document.getElementById('settings-panel').classList.remove('open');
+  document.getElementById('help-overlay').classList.add('open');
+}
+function closeHelp() {
+  helpOpen = false;
+  document.getElementById('help-overlay').classList.remove('open');
+}
+function switchHelpSection(id) {
+  document.querySelectorAll('.help-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.help-nav-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('help-' + id);
+  if (sec) sec.classList.add('active');
+  const btn = document.querySelector(`.help-nav-btn[onclick*="${id}"]`);
+  if (btn) btn.classList.add('active');
+  // Scroll panel to top when switching
+  const panel = document.getElementById('help-panel');
+  if (panel) panel.scrollTop = 0;
+}
+
 function onAccentChange(val) {
   const cfg = loadAppearanceCfg();
   cfg.accent = val;
