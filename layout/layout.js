@@ -112,9 +112,9 @@ function initLayout() {
       dragOffX = e.clientX - r.left;
       dragOffY = e.clientY - r.top;
     });
-    // Suppress onclick / href / etc. while in layout mode (capture phase)
+    // Suppress onclick / href / etc. while in layout mode OR wobble mode (capture phase)
     el.addEventListener('click', e => {
-      if (layoutMode) { e.preventDefault(); e.stopPropagation(); }
+      if (layoutMode || _longPressFired) { e.preventDefault(); e.stopPropagation(); }
     }, true);
   });
 
@@ -362,6 +362,10 @@ function initLayout() {
       _longPressStartY = e.clientY;
       _longPressTimer = setTimeout(() => _wobbleActivate(el), 500);
     });
+    // Suppress clicks while wobble/layout mode is active (capture phase)
+    el.addEventListener('click', e => {
+      if (layoutMode || _longPressFired) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
   };
 
   _applyAllPositions();
@@ -369,8 +373,8 @@ function initLayout() {
 
 function _onMouseMove(e) {
   if (dragEl) {
-    dragEl.style.left = (e.clientX - dragOffX) + 'px';
-    dragEl.style.top  = (e.clientY - dragOffY) + 'px';
+    dragEl.style.left = Math.round(e.clientX - dragOffX) + 'px';
+    dragEl.style.top  = Math.round(e.clientY - dragOffY) + 'px';
     _syncOverlay(dragEl);
     return;
   }
@@ -417,8 +421,6 @@ function _onMouseMove(e) {
 }
 
 function _onMouseUp() {
-  // Skip if wobble mode is handling this
-  if (_longPressFired) return;
   if (dragEl) {
     let x = Math.round(parseFloat(dragEl.style.left) / GRID) * GRID;
     let y = Math.round(parseFloat(dragEl.style.top)  / GRID) * GRID;
@@ -777,10 +779,10 @@ function _syncOverlay(el) {
   const ov = _overlayMap[el.id];
   if (!ov) return;
   const r = el.getBoundingClientRect();
-  ov.style.left   = r.left   + 'px';
-  ov.style.top    = r.top    + 'px';
-  ov.style.width  = r.width  + 'px';
-  ov.style.height = r.height + 'px';
+  ov.style.left   = Math.round(r.left)   + 'px';
+  ov.style.top    = Math.round(r.top)    + 'px';
+  ov.style.width  = Math.round(r.width)  + 'px';
+  ov.style.height = Math.round(r.height) + 'px';
 }
 
 // ── Private helpers ───────────────────────────────
@@ -789,19 +791,20 @@ function _drawGrid() {
   const W = gridCanvas.width, H = gridCanvas.height;
   ctx.clearRect(0, 0, W, H);
 
+  // +0.5 offset renders crisp 1px lines on canvas (avoids straddling pixel boundary)
   ctx.strokeStyle = 'rgba(217,102,255,0.10)';
   ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += GRID) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y = 0; y < H; y += GRID) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  for (let x = 0; x < W; x += GRID) { ctx.beginPath(); ctx.moveTo(x+.5,0); ctx.lineTo(x+.5,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += GRID) { ctx.beginPath(); ctx.moveTo(0,y+.5); ctx.lineTo(W,y+.5); ctx.stroke(); }
 
   ctx.strokeStyle = 'rgba(217,102,255,0.22)';
-  for (let x = 0; x < W; x += GRID*5) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y = 0; y < H; y += GRID*5) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  for (let x = 0; x < W; x += GRID*5) { ctx.beginPath(); ctx.moveTo(x+.5,0); ctx.lineTo(x+.5,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += GRID*5) { ctx.beginPath(); ctx.moveTo(0,y+.5); ctx.lineTo(W,y+.5); ctx.stroke(); }
 
   ctx.strokeStyle = 'rgba(217,102,255,0.35)';
   ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(Math.round(W/2)+.5,0); ctx.lineTo(Math.round(W/2)+.5,H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,Math.round(H/2)+.5); ctx.lineTo(W,Math.round(H/2)+.5); ctx.stroke();
   ctx.setLineDash([]);
 }
 
