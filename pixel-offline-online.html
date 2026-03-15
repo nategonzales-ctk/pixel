@@ -93,8 +93,9 @@ body {
   background: #fff;
   border-radius: 18px;
   padding: 10px 30px 10px 16px;
-  max-width: 280px;
+  max-width: 196px;
   min-width: 80px;
+  box-sizing: border-box;
   font-size: 15px;
   font-weight: 800;
   color: #1a1030;
@@ -1438,7 +1439,7 @@ body {
   top: 164px; left: calc(var(--primary-w) - 224px); width: 188px;
   opacity: 0; transform: translateY(-6px); transition: opacity 0.4s, transform 0.4s;
 }
-#network-widget.visible { opacity: 1; transform: translateY(0); }
+#network-widget.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .net-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .net-row:last-child { margin-bottom: 0; }
 .net-arrow { font-size: 13px; width: 16px; flex-shrink: 0; }
@@ -1450,7 +1451,7 @@ body {
   top: 252px; left: calc(var(--primary-w) - 224px); width: 188px;
   opacity: 0; transform: translateY(-6px); transition: opacity 0.4s, transform 0.4s;
 }
-#processes-widget.visible { opacity: 1; transform: translateY(0); }
+#processes-widget.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 #proc-list { display: flex; flex-direction: column; gap: 4px; }
 .proc-row { display: flex; align-items: center; gap: 5px; }
 .proc-name { font-size: 9px; font-weight: 800; color: rgba(238,238,255,0.6); width: 68px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1464,7 +1465,7 @@ body {
   opacity: 0; transition: opacity 0.4s;
 }
 #battery-widget > .wp-body { padding: 8px 10px; }
-#battery-widget.visible { opacity: 1; }
+#battery-widget.visible { opacity: 1; pointer-events: auto; }
 #bat-icon { font-size: 13px; display: block; text-align: center; }
 #bat-bar-wrap { height: 5px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; margin: 4px 0; }
 #bat-fill { height: 100%; border-radius: 999px; transition: width 0.8s, background 0.5s; }
@@ -3047,29 +3048,10 @@ let petMouseNear = false;
 
 document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
-function getChatRect() {
-  if (!chatOpen) return null;
-  const el = document.getElementById('chat-panel');
-  return el ? el.getBoundingClientRect() : null;
-}
-
-function overlapsChat(x, y, cr) {
-  if (!cr) return false;
-  const margin = 20;
-  return x < cr.right + margin &&
-         x + PET_W > cr.left - margin &&
-         y + PET_H > cr.top - margin;
-}
-
 function pickWanderTarget() {
-  const pad = 60, w = Math.min(window.innerWidth, displayW), h = Math.min(window.innerHeight, displayH);
-  const cr = getChatRect();
-  let attempts = 0;
-  do {
-    petTargetX = pad + Math.random() * (w - PET_W - pad * 2);
-    petTargetY = pad + Math.random() * (h - PET_H - pad * 2);
-    attempts++;
-  } while (overlapsChat(petTargetX, petTargetY, cr) && attempts < 20);
+  const padX = 20, padY = 20, w = Math.min(window.innerWidth, displayW), h = Math.min(window.innerHeight, displayH);
+  petTargetX = padX + Math.random() * Math.max(0, w - PET_W - padX * 2);
+  petTargetY = padY + Math.random() * Math.max(0, h - PET_H - 70 - padY * 2);
   nextWanderTime = Date.now() + 8000 + Math.random() * 14000;
 }
 
@@ -3080,10 +3062,10 @@ function pickRunTarget() {
   const edge = Math.floor(Math.random() * 4); // 0=left, 1=right, 2=top-ish, 3=bottom-ish
   const margin = 40;
   switch(edge) {
-    case 0: petTargetX = margin;               petTargetY = margin + Math.random() * (h - PET_H - margin * 2); break;
-    case 1: petTargetX = w - PET_W - margin;   petTargetY = margin + Math.random() * (h - PET_H - margin * 2); break;
-    case 2: petTargetX = margin + Math.random() * (w - PET_W - margin * 2); petTargetY = margin + 60; break;
-    case 3: petTargetX = margin + Math.random() * (w - PET_W - margin * 2); petTargetY = h - PET_H - margin; break;
+    case 0: petTargetX = margin;               petTargetY = margin + Math.random() * Math.max(0, h - PET_H - 70 - margin * 2); break;
+    case 1: petTargetX = w - PET_W - margin;   petTargetY = margin + Math.random() * Math.max(0, h - PET_H - 70 - margin * 2); break;
+    case 2: petTargetX = margin + Math.random() * Math.max(0, w - PET_W - margin * 2); petTargetY = margin + 60; break;
+    case 3: petTargetX = margin + Math.random() * Math.max(0, w - PET_W - margin * 2); petTargetY = h - PET_H - 70 - margin; break;
   }
   nextWanderTime = Date.now() + 99999; // block normal wander during run
 }
@@ -3116,14 +3098,7 @@ function updatePetMovement() {
   petX += (tx - petX) * speed;
   petY += (ty - petY) * speed;
   petX = Math.max(10, Math.min(Math.min(window.innerWidth, displayW) - PET_W - 10, petX));
-  petY = Math.max(100, Math.min(Math.min(window.innerHeight, displayH) - PET_H - 10, petY));
-  // Push pet away from chat panel if overlapping
-  const cr = getChatRect();
-  if (cr && overlapsChat(petX, petY, cr)) {
-    const pushRight = window.innerWidth - PET_W - 10;
-    petX += (pushRight - petX) * 0.08;
-    petTargetX = pushRight;
-  }
+  petY = Math.max(10, Math.min(Math.min(window.innerHeight, displayH) - PET_H - 70, petY));
   document.getElementById('pet-zone').style.transform =
     `translate(${Math.round(petX)}px,${Math.round(petY)}px)`;
 }

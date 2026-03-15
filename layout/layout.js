@@ -128,8 +128,8 @@ function initLayout() {
   let _wobbleRemoveBtn = null; // 🗑 remove/hide button
 
   function _wobbleActivate(el) {
-    // Dismiss any previous wobble first
-    if (_longPressFired && _longPressEl) _wobbleDismiss();
+    // Dismiss any previous wobble first (check overlay too, not just flag)
+    if ((_longPressFired || _wobbleOverlay) && _longPressEl) _wobbleDismiss();
     _longPressFired = true;
     _longPressEl = el;
     el.classList.add('layout-drag-mode', 'widget-wobble');
@@ -215,7 +215,9 @@ function initLayout() {
       _longPressEl.style.cursor = '';
     }
     if (_wobbleOverlay) {
-      _removeOverlay(_longPressEl ? _longPressEl.id : '');
+      // Remove overlay directly from DOM in case _longPressEl changed
+      _wobbleOverlay.remove();
+      if (_longPressEl) delete _overlayMap[_longPressEl.id];
       _wobbleOverlay = null;
     }
     _wobbleCloseBtn = null;
@@ -232,8 +234,9 @@ function initLayout() {
     if (!el) return;
     el.addEventListener('mousedown', e => {
       if (layoutMode) return; // layout mode has its own drag
-      // Ignore clicks on interactive elements
-      if (e.target.closest('input,textarea,select,button,a,.tog,.cal-nav-btn,.habit-del,.todo-del,.todo-check,.qlinks-del,.sticky-dot,.layout-resize-handle')) return;
+      // Ignore clicks on interactive child elements, but allow the widget itself even if it IS a button
+      const _iEl = e.target.closest('input,textarea,select,button,a,.tog,.cal-nav-btn,.habit-del,.todo-del,.todo-check,.qlinks-del,.sticky-dot,.layout-resize-handle');
+      if (_iEl && _iEl !== el) return;
 
       // If already wobbling this widget, start dragging it
       if (_longPressFired && _longPressEl === el) {
@@ -244,6 +247,12 @@ function initLayout() {
         return;
       }
 
+      // Dismiss any active wobble on a DIFFERENT widget before overwriting state
+      // (without this, _longPressFired gets cleared before the document dismiss handler runs)
+      if ((_longPressFired || _wobbleOverlay) && _longPressEl && _longPressEl !== el) {
+        _wobbleDismiss();
+      }
+
       _longPressEl = el;
       _longPressFired = false;
       _longPressStartX = e.clientX;
@@ -251,6 +260,9 @@ function initLayout() {
       _longPressTimer = setTimeout(() => _wobbleActivate(el), 500);
     });
   });
+
+  // Expose dismiss so toggleLayoutMode can clear wobble state before taking over
+  window._wobbleDismissAll = _wobbleDismiss;
 
   // Cancel long-press if mouse moves too much before it fires
   document.addEventListener('mousemove', e => {
@@ -282,6 +294,7 @@ function initLayout() {
       dragEl.style.top  = y + 'px';
       _savePos(dragEl.id, x, y);
       dragEl = null;
+      if (_longPressEl) _longPressEl.style.cursor = 'grab';
       // Re-sync overlay
       if (_wobbleOverlay && _longPressEl) _syncOverlay(_longPressEl);
     }
@@ -331,13 +344,17 @@ function initLayout() {
   window.registerWidgetWobble = function(el) {
     el.addEventListener('mousedown', e => {
       if (layoutMode) return;
-      if (e.target.closest('input,textarea,select,button,a,.tog,.app-obj-del,.layout-resize-handle')) return;
+      const _iEl2 = e.target.closest('input,textarea,select,button,a,.tog,.app-obj-del,.layout-resize-handle');
+      if (_iEl2 && _iEl2 !== el) return;
       if (_longPressFired && _longPressEl === el) {
         const r = el.getBoundingClientRect();
         dragEl = el;
         dragOffX = e.clientX - r.left;
         dragOffY = e.clientY - r.top;
         return;
+      }
+      if ((_longPressFired || _wobbleOverlay) && _longPressEl && _longPressEl !== el) {
+        _wobbleDismiss();
       }
       _longPressEl = el;
       _longPressFired = false;
@@ -447,6 +464,9 @@ function _onMouseUp() {
 
 // ── Toggle layout edit mode ───────────────────────
 function toggleLayoutMode() {
+  // Dismiss any active wobble before toggling — prevents _longPressFired leaking
+  // into layout mode and causing _onMouseUp to skip drag cleanup (widget sticks)
+  if (typeof window._wobbleDismissAll === 'function') window._wobbleDismissAll();
   layoutMode = !layoutMode;
   const btn = document.getElementById('layout-edit-btn');
 
@@ -815,6 +835,17 @@ function _saveScale(id, x, y, sx, sy) {
 function _applyAllPositions() {
   try {
     let saved = JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {};
+    // pet-zone position is managed by the animation system (petX/petY + transform).
+    // Remove any stale entry so left/top don't stack on top of the transform.
+    if (saved['pet-zone']) {
+      delete saved['pet-zone'];
+      localStorage.setItem(LAYOUT_KEY, JSON.stringify(saved));
+    }
+    const petZoneEl = document.getElementById('pet-zone');
+    if (petZoneEl) {
+      petZoneEl.style.left = petZoneEl.style.top = petZoneEl.style.right =
+        petZoneEl.style.bottom = petZoneEl.style.transform = petZoneEl.style.transformOrigin = '';
+    }
     // First-time: no saved positions → apply defaults
     if (Object.keys(saved).length === 0) {
       const defaults = _defaultPositions();

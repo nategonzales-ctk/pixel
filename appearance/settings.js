@@ -76,7 +76,15 @@ function applySettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
   WIDGET_TOGGLES.forEach(([key, elId]) => {
     const el = document.getElementById(elId);
-    if (el) el.style.display = s[key] === false ? 'none' : '';
+    if (!el) return;
+    if (s[key] === false) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = '';
+      // Restore .visible for widgets that use opacity-based visibility
+      // so they re-appear when re-enabled in settings
+      el.classList.add('visible');
+    }
   });
 }
 
